@@ -101,12 +101,9 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
     }
   };
 
-  const handlePointerUp = (e: React.PointerEvent) => {
+  const handlePointerUp = () => {
     if (isCreating && (tool === 'create-rectangle' || tool === 'create-circle')) {
-      const isDeliberate = e.timeStamp - (e as any).startTime > 100; // Minimum 100ms tap
-      if (isDeliberate) {
-        placeBed();
-      }
+      placeBed();
     } else {
       finishSelection();
     }
