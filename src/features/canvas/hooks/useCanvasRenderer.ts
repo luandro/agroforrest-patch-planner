@@ -8,10 +8,9 @@ import { drawBed } from '../utils/shapeRenderer';
 interface UseCanvasRendererProps {
   canvasRef?: React.RefObject<HTMLCanvasElement>;
   gridSize: number;
-  spacing?: number;
 }
 
-export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4 }: UseCanvasRendererProps) => {
+export const useCanvasRenderer = ({ canvasRef, gridSize }: UseCanvasRendererProps) => {
   const animationFrameRef = useRef<number>();
   const internalCanvasRef = useRef<HTMLCanvasElement>(null);
   
@@ -50,22 +49,22 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4 }: UseCan
     
     drawGrid(ctx, viewport, gridSize, snapHighlight);
 
-    // 4. Draw all beds with spacing
+    // 4. Draw all beds
     beds.forEach(bed => {
       const isSelected = selectedBedIds.includes(bed.id);
-      drawBed(ctx, bed, viewport, isSelected, false, false, spacing);
+      drawBed(ctx, bed, viewport, isSelected, false, false);
     });
 
     // 5. Draw placement bed if it exists (confirmed bed awaiting creation)
     if (placementBed) {
-      drawBed(ctx, placementBed, viewport, false, false, true, spacing);
+      drawBed(ctx, placementBed, viewport, false, false, true);
     }
 
     // 6. Draw preview bed if it exists (follows cursor)
     if (previewBed) {
-      drawBed(ctx, previewBed, viewport, false, true, false, spacing);
+      drawBed(ctx, previewBed, viewport, false, true, false);
     }
-  }, [activeCanvasRef, gridSize, spacing]);
+  }, [activeCanvasRef, gridSize]);
 
   const scheduleRender = useCallback((
     viewport: CanvasViewport, 

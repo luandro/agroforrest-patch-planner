@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { BedConfirmationPanel } from './BedConfirmationPanel';
-import { CollisionAlert } from './CollisionAlert';
 import { CanvasTool } from '../types/bed.types';
 
 interface CanvasOverlaysProps {
@@ -36,16 +35,21 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
   return (
     <>
       {/* Creation Mode Indicator */}
-      {(isCreating || tool === 'create-rectangle' || tool === 'create-circle') && !hasCollision && (
+      {(isCreating || tool === 'create-rectangle' || tool === 'create-circle') && (
         <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-40">
-          <div className="bg-green-100 border border-green-300 text-green-800 px-3 py-1 rounded-full text-sm font-medium animate-fade-in">
-            Modo Criação • {tool === 'create-rectangle' ? 'Retângulo' : 'Círculo'}
+          <div className={`border px-3 py-1 rounded-full text-sm font-medium animate-fade-in ${
+            hasCollision 
+              ? 'bg-red-100 border-red-300 text-red-800'
+              : 'bg-green-100 border-green-300 text-green-800'
+          }`}>
+            {hasCollision ? (
+              <>❌ Posição inválida - sobreposição detectada</>
+            ) : (
+              <>Modo Criação • {tool === 'create-rectangle' ? 'Retângulo' : 'Círculo'}</>
+            )}
           </div>
         </div>
       )}
-
-      {/* Collision Alert */}
-      <CollisionAlert hasCollision={hasCollision} />
 
       {/* Multi-bed indicator */}
       {(isCreating || showConfirmation) && bedConfig.quantity > 1 && (

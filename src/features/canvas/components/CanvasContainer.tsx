@@ -18,7 +18,6 @@ interface CanvasContainerProps {
   previewBed: any;
   placementBed?: any;
   gridSize?: number;
-  bedConfig?: any;
 }
 
 export const CanvasContainer: React.FC<CanvasContainerProps> = ({
@@ -35,14 +34,12 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
   selectedBedIds,
   previewBed,
   placementBed,
-  gridSize = 1,
-  bedConfig
+  gridSize = 1
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   
   const { scheduleRender, canvasRef } = useCanvasRenderer({
-    gridSize,
-    spacing: bedConfig?.spacing || 0.4
+    gridSize
   });
 
   // Handle gestures only when in pan mode or when not creating
@@ -53,7 +50,7 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
     currentZoom: viewport.zoom
   });
 
-  // Handle canvas resize and positioning
+  // Handle canvas resize
   useEffect(() => {
     const resizeCanvas = () => {
       const canvas = canvasRef.current;
@@ -63,7 +60,6 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
       const rect = container.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
 
-      // Ensure canvas fills container properly
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
       canvas.style.width = `${rect.width}px`;
@@ -97,26 +93,15 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
   return (
     <div 
       ref={containerRef} 
-      className="touch-none select-none overscroll-none w-full h-full relative"
-      style={{ 
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 1
-      }}
+      className="touch-none select-none overscroll-none w-full h-full"
     >
       <canvas
         ref={canvasRef}
-        className="block touch-none w-full h-full"
+        className="block touch-none cursor-grab active:cursor-grabbing"
         style={{ 
           touchAction: 'none',
           background: '#FAFAF9',
-          cursor: getCursorStyle(),
-          position: 'absolute',
-          top: 0,
-          left: 0
+          cursor: getCursorStyle()
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
