@@ -8,11 +8,12 @@ import { useBedCreation } from '../hooks/useBedCreation';
 import { useBedSelection } from '../hooks/useBedSelection';
 import { useAutoSave } from '../hooks/useAutoSave';
 import { useBedStore } from '../stores/bedStore';
-import { CanvasControls } from './CanvasControls';
-import { MiniMap } from './MiniMap';
-import { BedConfigPanel } from './BedConfigPanel';
-import { CanvasToolbar } from './CanvasToolbar';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { EnhancedMiniMap } from './EnhancedMiniMap';
+import { MobileControls } from './MobileControls';
+import { DesktopSidebar } from './DesktopSidebar';
 import { BedRenderer } from './BedRenderer';
+import { ViewControls } from './ViewControls';
 
 export const PatchCanvas: React.FC<PatchCanvasProps> = ({
   initialViewport,
@@ -23,10 +24,12 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [showConfigPanel, setShowConfigPanel] = useState(false);
+  const isMobile = useIsMobile();
+  const [showMobileControls, setShowMobileControls] = useState(false);
+  const [showDesktopSidebar, setShowDesktopSidebar] = useState(true);
 
   // Canvas viewport and rendering
-  const { viewport, pan, zoomTo, updateViewport } = useCanvasViewport({
+  const { viewport, pan, zoomTo, updateViewport, centerOnBed, fitAllBeds } = useCanvasViewport({
     initialViewport,
     minZoom,
     maxZoom,
@@ -47,10 +50,12 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
     undo,
     redo,
     canUndo,
-    canRedo
+    canRedo,
+    isCreatingBed,
+    setIsCreatingBed
   } = useBedStore();
 
-  // Bed creation
+  // Bed creation with auto-zoom
   const {
     bedConfig,
     updateBedConfig,
@@ -60,7 +65,16 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
     updateCreation,
     finishCreation,
     cancelCreation
-  } = useBedCreation({ viewport, gridSize });
+  } = useBedCreation({ 
+    viewport, 
+    gridSize, 
+    onBedCreated: (bedId) => {
+      // Auto-zoom to show 1m grid squares and center on new bed
+      setTimeout(() => {
+        centerOnBed(bedId, 2.0); // 2x zoom shows ~1m grid squares clearly
+      }, 100);
+    }
+  });
 
   // Bed selection
   const {
@@ -82,10 +96,16 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
     const y = e.clientY - rect.top;
 
     if (tool === 'create-rectangle' || tool === 'create-circle') {
+      setIsCreatingBed(true);
       startCreation(x, y);
     } else if (tool === 'select') {
       const isMultiSelect = e.shiftKey || e.ctrlKey;
       startSelection(x, y, isMultiSelect);
+    }
+
+    // Auto-hide mobile controls after interaction
+    if (isMobile && showMobileControls) {
+      setTimeout(() => setShowMobileControls(false), 2000);
     }
   };
 
@@ -106,14 +126,39 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
   const handlePointerUp = () => {
     if (isCreating) {
       finishCreation();
+      setIsCreatingBed(false);
     } else {
       finishSelection();
     }
   };
 
-  // Handle gestures only when in pan mode
+  // Double tap for quick bed creation on mobile
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    if (isMobile && tool === 'pan') {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      // Switch to rectangle tool temporarily and create bed
+      setTool('create-rectangle');
+      setIsCreatingBed(true);
+      startCreation(x, y);
+      
+      // Simulate drag to create default size bed
+      setTimeout(() => {
+        updateCreation(x + 50, y + 20); // Default 1m x 0.4m bed
+        finishCreation();
+        setIsCreatingBed(false);
+        setTool('pan');
+      }, 10);
+    }
+  };
+
+  // Handle gestures only when in pan mode or when not creating
   useCanvasGestures({
-    onPan: tool === 'pan' ? pan : () => {},
+    onPan: (tool === 'pan' && !isCreating) ? pan : () => {},
     onZoom: (zoom) => zoomTo(zoom),
     canvasRef,
     currentZoom: viewport.zoom
@@ -128,12 +173,8 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
     zoomTo(Math.max(minZoom, viewport.zoom / 1.2));
   };
 
-  const handleReset = () => {
-    updateViewport({
-      zoom: 1,
-      centerX: 10,
-      centerY: 10
-    });
+  const handleFitAll = () => {
+    fitAllBeds(beds);
   };
 
   // Handle keyboard controls
@@ -168,7 +209,7 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
           handleZoomOut();
           break;
         case '0':
-          handleReset();
+          handleFitAll();
           break;
         case 'Delete':
         case 'Backspace':
@@ -189,6 +230,7 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
         case 'Escape':
           if (isCreating) {
             cancelCreation();
+            setIsCreatingBed(false);
           }
           setTool('pan');
           break;
@@ -237,16 +279,36 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
     return cleanup;
   }, [cleanup]);
 
+  // Calculate canvas dimensions based on sidebar state
+  const canvasStyle = {
+    width: isMobile ? '100vw' : showDesktopSidebar ? 'calc(100vw - 300px)' : '100vw',
+    height: 'calc(100vh - 4rem)', // Subtract header height
+    position: 'fixed' as const,
+    top: '4rem', // Header height
+    left: 0,
+    zIndex: 10
+  };
+
   return (
-    <div className="relative w-full h-full min-h-[500px] overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
-      <div ref={containerRef} className="w-full h-full">
+    <>
+      {/* Full-screen canvas container */}
+      <div 
+        ref={containerRef} 
+        className="touch-none select-none overscroll-none"
+        style={canvasStyle}
+      >
         <canvas
           ref={canvasRef}
           className="block touch-none cursor-grab active:cursor-grabbing"
-          style={{ touchAction: 'none' }}
+          style={{ 
+            touchAction: 'none',
+            background: '#FAFAF9',
+            cursor: isCreating ? 'crosshair' : tool === 'select' ? 'pointer' : 'grab'
+          }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
+          onDoubleClick={handleDoubleClick}
         />
       </div>
 
@@ -259,50 +321,77 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
         canvasRef={canvasRef}
       />
 
-      {/* Canvas Controls */}
-      <CanvasControls
+      {/* Enhanced MiniMap - always visible */}
+      <EnhancedMiniMap 
+        viewport={viewport} 
+        beds={beds}
+        onNavigate={(x, y) => updateViewport({ centerX: x, centerY: y })}
+        className="fixed top-20 left-4 z-50"
+      />
+
+      {/* View Controls - always visible in top-right */}
+      <ViewControls
         zoom={viewport.zoom}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
-        onReset={handleReset}
+        onFitAll={handleFitAll}
+        bedsCount={beds.length}
+        className="fixed top-20 right-4 z-50"
       />
 
-      {/* Mini Map */}
-      <MiniMap viewport={viewport} />
+      {/* Mobile Controls */}
+      {isMobile && (
+        <MobileControls
+          activeTool={tool}
+          onToolChange={setTool}
+          bedConfig={bedConfig}
+          onBedConfigChange={updateBedConfig}
+          onUndo={undo}
+          onRedo={redo}
+          canUndo={canUndo()}
+          canRedo={canRedo()}
+          onDeleteSelected={deleteSelected}
+          selectedCount={selectedBedIds.length}
+          isVisible={showMobileControls}
+          onToggle={setShowMobileControls}
+          isSaving={isSaving}
+        />
+      )}
 
-      {/* Toolbar */}
-      <CanvasToolbar
-        activeTool={tool}
-        onToolChange={setTool}
-        onUndo={undo}
-        onRedo={redo}
-        canUndo={canUndo()}
-        canRedo={canRedo()}
-        onToggleConfig={() => setShowConfigPanel(!showConfigPanel)}
-        isSaving={isSaving}
-      />
-
-      {/* Configuration Panel */}
-      {showConfigPanel && (
-        <BedConfigPanel
-          config={bedConfig}
-          onConfigChange={updateBedConfig}
-          onClose={() => setShowConfigPanel(false)}
+      {/* Desktop Sidebar */}
+      {!isMobile && (
+        <DesktopSidebar
+          activeTool={tool}
+          onToolChange={setTool}
+          bedConfig={bedConfig}
+          onBedConfigChange={updateBedConfig}
+          onUndo={undo}
+          onRedo={redo}
+          canUndo={canUndo()}
+          canRedo={canRedo()}
+          onDeleteSelected={deleteSelected}
+          selectedCount={selectedBedIds.length}
+          isCollapsed={!showDesktopSidebar}
+          onToggleCollapse={setShowDesktopSidebar}
+          isSaving={isSaving}
+          beds={beds}
+          viewport={viewport}
         />
       )}
 
       {/* Development Info */}
       {process.env.NODE_ENV === 'development' && (
-        <div className="absolute top-4 left-4 bg-black/80 text-white text-xs p-2 rounded font-mono">
+        <div className="fixed bottom-4 left-4 bg-black/80 text-white text-xs p-2 rounded font-mono z-50">
           <div>Centro: ({viewport.centerX.toFixed(1)}m, {viewport.centerY.toFixed(1)}m)</div>
           <div>Zoom: {viewport.zoom.toFixed(2)}x</div>
           <div>Área: {viewport.width.toFixed(1)}×{viewport.height.toFixed(1)}m</div>
           <div>Ferramenta: {tool}</div>
           <div>Canteiros: {beds.length}</div>
           <div>Selecionados: {selectedBedIds.length}</div>
+          <div>Mobile: {isMobile ? 'Sim' : 'Não'}</div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

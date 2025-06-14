@@ -7,9 +7,10 @@ import { CanvasViewport } from '../types/canvas.types';
 interface UseBedCreationProps {
   viewport: CanvasViewport;
   gridSize?: number;
+  onBedCreated?: (bedId: string) => void;
 }
 
-export const useBedCreation = ({ viewport, gridSize = 1 }: UseBedCreationProps) => {
+export const useBedCreation = ({ viewport, gridSize = 1, onBedCreated }: UseBedCreationProps) => {
   const { addBed, tool } = useBedStore();
   const [isCreating, setIsCreating] = useState(false);
   const [previewBed, setPreviewBed] = useState<Bed | null>(null);
@@ -114,8 +115,9 @@ export const useBedCreation = ({ viewport, gridSize = 1 }: UseBedCreationProps) 
     for (let i = 0; i < bedConfig.quantity; i++) {
       const offsetY = i * (bedConfig.spacing + (previewBed.dimensions.width || 0));
       
+      const bedId = `bed-${Date.now()}-${i}`;
       const bed: Bed = {
-        id: `bed-${Date.now()}-${i}`,
+        id: bedId,
         shape: previewBed.shape,
         position: {
           x: previewBed.position.x,
@@ -129,13 +131,18 @@ export const useBedCreation = ({ viewport, gridSize = 1 }: UseBedCreationProps) 
 
       beds.push(bed);
       addBed(bed);
+      
+      // Call auto-zoom callback for the first bed
+      if (i === 0 && onBedCreated) {
+        onBedCreated(bedId);
+      }
     }
 
     // Reset creation state
     setIsCreating(false);
     setPreviewBed(null);
     setStartPoint(null);
-  }, [isCreating, previewBed, bedConfig, addBed]);
+  }, [isCreating, previewBed, bedConfig, addBed, onBedCreated]);
 
   const cancelCreation = useCallback(() => {
     setIsCreating(false);

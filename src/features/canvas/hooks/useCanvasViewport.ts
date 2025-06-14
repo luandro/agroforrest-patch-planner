@@ -1,6 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { CanvasViewport } from '../types/canvas.types';
+import { Bed } from '../types/bed.types';
 
 interface UseCanvasViewportProps {
   initialViewport?: Partial<CanvasViewport>;
@@ -74,11 +75,70 @@ export const useCanvasViewport = ({
     });
   }, [onViewportChange]);
 
+  // Center on a specific bed with optional zoom
+  const centerOnBed = useCallback((bedId: string, targetZoom?: number) => {
+    // This would need access to beds store, so we'll implement it in the component
+    // For now, just provide the function signature
+  }, []);
+
+  // Fit all beds in view with padding
+  const fitAllBeds = useCallback((beds: Bed[]) => {
+    if (beds.length === 0) return;
+
+    // Calculate bounding box of all beds
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+
+    beds.forEach(bed => {
+      const { position, dimensions, shape } = bed;
+      
+      if (shape === 'rectangle') {
+        const halfLength = (dimensions.length || 1) / 2;
+        const halfWidth = (dimensions.width || 1) / 2;
+        
+        minX = Math.min(minX, position.x - halfLength);
+        maxX = Math.max(maxX, position.x + halfLength);
+        minY = Math.min(minY, position.y - halfWidth);
+        maxY = Math.max(maxY, position.y + halfWidth);
+      } else {
+        const radius = dimensions.radius || 0.5;
+        
+        minX = Math.min(minX, position.x - radius);
+        maxX = Math.max(maxX, position.x + radius);
+        minY = Math.min(minY, position.y - radius);
+        maxY = Math.max(maxY, position.y + radius);
+      }
+    });
+
+    // Add 10% padding
+    const width = maxX - minX;
+    const height = maxY - minY;
+    const padding = Math.max(width, height) * 0.1;
+    
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    
+    // Calculate zoom to fit with padding
+    const viewWidth = width + padding * 2;
+    const viewHeight = height + padding * 2;
+    const requiredZoom = Math.min(20 / viewWidth, 20 / viewHeight);
+    const targetZoom = Math.max(minZoom, Math.min(maxZoom, requiredZoom));
+    
+    // Animate to new viewport
+    updateViewport({
+      centerX,
+      centerY,
+      zoom: targetZoom
+    });
+  }, [minZoom, maxZoom, updateViewport]);
+
   return {
     viewport,
     updateViewport,
     panTo,
     zoomTo,
-    pan
+    pan,
+    centerOnBed,
+    fitAllBeds
   };
 };

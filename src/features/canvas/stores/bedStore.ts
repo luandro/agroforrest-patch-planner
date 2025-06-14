@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { Bed, BedAction, CanvasTool } from '../types/bed.types';
 
@@ -9,6 +8,7 @@ interface BedStore {
   tool: CanvasTool;
   isDirty: boolean;
   lastSaved: number;
+  isCreatingBed: boolean;
   
   // History for undo/redo
   history: BedAction[];
@@ -16,6 +16,7 @@ interface BedStore {
   
   // Actions
   setTool: (tool: CanvasTool) => void;
+  setIsCreatingBed: (creating: boolean) => void;
   addBed: (bed: Bed) => void;
   removeBeds: (bedIds: string[]) => void;
   updateBed: (bedId: string, updates: Partial<Bed>) => void;
@@ -43,10 +44,12 @@ export const useBedStore = create<BedStore>((set, get) => ({
   tool: 'pan',
   isDirty: false,
   lastSaved: 0,
+  isCreatingBed: false,
   history: [],
   historyIndex: -1,
 
   setTool: (tool) => set({ tool }),
+  setIsCreatingBed: (creating) => set({ isCreatingBed: creating }),
 
   addBed: (bed) => {
     const state = get();
