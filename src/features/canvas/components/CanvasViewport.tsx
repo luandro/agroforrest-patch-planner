@@ -27,6 +27,7 @@ interface CanvasViewportProps {
   deleteSelected: () => void;
   isMobile?: boolean;
   showDesktopSidebar?: boolean;
+  bedConfig?: any;
 }
 
 export const CanvasViewport: React.FC<CanvasViewportProps> = ({
@@ -51,7 +52,8 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
   setTool,
   deleteSelected,
   isMobile = false,
-  showDesktopSidebar = true
+  showDesktopSidebar = true,
+  bedConfig
 }) => {
   // Calculate canvas dimensions based on sidebar state
   const canvasStyle = {
@@ -82,6 +84,7 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
           previewBed={previewBed}
           placementBed={placementBed}
           gridSize={gridSize}
+          bedConfig={bedConfig}
         />
       </div>
 

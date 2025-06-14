@@ -18,6 +18,7 @@ interface CanvasContainerProps {
   previewBed: any;
   placementBed?: any;
   gridSize?: number;
+  bedConfig?: any;
 }
 
 export const CanvasContainer: React.FC<CanvasContainerProps> = ({
@@ -34,12 +35,14 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
   selectedBedIds,
   previewBed,
   placementBed,
-  gridSize = 1
+  gridSize = 1,
+  bedConfig
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   
   const { scheduleRender, canvasRef } = useCanvasRenderer({
-    gridSize
+    gridSize,
+    spacing: bedConfig?.spacing || 0.4
   });
 
   // Handle gestures only when in pan mode or when not creating

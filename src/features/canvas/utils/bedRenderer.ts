@@ -1,4 +1,3 @@
-
 import { CanvasViewport } from '../types/canvas.types';
 import { Bed } from '../types/bed.types';
 
@@ -27,25 +26,24 @@ export const setBedStyles = (
   isPlacement: boolean
 ) => {
   if (isPreview) {
-    ctx.globalAlpha = 0.7;
-    ctx.strokeStyle = 'rgba(34, 197, 94, 0.9)'; // Brighter green preview
-    ctx.fillStyle = 'rgba(34, 197, 94, 0.3)';
+    ctx.globalAlpha = 0.4;
+    ctx.strokeStyle = '#10B981'; // Green preview border
+    ctx.fillStyle = '#10B981'; // Green preview fill
     ctx.lineWidth = 2;
     ctx.setLineDash([5, 5]);
-    ctx.shadowColor = 'rgba(34, 197, 94, 0.4)';
+    ctx.shadowColor = 'rgba(16, 185, 129, 0.4)';
     ctx.shadowBlur = 8;
   } else if (isPlacement) {
-    ctx.globalAlpha = 0.9;
-    ctx.strokeStyle = '#16A34A'; // Solid green for placement
-    ctx.fillStyle = 'rgba(34, 197, 94, 0.6)';
+    ctx.globalAlpha = 0.4;
+    ctx.strokeStyle = '#10B981'; // Green placement border
+    ctx.fillStyle = '#10B981'; // Green placement fill
     ctx.lineWidth = 3;
     ctx.setLineDash([]);
-    // Add stronger glow effect
-    ctx.shadowColor = '#16A34A';
+    ctx.shadowColor = '#10B981';
     ctx.shadowBlur = 12;
   } else {
     ctx.globalAlpha = 1;
-    ctx.fillStyle = '#D4A574'; // Light brown for beds
+    ctx.fillStyle = '#FEF3C7'; // Light yellow-brown for placed beds
     ctx.strokeStyle = isSelected ? '#0EA5E9' : '#92400E'; // Blue if selected, dark brown otherwise
     ctx.lineWidth = isSelected ? 3 : 2;
     ctx.setLineDash([]);

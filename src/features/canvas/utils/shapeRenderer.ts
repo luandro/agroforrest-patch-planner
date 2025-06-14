@@ -7,6 +7,7 @@ import {
   drawDimensionText, 
   drawResizeHandles 
 } from './bedRenderer';
+import { drawSpacingArea } from './spacingRenderer';
 
 export const drawRectangleBed = (
   ctx: CanvasRenderingContext2D,
@@ -14,7 +15,8 @@ export const drawRectangleBed = (
   viewport: CanvasViewport,
   isSelected: boolean,
   isPreview: boolean,
-  isPlacement: boolean
+  isPlacement: boolean,
+  spacing: number = 0.4
 ) => {
   const canvasWidth = ctx.canvas.width / (window.devicePixelRatio || 1);
   const canvasHeight = ctx.canvas.height / (window.devicePixelRatio || 1);
@@ -23,18 +25,29 @@ export const drawRectangleBed = (
     bed, viewport, canvasWidth, canvasHeight
   );
 
+  // 1. Draw spacing area first (behind bed)
+  if (spacing > 0) {
+    drawSpacingArea(ctx, bed, viewport, spacing, isPreview, isPlacement);
+  }
+
+  // 2. Draw bed area
+  ctx.save();
+  setBedStyles(ctx, isSelected, isPreview, isPlacement);
+
   const length = (bed.dimensions.length || 0) * pixelsPerMeter;
   const width = (bed.dimensions.width || 0) * pixelsPerMeter;
   
   ctx.fillRect(screenX - length / 2, screenY - width / 2, length, width);
   ctx.strokeRect(screenX - length / 2, screenY - width / 2, length, width);
   
-  // Draw dimensions text for preview and placement
+  ctx.restore();
+
+  // 3. Draw dimensions text for preview and placement
   if (isPreview || isPlacement) {
     drawDimensionText(ctx, bed, screenX, screenY);
   }
   
-  // Draw resize handles if selected
+  // 4. Draw resize handles if selected
   if (isSelected && !isPreview) {
     drawResizeHandles(ctx, bed, screenX, screenY, pixelsPerMeter);
   }
@@ -46,7 +59,8 @@ export const drawCircleBed = (
   viewport: CanvasViewport,
   isSelected: boolean,
   isPreview: boolean,
-  isPlacement: boolean
+  isPlacement: boolean,
+  spacing: number = 0.4
 ) => {
   const canvasWidth = ctx.canvas.width / (window.devicePixelRatio || 1);
   const canvasHeight = ctx.canvas.height / (window.devicePixelRatio || 1);
@@ -55,6 +69,15 @@ export const drawCircleBed = (
     bed, viewport, canvasWidth, canvasHeight
   );
 
+  // 1. Draw spacing area first (behind bed)
+  if (spacing > 0) {
+    drawSpacingArea(ctx, bed, viewport, spacing, isPreview, isPlacement);
+  }
+
+  // 2. Draw bed area
+  ctx.save();
+  setBedStyles(ctx, isSelected, isPreview, isPlacement);
+
   const radius = (bed.dimensions.radius || 0) * pixelsPerMeter;
   
   ctx.beginPath();
@@ -62,12 +85,14 @@ export const drawCircleBed = (
   ctx.fill();
   ctx.stroke();
   
-  // Draw dimensions text for preview and placement
+  ctx.restore();
+
+  // 3. Draw dimensions text for preview and placement
   if (isPreview || isPlacement) {
     drawDimensionText(ctx, bed, screenX, screenY);
   }
   
-  // Draw resize handle if selected
+  // 4. Draw resize handle if selected
   if (isSelected && !isPreview) {
     drawResizeHandles(ctx, bed, screenX, screenY, pixelsPerMeter);
   }
@@ -79,16 +104,12 @@ export const drawBed = (
   viewport: CanvasViewport,
   isSelected: boolean = false,
   isPreview: boolean = false,
-  isPlacement: boolean = false
+  isPlacement: boolean = false,
+  spacing: number = 0.4
 ) => {
-  ctx.save();
-  setBedStyles(ctx, isSelected, isPreview, isPlacement);
-
   if (bed.shape === 'rectangle') {
-    drawRectangleBed(ctx, bed, viewport, isSelected, isPreview, isPlacement);
+    drawRectangleBed(ctx, bed, viewport, isSelected, isPreview, isPlacement, spacing);
   } else {
-    drawCircleBed(ctx, bed, viewport, isSelected, isPreview, isPlacement);
+    drawCircleBed(ctx, bed, viewport, isSelected, isPreview, isPlacement, spacing);
   }
-
-  ctx.restore();
 };
