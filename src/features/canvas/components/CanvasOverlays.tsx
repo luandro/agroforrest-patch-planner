@@ -84,10 +84,7 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
       {showCollisionAlert && (
         <div className="absolute top-5 left-1/2 transform -translate-x-1/2 z-50">
           <div 
-            className="bg-red-500 text-white px-4 py-3 rounded-lg text-sm font-medium shadow-lg animate-fade-in max-w-xs mx-auto"
-            style={{
-              animation: 'fadeInOut 1.5s ease-in-out'
-            }}
+            className="bg-red-500 text-white px-4 py-3 rounded-lg text-sm font-medium shadow-lg animate-fade-in max-w-xs mx-auto fadeInOut"
           >
             ❌ Posição inválida - sobreposição detectada
           </div>
@@ -118,14 +115,20 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
         />
       )}
 
-      <style jsx>{`
-        @keyframes fadeInOut {
-          0% { opacity: 0; transform: translateY(-10px); }
-          20% { opacity: 1; transform: translateY(0); }
-          80% { opacity: 1; transform: translateY(0); }
-          100% { opacity: 0; transform: translateY(-10px); }
-        }
-      `}</style>
+      <style>
+        {`
+          @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-10px); }
+            20% { opacity: 1; transform: translateY(0); }
+            80% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); }
+          }
+          
+          .fadeInOut {
+            animation: fadeInOut 1.5s ease-in-out;
+          }
+        `}
+      </style>
     </>
   );
 };
