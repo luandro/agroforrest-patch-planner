@@ -15,12 +15,9 @@ interface CanvasContainerProps {
   zoomTo: (zoom: number) => void;
   beds: any[];
   selectedBedIds: string[];
-  previewBed?: any;
-  previewBeds?: any[];
+  previewBed: any;
   placementBed?: any;
-  placementBeds?: any[];
   gridSize?: number;
-  spacing?: number;
 }
 
 export const CanvasContainer: React.FC<CanvasContainerProps> = ({
@@ -36,27 +33,21 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
   beds,
   selectedBedIds,
   previewBed,
-  previewBeds,
   placementBed,
-  placementBeds,
-  gridSize = 1,
-  spacing = 0.4
+  gridSize = 1
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   
-  const { scheduleRender, scheduleRenderLegacy, canvasRef } = useCanvasRenderer({
-    gridSize,
-    spacing
+  const { scheduleRender, canvasRef } = useCanvasRenderer({
+    gridSize
   });
 
-  // Handle gestures with tool and creation state awareness
+  // Handle gestures only when in pan mode or when not creating
   useCanvasGestures({
-    onPan: pan,
+    onPan: (tool === 'pan' && !isCreating) ? pan : () => {},
     onZoom: (zoom) => zoomTo(zoom),
     canvasRef,
-    currentZoom: viewport.zoom,
-    tool,
-    isCreating
+    currentZoom: viewport.zoom
   });
 
   // Handle canvas resize
@@ -79,32 +70,18 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
         ctx.scale(dpr, dpr);
       }
 
-      // Use new array-based rendering if available, otherwise fall back to legacy
-      if (previewBeds || placementBeds) {
-        const actualPreviewBeds = previewBeds || (previewBed ? [previewBed] : []);
-        const actualPlacementBeds = placementBeds || (placementBed ? [placementBed] : []);
-        scheduleRender(viewport, beds, selectedBedIds, actualPreviewBeds, actualPlacementBeds);
-      } else {
-        scheduleRenderLegacy(viewport, beds, selectedBedIds, previewBed, placementBed);
-      }
+      scheduleRender(viewport, beds, selectedBedIds, previewBed, placementBed);
     };
 
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
     return () => window.removeEventListener('resize', resizeCanvas);
-  }, [viewport, scheduleRender, scheduleRenderLegacy, beds, selectedBedIds, previewBed, previewBeds, placementBed, placementBeds, canvasRef]);
+  }, [viewport, scheduleRender, beds, selectedBedIds, previewBed, placementBed, canvasRef]);
 
   // Render when viewport or beds change
   useEffect(() => {
-    // Use new array-based rendering if available, otherwise fall back to legacy
-    if (previewBeds || placementBeds) {
-      const actualPreviewBeds = previewBeds || (previewBed ? [previewBed] : []);
-      const actualPlacementBeds = placementBeds || (placementBed ? [placementBed] : []);
-      scheduleRender(viewport, beds, selectedBedIds, actualPreviewBeds, actualPlacementBeds);
-    } else {
-      scheduleRenderLegacy(viewport, beds, selectedBedIds, previewBed, placementBed);
-    }
-  }, [viewport, beds, selectedBedIds, previewBed, previewBeds, placementBed, placementBeds, scheduleRender, scheduleRenderLegacy]);
+    scheduleRender(viewport, beds, selectedBedIds, previewBed, placementBed);
+  }, [viewport, beds, selectedBedIds, previewBed, placementBed, scheduleRender]);
 
   const getCursorStyle = () => {
     if (isCreating) return 'crosshair';
@@ -113,65 +90,22 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
     return 'grab';
   };
 
-  // Enhanced pointer event handling
-  const handlePointerDownWithLogging = (e: React.PointerEvent) => {
-    console.log('CanvasContainer.pointerDown:', { 
-      tool, 
-      isCreating, 
-      pointerType: e.pointerType,
-      isPrimary: e.isPrimary 
-    });
-    
-    // Only handle primary pointer events to avoid conflicts
-    if (!e.isPrimary) return;
-    
-    handlePointerDown(e);
-  };
-
-  const handlePointerMoveWithLogging = (e: React.PointerEvent) => {
-    // Only handle primary pointer events and when needed
-    if (!e.isPrimary) return;
-    
-    // Only call move handler for creation tools or selection
-    if (isCreating || tool === 'select') {
-      handlePointerMove(e);
-    }
-  };
-
-  const handlePointerUpWithLogging = (e: React.PointerEvent) => {
-    console.log('CanvasContainer.pointerUp:', { tool, isCreating, pointerType: e.pointerType });
-    
-    // Only handle primary pointer events
-    if (!e.isPrimary) return;
-    
-    handlePointerUp();
-  };
-
-  console.log('CanvasContainer render:', { tool, isCreating });
-
   return (
     <div 
       ref={containerRef} 
-      className="w-full h-full"
-      style={{ 
-        touchAction: 'none',
-        userSelect: 'none',
-        WebkitUserSelect: 'none'
-      }}
+      className="touch-none select-none overscroll-none w-full h-full"
     >
       <canvas
         ref={canvasRef}
-        className="block w-full h-full"
+        className="block touch-none cursor-grab active:cursor-grabbing"
         style={{ 
           touchAction: 'none',
           background: '#FAFAF9',
-          cursor: getCursorStyle(),
-          userSelect: 'none',
-          WebkitUserSelect: 'none'
+          cursor: getCursorStyle()
         }}
-        onPointerDown={handlePointerDownWithLogging}
-        onPointerMove={handlePointerMoveWithLogging}
-        onPointerUp={handlePointerUpWithLogging}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
         onDoubleClick={handleDoubleClick}
       />
     </div>

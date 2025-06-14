@@ -13,10 +13,8 @@ interface CanvasLayoutProviderProps {
   bedConfig: any;
   updateBedConfig: any;
   isCreating: boolean;
-  previewBed?: any;
-  previewBeds?: any[];
-  placementBed?: any;
-  placementBeds?: any[];
+  previewBed: any;
+  placementBed: any;
   showConfirmation: boolean;
   multiCreationMode: boolean;
   setMultiCreationMode: (enabled: boolean) => void;
