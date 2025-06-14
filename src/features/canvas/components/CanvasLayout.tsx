@@ -47,10 +47,14 @@ interface CanvasLayoutProps {
 
 export const CanvasLayout: React.FC<CanvasLayoutProps> = (props) => {
   return (
-    <CanvasLayoutProvider {...props}>
-      <CanvasViewport {...props} />
-      <CanvasOverlays {...props} />
-      <CanvasControls {...props} />
-    </CanvasLayoutProvider>
+    <div className="relative w-full h-full overflow-hidden" style={{ paddingTop: '4rem' }}>
+      <CanvasLayoutProvider {...props}>
+        <div className="relative w-full h-full">
+          <CanvasViewport {...props} />
+          <CanvasOverlays {...props} />
+          <CanvasControls {...props} />
+        </div>
+      </CanvasLayoutProvider>
+    </div>
   );
 };
