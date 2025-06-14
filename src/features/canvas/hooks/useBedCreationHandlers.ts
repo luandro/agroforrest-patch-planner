@@ -68,8 +68,8 @@ export const useBedCreationHandlers = ({
   // Enhanced placement cancellation
   const cancelPlacement = useCallback(() => {
     console.log('Canceling placement');
-    return cancelPlacementBase();
-  }, [cancelPlacementBase]);
+    return cancelPlacementBase(cursorPosition);
+  }, [cancelPlacementBase, cursorPosition]);
 
   // Enhanced cancel creation that clears all states
   const cancelCreation = useCallback(() => {
