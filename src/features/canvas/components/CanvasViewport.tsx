@@ -19,8 +19,10 @@ interface CanvasViewportProps {
   handleFitAll: () => void;
   beds: any[];
   selectedBedIds: string[];
-  previewBed: any;
-  placementBed: any;
+  previewBed?: any;
+  previewBeds?: any[];
+  placementBed?: any;
+  placementBeds?: any[];
   gridSize?: number;
   cancelCreation: () => void;
   setTool: (tool: CanvasTool) => void;
@@ -45,7 +47,9 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
   beds,
   selectedBedIds,
   previewBed,
+  previewBeds,
   placementBed,
+  placementBeds,
   gridSize = 1,
   cancelCreation,
   setTool,
@@ -83,7 +87,9 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
           beds={beds}
           selectedBedIds={selectedBedIds}
           previewBed={previewBed}
+          previewBeds={previewBeds}
           placementBed={placementBed}
+          placementBeds={placementBeds}
           gridSize={gridSize}
         />
       </div>

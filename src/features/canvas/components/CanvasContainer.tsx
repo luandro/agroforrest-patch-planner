@@ -15,8 +15,10 @@ interface CanvasContainerProps {
   zoomTo: (zoom: number) => void;
   beds: any[];
   selectedBedIds: string[];
-  previewBed: any;
+  previewBed?: any;
+  previewBeds?: any[];
   placementBed?: any;
+  placementBeds?: any[];
   gridSize?: number;
   spacing?: number;
 }
@@ -34,13 +36,15 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
   beds,
   selectedBedIds,
   previewBed,
+  previewBeds,
   placementBed,
+  placementBeds,
   gridSize = 1,
   spacing = 0.4
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   
-  const { scheduleRender, canvasRef } = useCanvasRenderer({
+  const { scheduleRender, scheduleRenderLegacy, canvasRef } = useCanvasRenderer({
     gridSize,
     spacing
   });
@@ -73,18 +77,32 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
         ctx.scale(dpr, dpr);
       }
 
-      scheduleRender(viewport, beds, selectedBedIds, previewBed, placementBed);
+      // Use new array-based rendering if available, otherwise fall back to legacy
+      if (previewBeds || placementBeds) {
+        const actualPreviewBeds = previewBeds || (previewBed ? [previewBed] : []);
+        const actualPlacementBeds = placementBeds || (placementBed ? [placementBed] : []);
+        scheduleRender(viewport, beds, selectedBedIds, actualPreviewBeds, actualPlacementBeds);
+      } else {
+        scheduleRenderLegacy(viewport, beds, selectedBedIds, previewBed, placementBed);
+      }
     };
 
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
     return () => window.removeEventListener('resize', resizeCanvas);
-  }, [viewport, scheduleRender, beds, selectedBedIds, previewBed, placementBed, canvasRef]);
+  }, [viewport, scheduleRender, scheduleRenderLegacy, beds, selectedBedIds, previewBed, previewBeds, placementBed, placementBeds, canvasRef]);
 
   // Render when viewport or beds change
   useEffect(() => {
-    scheduleRender(viewport, beds, selectedBedIds, previewBed, placementBed);
-  }, [viewport, beds, selectedBedIds, previewBed, placementBed, scheduleRender]);
+    // Use new array-based rendering if available, otherwise fall back to legacy
+    if (previewBeds || placementBeds) {
+      const actualPreviewBeds = previewBeds || (previewBed ? [previewBed] : []);
+      const actualPlacementBeds = placementBeds || (placementBed ? [placementBed] : []);
+      scheduleRender(viewport, beds, selectedBedIds, actualPreviewBeds, actualPlacementBeds);
+    } else {
+      scheduleRenderLegacy(viewport, beds, selectedBedIds, previewBed, placementBed);
+    }
+  }, [viewport, beds, selectedBedIds, previewBed, previewBeds, placementBed, placementBeds, scheduleRender, scheduleRenderLegacy]);
 
   const getCursorStyle = () => {
     if (isCreating) return 'crosshair';

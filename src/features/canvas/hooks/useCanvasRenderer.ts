@@ -22,8 +22,8 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4 }: UseCan
     viewport: CanvasViewport, 
     beds: Bed[] = [], 
     selectedBedIds: string[] = [], 
-    previewBed?: Bed | null,
-    placementBed?: Bed | null
+    previewBeds: Bed[] = [],
+    placementBeds: Bed[] = []
   ) => {
     const canvas = activeCanvasRef.current;
     if (!canvas) return;
@@ -41,45 +41,45 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4 }: UseCan
     // 3. Draw grid with snap indicator
     let snapHighlight: { x: number; y: number } | undefined;
     
-    // Show snap highlight for preview or placement bed
-    if (previewBed) {
-      snapHighlight = previewBed.position;
-    } else if (placementBed) {
-      snapHighlight = placementBed.position;
+    // Show snap highlight for preview or placement bed (use first bed for snap highlight)
+    if (previewBeds.length > 0) {
+      snapHighlight = previewBeds[0].position;
+    } else if (placementBeds.length > 0) {
+      snapHighlight = placementBeds[0].position;
     }
     
     drawGrid(ctx, viewport, gridSize, snapHighlight);
 
-    // 4. Draw all beds with spacing
+    // 4. Draw all existing beds with spacing
     beds.forEach(bed => {
       const isSelected = selectedBedIds.includes(bed.id);
       drawBed(ctx, bed, viewport, isSelected, false, false, spacing);
     });
 
-    // 5. Draw placement bed if it exists (confirmed bed awaiting creation)
-    if (placementBed) {
-      drawBed(ctx, placementBed, viewport, false, false, true, spacing);
-    }
+    // 5. Draw all placement beds if they exist (confirmed beds awaiting creation)
+    placementBeds.forEach(bed => {
+      drawBed(ctx, bed, viewport, false, false, true, spacing);
+    });
 
-    // 6. Draw preview bed if it exists (follows cursor)
-    if (previewBed) {
-      drawBed(ctx, previewBed, viewport, false, true, false, spacing);
-    }
+    // 6. Draw all preview beds if they exist (follows cursor)
+    previewBeds.forEach(bed => {
+      drawBed(ctx, bed, viewport, false, true, false, spacing);
+    });
   }, [activeCanvasRef, gridSize, spacing]);
 
   const scheduleRender = useCallback((
     viewport: CanvasViewport, 
     beds: Bed[] = [], 
     selectedBedIds: string[] = [], 
-    previewBed?: Bed | null,
-    placementBed?: Bed | null
+    previewBeds: Bed[] = [],
+    placementBeds: Bed[] = []
   ) => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
     
     animationFrameRef.current = requestAnimationFrame(() => {
-      render(viewport, beds, selectedBedIds, previewBed, placementBed);
+      render(viewport, beds, selectedBedIds, previewBeds, placementBeds);
     });
   }, [render]);
 
@@ -89,9 +89,36 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4 }: UseCan
     }
   }, []);
 
+  // Legacy compatibility - convert single bed to array
+  const renderLegacy = useCallback((
+    viewport: CanvasViewport, 
+    beds: Bed[] = [], 
+    selectedBedIds: string[] = [], 
+    previewBed?: Bed | null,
+    placementBed?: Bed | null
+  ) => {
+    const previewBeds = previewBed ? [previewBed] : [];
+    const placementBeds = placementBed ? [placementBed] : [];
+    render(viewport, beds, selectedBedIds, previewBeds, placementBeds);
+  }, [render]);
+
+  const scheduleRenderLegacy = useCallback((
+    viewport: CanvasViewport, 
+    beds: Bed[] = [], 
+    selectedBedIds: string[] = [], 
+    previewBed?: Bed | null,
+    placementBed?: Bed | null
+  ) => {
+    const previewBeds = previewBed ? [previewBed] : [];
+    const placementBeds = placementBed ? [placementBed] : [];
+    scheduleRender(viewport, beds, selectedBedIds, previewBeds, placementBeds);
+  }, [scheduleRender]);
+
   return {
     render,
     scheduleRender,
+    renderLegacy,
+    scheduleRenderLegacy,
     cleanup,
     canvasRef: activeCanvasRef
   };
