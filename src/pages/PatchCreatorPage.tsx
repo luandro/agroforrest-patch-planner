@@ -1,17 +1,39 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PatchCanvas from '../features/canvas/components/PatchCanvas';
+import MainLayout from '../components/layout/MainLayout';
 import { CanvasViewport } from '../features/canvas/types/canvas.types';
 import { useBedStore } from '../features/canvas/stores/bedStore';
 
 const PatchCreatorPage: React.FC = () => {
   const [viewport, setViewport] = useState<CanvasViewport | null>(null);
   const [fps, setFps] = useState(0);
-  const { beds, selectedBedIds, tool } = useBedStore();
+  const { beds, selectedBedIds, tool, setTool, loadBeds } = useBedStore();
+
+  // Ensure pan tool is default on page load
+  useEffect(() => {
+    if (tool !== 'pan') {
+      setTool('pan');
+    }
+  }, []);
 
   const handleViewportChange = (newViewport: CanvasViewport) => {
     setViewport(newViewport);
     console.log('Viewport changed:', newViewport);
+  };
+
+  const handleFitAll = () => {
+    // This will be called by the canvas component
+    if (viewport) {
+      console.log('Fitting all beds to screen');
+    }
+  };
+
+  const handleCreateNewPatch = () => {
+    // Reset the canvas state
+    loadBeds([]);
+    setTool('pan');
+    console.log('Creating new patch');
   };
 
   // FPS counter for development
@@ -38,7 +60,11 @@ const PatchCreatorPage: React.FC = () => {
   }, []);
 
   return (
-    <>
+    <MainLayout 
+      showUserMenu={true}
+      onFitAll={handleFitAll}
+      onCreateNewPatch={handleCreateNewPatch}
+    >
       {/* Page Header - Fixed at top */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 h-16">
         <div className="px-4 h-full flex items-center justify-between">
@@ -51,7 +77,7 @@ const PatchCreatorPage: React.FC = () => {
           
           {process.env.NODE_ENV === 'development' && (
             <div className="text-xs text-gray-500 hidden md:block">
-              FPS: {fps} | Canteiros: {beds.length} | Selecionados: {selectedBedIds.length}
+              FPS: {fps} | Canteiros: {beds.length} | Selecionados: {selectedBedIds.length} | Ferramenta: {tool}
             </div>
           )}
         </div>
@@ -81,7 +107,7 @@ const PatchCreatorPage: React.FC = () => {
           <div>Área Visível: {(viewport.width * viewport.height).toFixed(0)}m²</div>
         </div>
       )}
-    </>
+    </MainLayout>
   );
 };
 

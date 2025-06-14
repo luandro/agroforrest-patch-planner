@@ -38,7 +38,7 @@ interface BedStore {
 const MAX_HISTORY = 20;
 
 export const useBedStore = create<BedStore>((set, get) => ({
-  // Initial state
+  // Initial state - pan tool as default
   beds: [],
   selectedBedIds: [],
   tool: 'pan',
@@ -189,5 +189,11 @@ export const useBedStore = create<BedStore>((set, get) => ({
 
   markClean: () => set({ isDirty: false, lastSaved: Date.now() }),
   
-  loadBeds: (beds) => set({ beds, isDirty: false, history: [], historyIndex: -1 })
+  loadBeds: (beds) => set({ 
+    beds, 
+    isDirty: false, 
+    history: [], 
+    historyIndex: -1,
+    tool: 'pan' // Always reset to pan tool when loading beds
+  })
 }));
