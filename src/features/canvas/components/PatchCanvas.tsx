@@ -1,11 +1,18 @@
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { PatchCanvasProps } from '../types/canvas.types';
 import { useCanvasViewport } from '../hooks/useCanvasViewport';
 import { useCanvasGestures } from '../hooks/useCanvasGestures';
 import { useCanvasRenderer } from '../hooks/useCanvasRenderer';
+import { useBedCreation } from '../hooks/useBedCreation';
+import { useBedSelection } from '../hooks/useBedSelection';
+import { useAutoSave } from '../hooks/useAutoSave';
+import { useBedStore } from '../stores/bedStore';
 import { CanvasControls } from './CanvasControls';
 import { MiniMap } from './MiniMap';
+import { BedConfigPanel } from './BedConfigPanel';
+import { CanvasToolbar } from './CanvasToolbar';
+import { BedRenderer } from './BedRenderer';
 
 export const PatchCanvas: React.FC<PatchCanvasProps> = ({
   initialViewport,
@@ -16,7 +23,9 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [showConfigPanel, setShowConfigPanel] = useState(false);
 
+  // Canvas viewport and rendering
   const { viewport, pan, zoomTo, updateViewport } = useCanvasViewport({
     initialViewport,
     minZoom,
@@ -29,9 +38,82 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
     gridSize
   });
 
-  // Handle gestures
+  // Bed management
+  const { 
+    tool, 
+    setTool, 
+    beds, 
+    selectedBedIds,
+    undo,
+    redo,
+    canUndo,
+    canRedo
+  } = useBedStore();
+
+  // Bed creation
+  const {
+    bedConfig,
+    updateBedConfig,
+    isCreating,
+    previewBed,
+    startCreation,
+    updateCreation,
+    finishCreation,
+    cancelCreation
+  } = useBedCreation({ viewport, gridSize });
+
+  // Bed selection
+  const {
+    startSelection,
+    updateSelection,
+    finishSelection,
+    deleteSelected
+  } = useBedSelection({ viewport });
+
+  // Auto-save
+  const { isSaving } = useAutoSave();
+
+  // Handle canvas interactions based on current tool
+  const handlePointerDown = (e: React.PointerEvent) => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (tool === 'create-rectangle' || tool === 'create-circle') {
+      startCreation(x, y);
+    } else if (tool === 'select') {
+      const isMultiSelect = e.shiftKey || e.ctrlKey;
+      startSelection(x, y, isMultiSelect);
+    }
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (isCreating) {
+      updateCreation(x, y);
+    } else {
+      updateSelection(x, y);
+    }
+  };
+
+  const handlePointerUp = () => {
+    if (isCreating) {
+      finishCreation();
+    } else {
+      finishSelection();
+    }
+  };
+
+  // Handle gestures only when in pan mode
   useCanvasGestures({
-    onPan: pan,
+    onPan: tool === 'pan' ? pan : () => {},
     onZoom: (zoom) => zoomTo(zoom),
     canvasRef,
     currentZoom: viewport.zoom
@@ -57,44 +139,65 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
   // Handle keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent default for our handled keys
+      const handledKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', '+', '=', '-', '0', 'Delete', 'Backspace'];
+      if (handledKeys.includes(e.key) || (e.ctrlKey && (e.key === 'z' || e.key === 'Z'))) {
+        e.preventDefault();
+      }
+
       const panStep = 2; // meters
       
       switch (e.key) {
         case 'ArrowUp':
-          e.preventDefault();
-          pan(0, -50); // Pan up
+          pan(0, -50);
           break;
         case 'ArrowDown':
-          e.preventDefault();
-          pan(0, 50); // Pan down
+          pan(0, 50);
           break;
         case 'ArrowLeft':
-          e.preventDefault();
-          pan(-50, 0); // Pan left
+          pan(-50, 0);
           break;
         case 'ArrowRight':
-          e.preventDefault();
-          pan(50, 0); // Pan right
+          pan(50, 0);
           break;
         case '+':
         case '=':
-          e.preventDefault();
           handleZoomIn();
           break;
         case '-':
-          e.preventDefault();
           handleZoomOut();
           break;
         case '0':
-          e.preventDefault();
           handleReset();
+          break;
+        case 'Delete':
+        case 'Backspace':
+          if (selectedBedIds.length > 0) {
+            deleteSelected();
+          }
+          break;
+        case 'z':
+        case 'Z':
+          if (e.ctrlKey || e.metaKey) {
+            if (e.shiftKey) {
+              redo();
+            } else {
+              undo();
+            }
+          }
+          break;
+        case 'Escape':
+          if (isCreating) {
+            cancelCreation();
+          }
+          setTool('pan');
           break;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [pan]);
+  }, [pan, isCreating, selectedBedIds]);
 
   // Handle canvas resize
   useEffect(() => {
@@ -141,10 +244,22 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
           ref={canvasRef}
           className="block touch-none cursor-grab active:cursor-grabbing"
           style={{ touchAction: 'none' }}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
         />
       </div>
 
-      {/* Controls */}
+      {/* Render beds on canvas */}
+      <BedRenderer
+        beds={beds}
+        selectedBedIds={selectedBedIds}
+        viewport={viewport}
+        previewBed={previewBed}
+        canvasRef={canvasRef}
+      />
+
+      {/* Canvas Controls */}
       <CanvasControls
         zoom={viewport.zoom}
         onZoomIn={handleZoomIn}
@@ -155,12 +270,36 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
       {/* Mini Map */}
       <MiniMap viewport={viewport} />
 
+      {/* Toolbar */}
+      <CanvasToolbar
+        activeTool={tool}
+        onToolChange={setTool}
+        onUndo={undo}
+        onRedo={redo}
+        canUndo={canUndo()}
+        canRedo={canRedo()}
+        onToggleConfig={() => setShowConfigPanel(!showConfigPanel)}
+        isSaving={isSaving}
+      />
+
+      {/* Configuration Panel */}
+      {showConfigPanel && (
+        <BedConfigPanel
+          config={bedConfig}
+          onConfigChange={updateBedConfig}
+          onClose={() => setShowConfigPanel(false)}
+        />
+      )}
+
       {/* Development Info */}
       {process.env.NODE_ENV === 'development' && (
         <div className="absolute top-4 left-4 bg-black/80 text-white text-xs p-2 rounded font-mono">
           <div>Centro: ({viewport.centerX.toFixed(1)}m, {viewport.centerY.toFixed(1)}m)</div>
           <div>Zoom: {viewport.zoom.toFixed(2)}x</div>
           <div>Área: {viewport.width.toFixed(1)}×{viewport.height.toFixed(1)}m</div>
+          <div>Ferramenta: {tool}</div>
+          <div>Canteiros: {beds.length}</div>
+          <div>Selecionados: {selectedBedIds.length}</div>
         </div>
       )}
     </div>
