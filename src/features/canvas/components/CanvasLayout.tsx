@@ -46,11 +46,27 @@ interface CanvasLayoutProps {
 }
 
 export const CanvasLayout: React.FC<CanvasLayoutProps> = (props) => {
+  // Create safe props for CanvasOverlays with required placementBed
+  const overlayProps = {
+    tool: props.tool,
+    isCreating: props.isCreating,
+    showConfirmation: props.showConfirmation,
+    placementBed: props.placementBed || null, // Ensure it's never undefined
+    placementBeds: props.placementBeds,
+    bedConfig: props.bedConfig,
+    multiCreationMode: props.multiCreationMode,
+    setMultiCreationMode: props.setMultiCreationMode,
+    handleConfirmPlacement: props.handleConfirmPlacement,
+    handleCancelPlacement: props.handleCancelPlacement,
+    hasCollision: props.hasCollision,
+    isMobile: false // Will be enhanced by provider
+  };
+
   return (
     <div className="relative w-full h-full bg-gray-50">
       <CanvasLayoutProvider {...props}>
         <CanvasViewport {...props} />
-        <CanvasOverlays {...props} />
+        <CanvasOverlays {...overlayProps} />
         <CanvasControls {...props} />
       </CanvasLayoutProvider>
     </div>
