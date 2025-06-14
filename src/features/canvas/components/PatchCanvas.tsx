@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { PatchCanvasProps } from '../types/canvas.types';
 import { useCanvasViewport } from '../hooks/useCanvasViewport';
@@ -84,11 +83,17 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    console.log('PatchCanvas.handlePointerDown:', { tool, x, y, isCreating });
+
     if (tool === 'create-rectangle' || tool === 'create-circle') {
+      console.log('Starting preview for creation tool');
       startPreview(x, y);
     } else if (tool === 'select') {
+      console.log('Starting selection');
       const isMultiSelect = e.shiftKey || e.ctrlKey;
       startSelection(x, y, isMultiSelect);
+    } else if (tool === 'pan') {
+      console.log('Pan mode - no action on pointer down');
     }
   };
 
@@ -98,26 +103,33 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
     const y = e.clientY - rect.top;
 
     if (isCreating && (tool === 'create-rectangle' || tool === 'create-circle')) {
+      console.log('Updating preview during creation');
       updatePreview(x, y);
-    } else {
+    } else if (tool === 'select') {
       updateSelection(x, y);
     }
   };
 
   const handlePointerUp = () => {
+    console.log('PatchCanvas.handlePointerUp:', { tool, isCreating });
+    
     if (isCreating && (tool === 'create-rectangle' || tool === 'create-circle')) {
+      console.log('Placing bed after creation');
       placeBed();
-    } else {
+    } else if (tool === 'select') {
       finishSelection();
     }
   };
 
   const handleDoubleClick = (e: React.MouseEvent) => {
+    console.log('PatchCanvas.handleDoubleClick:', { isMobile, tool });
+    
     if (isMobile && tool === 'pan') {
       const rect = e.currentTarget.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       
+      console.log('Mobile double-click creating bed at:', x, y);
       startPreview(x, y);
       setTimeout(() => {
         placeBed();
@@ -126,6 +138,7 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
   };
 
   const handleConfirmPlacement = () => {
+    console.log('PatchCanvas.handleConfirmPlacement');
     confirmPlacement();
     
     // Exit creation mode if not in multi-creation mode
@@ -135,6 +148,7 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
   };
 
   const handleCancelPlacement = () => {
+    console.log('PatchCanvas.handleCancelPlacement');
     cancelPlacement();
   };
 

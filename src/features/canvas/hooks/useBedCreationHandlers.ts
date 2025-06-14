@@ -1,11 +1,6 @@
 
 import { useCallback } from 'react';
 import { useBedStore } from '../stores/bedStore';
-import { 
-  createBedConfigUpdater, 
-  createPreviewManager, 
-  createPlacementManager 
-} from '../utils/bedCreationHelpers';
 
 interface UseBedCreationHandlersProps {
   tool: string;
@@ -39,49 +34,60 @@ export const useBedCreationHandlers = ({
   const { setTool } = useBedStore();
 
   // Enhanced bed config update handler that also updates preview
-  const updateBedConfig = useCallback(
-    createBedConfigUpdater(updateBedConfigBase, updatePreviewWithConfig),
-    [updateBedConfigBase, updatePreviewWithConfig]
-  );
+  const updateBedConfig = useCallback((updates: any) => {
+    updateBedConfigBase(updates);
+    updatePreviewWithConfig(updates);
+  }, [updateBedConfigBase, updatePreviewWithConfig]);
 
-  // Enhanced preview management with tool awareness
-  const { startPreview, updatePreview } = createPreviewManager(
-    startPreviewBase,
-    updatePreviewBase,
-    tool
-  );
+  // Enhanced preview start with tool validation
+  const startPreview = useCallback((screenX: number, screenY: number) => {
+    console.log('Starting preview with tool:', tool, 'at position:', screenX, screenY);
+    startPreviewBase(screenX, screenY, tool);
+  }, [startPreviewBase, tool]);
 
-  // Enhanced placement management with creation mode handling
-  const {
-    placeBed,
-    confirmPlacement,
-    cancelPlacement,
-    cancelCreation
-  } = createPlacementManager(
-    placeBedBase,
-    confirmPlacementBase,
-    cancelPlacementBase,
-    clearPreview,
-    clearPlacement,
-    previewBed,
-    cursorPosition
-  );
+  // Enhanced preview update
+  const updatePreview = useCallback((screenX: number, screenY: number) => {
+    console.log('Updating preview at position:', screenX, screenY);
+    updatePreviewBase(screenX, screenY);
+  }, [updatePreviewBase]);
+
+  // Enhanced bed placement
+  const placeBed = useCallback(() => {
+    console.log('Placing bed:', previewBed);
+    if (previewBed) {
+      placeBedBase(previewBed);
+    }
+  }, [placeBedBase, previewBed]);
+
+  // Enhanced placement confirmation
+  const confirmPlacement = useCallback(() => {
+    console.log('Confirming placement');
+    return confirmPlacementBase();
+  }, [confirmPlacementBase]);
+
+  // Enhanced placement cancellation
+  const cancelPlacement = useCallback(() => {
+    console.log('Canceling placement');
+    return cancelPlacementBase();
+  }, [cancelPlacementBase]);
+
+  // Enhanced cancel creation that clears all states
+  const cancelCreation = useCallback(() => {
+    console.log('Canceling creation');
+    clearPreview();
+    clearPlacement();
+    setTool('pan'); // Always return to pan mode
+  }, [clearPreview, clearPlacement, setTool]);
 
   // Tool change handler that clears states
   const handleToolChange = useCallback((newTool: any) => {
+    console.log('Tool change from', tool, 'to', newTool);
     if (newTool !== tool) {
       clearPreview();
       clearPlacement();
     }
     setTool(newTool);
   }, [tool, clearPreview, clearPlacement, setTool]);
-
-  // Enhanced cancel creation that clears all states
-  const cancelCreationEnhanced = useCallback(() => {
-    clearPreview();
-    clearPlacement();
-    setTool('pan'); // Always return to pan mode
-  }, [clearPreview, clearPlacement, setTool]);
 
   return {
     updateBedConfig,
@@ -90,7 +96,7 @@ export const useBedCreationHandlers = ({
     placeBed,
     confirmPlacement,
     cancelPlacement,
-    cancelCreation: cancelCreationEnhanced,
+    cancelCreation,
     handleToolChange
   };
 };
