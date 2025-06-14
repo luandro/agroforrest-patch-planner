@@ -56,13 +56,25 @@ export const useCanvasViewport = ({
   }, [updateViewport]);
 
   const pan = useCallback((deltaX: number, deltaY: number) => {
+    console.log('Pan called with delta:', { deltaX, deltaY });
+    
     setViewport(prev => {
-      const newCenterX = prev.centerX - deltaX / (50 * prev.zoom); // Scale based on zoom
-      const newCenterY = prev.centerY + deltaY / (50 * prev.zoom); // Invert Y for natural feel
+      // Improved scaling factor calculation
+      const scaleFactor = 50 * prev.zoom;
+      
+      // Apply deltas with proper Y-axis handling (no inversion needed)
+      const newCenterX = prev.centerX - deltaX / scaleFactor;
+      const newCenterY = prev.centerY - deltaY / scaleFactor;
       
       // Apply boundaries (prevent panning too far)
       const boundedX = Math.max(-50, Math.min(50, newCenterX));
       const boundedY = Math.max(-50, Math.min(50, newCenterY));
+      
+      console.log('Pan result:', {
+        from: { x: prev.centerX, y: prev.centerY },
+        to: { x: boundedX, y: boundedY },
+        scaleFactor
+      });
       
       const newViewport = {
         ...prev,

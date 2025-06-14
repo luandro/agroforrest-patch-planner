@@ -55,19 +55,20 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
   showDesktopSidebar = true,
   bedConfig
 }) => {
-  // Calculate canvas dimensions based on sidebar state
+  // Use relative positioning for better scrolling behavior
   const canvasStyle = {
     width: isMobile ? '100vw' : showDesktopSidebar ? 'calc(100vw - 300px)' : '100vw',
     height: 'calc(100vh - 4rem)', // Subtract header height
-    position: 'fixed' as const,
-    top: '4rem', // Header height
-    left: 0,
+    position: 'relative' as const, // Changed from fixed to relative
+    overflow: 'hidden' as const, // Prevent default scrolling
     zIndex: 10
   };
 
+  console.log('CanvasViewport render - tool:', tool, 'isCreating:', isCreating, 'isMobile:', isMobile);
+
   return (
     <>
-      {/* Full-screen canvas container */}
+      {/* Canvas container with relative positioning */}
       <div style={canvasStyle}>
         <CanvasContainer
           viewport={viewport}

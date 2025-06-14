@@ -45,12 +45,17 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
     spacing: bedConfig?.spacing || 0.4
   });
 
-  // Handle gestures only when in pan mode or when not creating
+  // Enable gestures when in pan mode OR when not actively creating
+  const gesturesEnabled = tool === 'pan' || !isCreating;
+  console.log('Gestures enabled:', gesturesEnabled, 'tool:', tool, 'isCreating:', isCreating);
+
+  // Handle gestures with proper enablement
   useCanvasGestures({
-    onPan: (tool === 'pan' && !isCreating) ? pan : () => {},
+    onPan: pan,
     onZoom: (zoom) => zoomTo(zoom),
     canvasRef,
-    currentZoom: viewport.zoom
+    currentZoom: viewport.zoom,
+    enabled: gesturesEnabled
   });
 
   // Handle canvas resize
@@ -96,15 +101,17 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
   return (
     <div 
       ref={containerRef} 
-      className="touch-none select-none overscroll-none w-full h-full"
+      className="w-full h-full"
+      style={{ touchAction: gesturesEnabled ? 'none' : 'auto' }}
     >
       <canvas
         ref={canvasRef}
-        className="block touch-none cursor-grab active:cursor-grabbing"
+        className="block"
         style={{ 
-          touchAction: 'none',
+          touchAction: gesturesEnabled ? 'none' : 'auto',
           background: '#FAFAF9',
-          cursor: getCursorStyle()
+          cursor: getCursorStyle(),
+          userSelect: 'none'
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
