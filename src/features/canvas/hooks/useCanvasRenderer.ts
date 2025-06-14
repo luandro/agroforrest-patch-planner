@@ -37,8 +37,17 @@ export const useCanvasRenderer = ({ canvasRef, gridSize }: UseCanvasRendererProp
     ctx.fillStyle = '#F9FAFB';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 3. Draw grid
-    drawGrid(ctx, viewport, gridSize);
+    // 3. Draw grid with snap indicator
+    let snapHighlight: { x: number; y: number } | undefined;
+    
+    // Show snap highlight for preview or placement bed
+    if (previewBed) {
+      snapHighlight = previewBed.position;
+    } else if (placementBed) {
+      snapHighlight = placementBed.position;
+    }
+    
+    drawGrid(ctx, viewport, gridSize, snapHighlight);
 
     // 4. Draw all beds
     beds.forEach(bed => {

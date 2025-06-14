@@ -10,8 +10,12 @@ export const convertToScreenCoordinates = (
 ) => {
   const pixelsPerMeter = 50 * viewport.zoom;
   
-  const screenX = (canvasWidth / 2) + (bed.position.x - viewport.centerX) * pixelsPerMeter;
-  const screenY = (canvasHeight / 2) - (bed.position.y - viewport.centerY) * pixelsPerMeter;
+  // Convert to display coordinates (accounting for device pixel ratio)
+  const displayWidth = canvasWidth / (window.devicePixelRatio || 1);
+  const displayHeight = canvasHeight / (window.devicePixelRatio || 1);
+  
+  const screenX = (displayWidth / 2) + (bed.position.x - viewport.centerX) * pixelsPerMeter;
+  const screenY = (displayHeight / 2) - (bed.position.y - viewport.centerY) * pixelsPerMeter;
   
   return { screenX, screenY, pixelsPerMeter };
 };
@@ -23,26 +27,30 @@ export const setBedStyles = (
   isPlacement: boolean
 ) => {
   if (isPreview) {
-    ctx.globalAlpha = 0.5;
-    ctx.strokeStyle = 'rgba(34, 197, 94, 0.8)'; // Green preview
+    ctx.globalAlpha = 0.7;
+    ctx.strokeStyle = 'rgba(34, 197, 94, 0.9)'; // Brighter green preview
     ctx.fillStyle = 'rgba(34, 197, 94, 0.3)';
     ctx.lineWidth = 2;
     ctx.setLineDash([5, 5]);
+    ctx.shadowColor = 'rgba(34, 197, 94, 0.4)';
+    ctx.shadowBlur = 8;
   } else if (isPlacement) {
-    ctx.globalAlpha = 0.8;
+    ctx.globalAlpha = 0.9;
     ctx.strokeStyle = '#16A34A'; // Solid green for placement
     ctx.fillStyle = 'rgba(34, 197, 94, 0.6)';
     ctx.lineWidth = 3;
     ctx.setLineDash([]);
-    // Add glow effect
+    // Add stronger glow effect
     ctx.shadowColor = '#16A34A';
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 12;
   } else {
     ctx.globalAlpha = 1;
     ctx.fillStyle = '#D4A574'; // Light brown for beds
     ctx.strokeStyle = isSelected ? '#0EA5E9' : '#92400E'; // Blue if selected, dark brown otherwise
     ctx.lineWidth = isSelected ? 3 : 2;
     ctx.setLineDash([]);
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
   }
 };
 
@@ -53,21 +61,57 @@ export const drawDimensionText = (
   screenY: number
 ) => {
   ctx.save();
+  
+  // Reset styles for text
+  ctx.globalAlpha = 1;
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.setLineDash([]);
+  
   ctx.fillStyle = 'white';
   ctx.strokeStyle = 'black';
   ctx.lineWidth = 3;
-  ctx.font = '14px sans-serif';
+  ctx.font = 'bold 14px sans-serif';
   ctx.textAlign = 'center';
   
   const dimensionText = bed.shape === 'rectangle' 
     ? `${bed.dimensions.length}m × ${bed.dimensions.width}m`
     : `⌀ ${(bed.dimensions.radius! * 2).toFixed(1)}m`;
   
-  const textY = screenY + 5;
+  // Position text below the bed center
+  const textY = screenY + 25;
+  
+  // Draw text background for better visibility
+  const textMetrics = ctx.measureText(dimensionText);
+  const padding = 4;
+  const bgWidth = textMetrics.width + padding * 2;
+  const bgHeight = 20;
+  
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+  ctx.fillRect(screenX - bgWidth / 2, textY - bgHeight / 2 - 2, bgWidth, bgHeight);
   
   // Text with stroke for better visibility
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+  ctx.fillStyle = 'white';
   ctx.strokeText(dimensionText, screenX, textY);
   ctx.fillText(dimensionText, screenX, textY);
+  
+  // Show coordinates for preview/placement
+  if (bed.id.includes('preview') || bed.id.includes('placement')) {
+    const coordText = `(${bed.position.x.toFixed(1)}, ${bed.position.y.toFixed(1)})`;
+    ctx.font = '12px sans-serif';
+    const coordY = textY + 18;
+    
+    const coordMetrics = ctx.measureText(coordText);
+    const coordBgWidth = coordMetrics.width + padding * 2;
+    
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fillRect(screenX - coordBgWidth / 2, coordY - 8, coordBgWidth, 16);
+    
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.fillText(coordText, screenX, coordY);
+  }
+  
   ctx.restore();
 };
 
@@ -78,10 +122,17 @@ export const drawResizeHandles = (
   screenY: number,
   pixelsPerMeter: number
 ) => {
+  ctx.save();
+  
+  // Reset styles for handles
+  ctx.globalAlpha = 1;
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.setLineDash([]);
+  
   ctx.fillStyle = '#FFFFFF';
   ctx.strokeStyle = '#0EA5E9';
   ctx.lineWidth = 2;
-  ctx.setLineDash([]);
   
   const handleSize = 8;
   
@@ -105,4 +156,6 @@ export const drawResizeHandles = (
     ctx.fillRect(screenX + radius - handleSize / 2, screenY - handleSize / 2, handleSize, handleSize);
     ctx.strokeRect(screenX + radius - handleSize / 2, screenY - handleSize / 2, handleSize, handleSize);
   }
+  
+  ctx.restore();
 };

@@ -49,27 +49,70 @@ export const useBedCreation = ({ viewport, gridSize = 1, onBedCreated }: UseBedC
     }
   }, [previewBed, cursorPosition, bedConfig]);
 
-  // Convert screen coordinates to world coordinates
+  // Convert screen coordinates to world coordinates with proper canvas transformation
   const screenToWorld = useCallback((screenX: number, screenY: number): { x: number; y: number } => {
-    const pixelsPerMeter = 50 * viewport.zoom;
-    const centerOffsetX = screenX - (viewport.width * pixelsPerMeter) / 2;
-    const centerOffsetY = screenY - (viewport.height * pixelsPerMeter) / 2;
+    // Get canvas element and its bounding rect for accurate positioning
+    const canvas = document.querySelector('canvas');
+    if (!canvas) return { x: 0, y: 0 };
     
-    return {
-      x: viewport.centerX + centerOffsetX / pixelsPerMeter,
-      y: viewport.centerY - centerOffsetY / pixelsPerMeter
-    };
+    const rect = canvas.getBoundingClientRect();
+    const devicePixelRatio = window.devicePixelRatio || 1;
+    
+    // Calculate relative position within canvas
+    const canvasX = (screenX - rect.left) * devicePixelRatio;
+    const canvasY = (screenY - rect.top) * devicePixelRatio;
+    
+    // Convert canvas pixels to display pixels
+    const displayX = canvasX / devicePixelRatio;
+    const displayY = canvasY / devicePixelRatio;
+    
+    // Canvas dimensions
+    const canvasWidth = rect.width;
+    const canvasHeight = rect.height;
+    
+    // Scale factor: pixels per meter in world space
+    const pixelsPerMeter = 50 * viewport.zoom;
+    
+    // Convert to world coordinates with proper centering
+    const worldX = viewport.centerX + (displayX - canvasWidth / 2) / pixelsPerMeter;
+    const worldY = viewport.centerY - (displayY - canvasHeight / 2) / pixelsPerMeter;
+    
+    return { x: worldX, y: worldY };
   }, [viewport]);
 
-  // Snap to grid if enabled
+  // Snap coordinates to grid intersections with proper alignment
   const snapToGrid = useCallback((x: number, y: number): { x: number; y: number } => {
-    if (!gridSize) return { x, y };
+    if (!gridSize || gridSize <= 0) return { x, y };
     
-    return {
-      x: Math.round(x / gridSize) * gridSize,
-      y: Math.round(y / gridSize) * gridSize
+    // Snap to grid intersections (not cell centers)
+    const snappedX = Math.round(x / gridSize) * gridSize;
+    const snappedY = Math.round(y / gridSize) * gridSize;
+    
+    return { 
+      x: Math.round(snappedX * 10) / 10, // Round to 0.1m precision
+      y: Math.round(snappedY * 10) / 10
     };
   }, [gridSize]);
+
+  // Calculate bed position based on shape and snapping rules
+  const calculateBedPosition = useCallback((worldPos: { x: number; y: number }, shape: 'rectangle' | 'circle') => {
+    const snappedPos = snapToGrid(worldPos.x, worldPos.y);
+    
+    if (shape === 'rectangle') {
+      // For rectangles, snap the center point and ensure edges align with grid
+      const length = bedConfig.length;
+      const width = bedConfig.width;
+      
+      // Adjust position so bed edges align with grid lines
+      const adjustedX = Math.round(snappedPos.x / gridSize) * gridSize;
+      const adjustedY = Math.round(snappedPos.y / gridSize) * gridSize;
+      
+      return { x: adjustedX, y: adjustedY };
+    } else {
+      // For circles, always snap center to grid intersection
+      return snappedPos;
+    }
+  }, [snapToGrid, bedConfig, gridSize]);
 
   // Check if position has collision with existing beds
   const checkCollision = useCallback((position: { x: number; y: number }, dimensions: any): boolean => {
@@ -82,16 +125,16 @@ export const useBedCreation = ({ viewport, gridSize = 1, onBedCreated }: UseBedC
     if (tool !== 'create-rectangle' && tool !== 'create-circle') return;
 
     const worldPos = screenToWorld(screenX, screenY);
-    const snappedPos = snapToGrid(worldPos.x, worldPos.y);
+    const bedPosition = calculateBedPosition(worldPos, bedConfig.shape);
     
     setCursorPosition({ x: screenX, y: screenY });
     setIsCreating(true);
 
-    // Create preview bed
+    // Create preview bed with proper positioning
     const previewBedData: Bed = {
       id: `preview-${Date.now()}`,
       shape: bedConfig.shape,
-      position: snappedPos,
+      position: bedPosition,
       dimensions: bedConfig.shape === 'rectangle' 
         ? { length: bedConfig.length, width: bedConfig.width }
         : { radius: bedConfig.length },
@@ -101,21 +144,21 @@ export const useBedCreation = ({ viewport, gridSize = 1, onBedCreated }: UseBedC
     };
 
     setPreviewBed(previewBedData);
-  }, [tool, bedConfig, screenToWorld, snapToGrid]);
+  }, [tool, bedConfig, screenToWorld, calculateBedPosition]);
 
   const updatePreview = useCallback((screenX: number, screenY: number) => {
     if (!isCreating || !previewBed) return;
 
     const worldPos = screenToWorld(screenX, screenY);
-    const snappedPos = snapToGrid(worldPos.x, worldPos.y);
+    const bedPosition = calculateBedPosition(worldPos, previewBed.shape);
     
     setCursorPosition({ x: screenX, y: screenY });
 
     setPreviewBed({
       ...previewBed,
-      position: snappedPos
+      position: bedPosition
     });
-  }, [isCreating, previewBed, screenToWorld, snapToGrid]);
+  }, [isCreating, previewBed, screenToWorld, calculateBedPosition]);
 
   const placeBed = useCallback(() => {
     if (!previewBed) return;
