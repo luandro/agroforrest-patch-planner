@@ -16,6 +16,7 @@ interface CanvasContainerProps {
   beds: any[];
   selectedBedIds: string[];
   previewBed: any;
+  placementBed?: any;
   gridSize?: number;
 }
 
@@ -32,6 +33,7 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
   beds,
   selectedBedIds,
   previewBed,
+  placementBed,
   gridSize = 1
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -68,18 +70,25 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
         ctx.scale(dpr, dpr);
       }
 
-      scheduleRender(viewport, beds, selectedBedIds, previewBed);
+      scheduleRender(viewport, beds, selectedBedIds, previewBed, placementBed);
     };
 
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
     return () => window.removeEventListener('resize', resizeCanvas);
-  }, [viewport, scheduleRender, beds, selectedBedIds, previewBed, canvasRef]);
+  }, [viewport, scheduleRender, beds, selectedBedIds, previewBed, placementBed, canvasRef]);
 
   // Render when viewport or beds change
   useEffect(() => {
-    scheduleRender(viewport, beds, selectedBedIds, previewBed);
-  }, [viewport, beds, selectedBedIds, previewBed, scheduleRender]);
+    scheduleRender(viewport, beds, selectedBedIds, previewBed, placementBed);
+  }, [viewport, beds, selectedBedIds, previewBed, placementBed, scheduleRender]);
+
+  const getCursorStyle = () => {
+    if (isCreating) return 'crosshair';
+    if (tool === 'create-rectangle' || tool === 'create-circle') return 'crosshair';
+    if (tool === 'select') return 'pointer';
+    return 'grab';
+  };
 
   return (
     <div 
@@ -92,7 +101,7 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
         style={{ 
           touchAction: 'none',
           background: '#FAFAF9',
-          cursor: isCreating ? 'crosshair' : tool === 'select' ? 'pointer' : 'grab'
+          cursor: getCursorStyle()
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}

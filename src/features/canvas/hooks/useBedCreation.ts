@@ -14,7 +14,10 @@ export const useBedCreation = ({ viewport, gridSize = 1, onBedCreated }: UseBedC
   const { addBed, tool } = useBedStore();
   const [isCreating, setIsCreating] = useState(false);
   const [previewBed, setPreviewBed] = useState<Bed | null>(null);
-  const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
+  const [placementBed, setPlacementBed] = useState<Bed | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [multiCreationMode, setMultiCreationMode] = useState(false);
+  const [cursorPosition, setCursorPosition] = useState<{ x: number; y: number } | null>(null);
 
   // Default bed configuration
   const [bedConfig, setBedConfig] = useState<BedConfig>({
@@ -27,7 +30,24 @@ export const useBedCreation = ({ viewport, gridSize = 1, onBedCreated }: UseBedC
 
   const updateBedConfig = useCallback((updates: Partial<BedConfig>) => {
     setBedConfig(prev => ({ ...prev, ...updates }));
-  }, []);
+    
+    // Update preview bed with new config if we're in preview mode
+    if (previewBed && cursorPosition) {
+      const worldPos = screenToWorld(cursorPosition.x, cursorPosition.y);
+      const snappedPos = snapToGrid(worldPos.x, worldPos.y);
+      
+      const updatedPreview: Bed = {
+        ...previewBed,
+        shape: updates.shape || previewBed.shape,
+        dimensions: updates.shape === 'rectangle' 
+          ? { length: updates.length || bedConfig.length, width: updates.width || bedConfig.width }
+          : { radius: updates.length || bedConfig.length },
+        position: snappedPos
+      };
+      
+      setPreviewBed(updatedPreview);
+    }
+  }, [previewBed, cursorPosition, bedConfig]);
 
   // Convert screen coordinates to world coordinates
   const screenToWorld = useCallback((screenX: number, screenY: number): { x: number; y: number } => {
@@ -37,7 +57,7 @@ export const useBedCreation = ({ viewport, gridSize = 1, onBedCreated }: UseBedC
     
     return {
       x: viewport.centerX + centerOffsetX / pixelsPerMeter,
-      y: viewport.centerY - centerOffsetY / pixelsPerMeter // Flip Y for natural feel
+      y: viewport.centerY - centerOffsetY / pixelsPerMeter
     };
   }, [viewport]);
 
@@ -51,79 +71,80 @@ export const useBedCreation = ({ viewport, gridSize = 1, onBedCreated }: UseBedC
     };
   }, [gridSize]);
 
-  const startCreation = useCallback((screenX: number, screenY: number) => {
+  // Check if position has collision with existing beds
+  const checkCollision = useCallback((position: { x: number; y: number }, dimensions: any): boolean => {
+    // This would check against existing beds in a real implementation
+    // For now, just return false
+    return false;
+  }, []);
+
+  const startPreview = useCallback((screenX: number, screenY: number) => {
     if (tool !== 'create-rectangle' && tool !== 'create-circle') return;
 
     const worldPos = screenToWorld(screenX, screenY);
     const snappedPos = snapToGrid(worldPos.x, worldPos.y);
     
-    setStartPoint(snappedPos);
+    setCursorPosition({ x: screenX, y: screenY });
     setIsCreating(true);
 
-    // Create initial preview bed
-    const initialBed: Bed = {
+    // Create preview bed
+    const previewBedData: Bed = {
       id: `preview-${Date.now()}`,
       shape: bedConfig.shape,
       position: snappedPos,
       dimensions: bedConfig.shape === 'rectangle' 
-        ? { length: 0.1, width: 0.1 }
-        : { radius: 0.1 },
+        ? { length: bedConfig.length, width: bedConfig.width }
+        : { radius: bedConfig.length },
       rotation: 0,
       createdAt: Date.now(),
       updatedAt: Date.now()
     };
 
-    setPreviewBed(initialBed);
-  }, [tool, bedConfig.shape, screenToWorld, snapToGrid]);
+    setPreviewBed(previewBedData);
+  }, [tool, bedConfig, screenToWorld, snapToGrid]);
 
-  const updateCreation = useCallback((screenX: number, screenY: number) => {
-    if (!isCreating || !startPoint || !previewBed) return;
+  const updatePreview = useCallback((screenX: number, screenY: number) => {
+    if (!isCreating || !previewBed) return;
 
     const worldPos = screenToWorld(screenX, screenY);
     const snappedPos = snapToGrid(worldPos.x, worldPos.y);
+    
+    setCursorPosition({ x: screenX, y: screenY });
 
-    if (bedConfig.shape === 'rectangle') {
-      const length = Math.abs(snappedPos.x - startPoint.x);
-      const width = Math.abs(snappedPos.y - startPoint.y);
-      const centerX = (startPoint.x + snappedPos.x) / 2;
-      const centerY = (startPoint.y + snappedPos.y) / 2;
+    setPreviewBed({
+      ...previewBed,
+      position: snappedPos
+    });
+  }, [isCreating, previewBed, screenToWorld, snapToGrid]);
 
-      setPreviewBed({
-        ...previewBed,
-        position: { x: centerX, y: centerY },
-        dimensions: { length: Math.max(0.1, length), width: Math.max(0.1, width) }
-      });
-    } else {
-      const radius = Math.sqrt(
-        Math.pow(snappedPos.x - startPoint.x, 2) + 
-        Math.pow(snappedPos.y - startPoint.y, 2)
-      );
+  const placeBed = useCallback(() => {
+    if (!previewBed) return;
 
-      setPreviewBed({
-        ...previewBed,
-        dimensions: { radius: Math.max(0.1, radius) }
-      });
-    }
-  }, [isCreating, startPoint, previewBed, bedConfig.shape, screenToWorld, snapToGrid]);
+    // Move from preview to placement
+    setPlacementBed(previewBed);
+    setPreviewBed(null);
+    setShowConfirmation(true);
+    setIsCreating(false);
+  }, [previewBed]);
 
-  const finishCreation = useCallback(() => {
-    if (!isCreating || !previewBed) return;
+  const confirmPlacement = useCallback(() => {
+    if (!placementBed) return;
 
     // Create final bed(s) based on configuration
     const beds: Bed[] = [];
     
     for (let i = 0; i < bedConfig.quantity; i++) {
-      const offsetY = i * (bedConfig.spacing + (previewBed.dimensions.width || 0));
+      const offsetY = i * (bedConfig.spacing + (placementBed.dimensions.width || bedConfig.width));
       
       const bedId = `bed-${Date.now()}-${i}`;
       const bed: Bed = {
         id: bedId,
-        shape: previewBed.shape,
+        shape: placementBed.shape,
         position: {
-          x: previewBed.position.x,
-          y: previewBed.position.y + offsetY
+          x: placementBed.position.x,
+          y: placementBed.position.y + offsetY
         },
-        dimensions: previewBed.dimensions,
+        dimensions: placementBed.dimensions,
         rotation: 0,
         createdAt: Date.now(),
         updatedAt: Date.now()
@@ -138,16 +159,41 @@ export const useBedCreation = ({ viewport, gridSize = 1, onBedCreated }: UseBedC
       }
     }
 
-    // Reset creation state
-    setIsCreating(false);
-    setPreviewBed(null);
-    setStartPoint(null);
-  }, [isCreating, previewBed, bedConfig, addBed, onBedCreated]);
+    // Reset state
+    setPlacementBed(null);
+    setShowConfirmation(false);
+    setCursorPosition(null);
+
+    // If not in multi-creation mode, exit creation
+    if (!multiCreationMode) {
+      // This will be handled by the canvas component
+    }
+  }, [placementBed, bedConfig, addBed, onBedCreated, multiCreationMode]);
+
+  const cancelPlacement = useCallback(() => {
+    if (placementBed && cursorPosition) {
+      // Resume preview at cursor position
+      setPreviewBed(placementBed);
+      setPlacementBed(null);
+      setShowConfirmation(false);
+      setIsCreating(true);
+    } else {
+      // Cancel completely
+      setPlacementBed(null);
+      setPreviewBed(null);
+      setShowConfirmation(false);
+      setIsCreating(false);
+      setCursorPosition(null);
+    }
+  }, [placementBed, cursorPosition]);
 
   const cancelCreation = useCallback(() => {
     setIsCreating(false);
     setPreviewBed(null);
-    setStartPoint(null);
+    setPlacementBed(null);
+    setShowConfirmation(false);
+    setCursorPosition(null);
+    setMultiCreationMode(false);
   }, []);
 
   return {
@@ -155,9 +201,16 @@ export const useBedCreation = ({ viewport, gridSize = 1, onBedCreated }: UseBedC
     updateBedConfig,
     isCreating,
     previewBed,
-    startCreation,
-    updateCreation,
-    finishCreation,
-    cancelCreation
+    placementBed,
+    showConfirmation,
+    multiCreationMode,
+    setMultiCreationMode,
+    startPreview,
+    updatePreview,
+    placeBed,
+    confirmPlacement,
+    cancelPlacement,
+    cancelCreation,
+    checkCollision
   };
 };

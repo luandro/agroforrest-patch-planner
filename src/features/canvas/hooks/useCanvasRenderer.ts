@@ -59,7 +59,8 @@ export const useCanvasRenderer = ({ canvasRef, gridSize }: UseCanvasRendererProp
     bed: Bed, 
     viewport: CanvasViewport,
     isSelected: boolean = false,
-    isPreview: boolean = false
+    isPreview: boolean = false,
+    isPlacement: boolean = false
   ) => {
     const pixelsPerMeter = 50 * viewport.zoom;
     const canvasWidth = ctx.canvas.width / (window.devicePixelRatio || 1);
@@ -71,13 +72,22 @@ export const useCanvasRenderer = ({ canvasRef, gridSize }: UseCanvasRendererProp
 
     ctx.save();
 
-    // Set styles
+    // Set styles based on bed state
     if (isPreview) {
-      ctx.globalAlpha = 0.6;
-      ctx.strokeStyle = '#3B82F6';
-      ctx.fillStyle = '#DBEAFE';
+      ctx.globalAlpha = 0.5;
+      ctx.strokeStyle = 'rgba(34, 197, 94, 0.8)'; // Green preview
+      ctx.fillStyle = 'rgba(34, 197, 94, 0.3)';
       ctx.lineWidth = 2;
       ctx.setLineDash([5, 5]);
+    } else if (isPlacement) {
+      ctx.globalAlpha = 0.8;
+      ctx.strokeStyle = '#16A34A'; // Solid green for placement
+      ctx.fillStyle = 'rgba(34, 197, 94, 0.6)';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([]);
+      // Add glow effect
+      ctx.shadowColor = '#16A34A';
+      ctx.shadowBlur = 10;
     } else {
       ctx.globalAlpha = 1;
       ctx.fillStyle = '#D4A574'; // Light brown for beds
@@ -92,6 +102,24 @@ export const useCanvasRenderer = ({ canvasRef, gridSize }: UseCanvasRendererProp
       
       ctx.fillRect(screenX - length / 2, screenY - width / 2, length, width);
       ctx.strokeRect(screenX - length / 2, screenY - width / 2, length, width);
+      
+      // Draw dimensions text for preview and placement
+      if (isPreview || isPlacement) {
+        ctx.save();
+        ctx.fillStyle = 'white';
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 3;
+        ctx.font = '14px sans-serif';
+        ctx.textAlign = 'center';
+        
+        const dimensionText = `${bed.dimensions.length}m × ${bed.dimensions.width}m`;
+        const textY = screenY + 5;
+        
+        // Text with stroke for better visibility
+        ctx.strokeText(dimensionText, screenX, textY);
+        ctx.fillText(dimensionText, screenX, textY);
+        ctx.restore();
+      }
       
       // Draw resize handles if selected
       if (isSelected && !isPreview) {
@@ -121,6 +149,24 @@ export const useCanvasRenderer = ({ canvasRef, gridSize }: UseCanvasRendererProp
       ctx.fill();
       ctx.stroke();
       
+      // Draw dimensions text for preview and placement
+      if (isPreview || isPlacement) {
+        ctx.save();
+        ctx.fillStyle = 'white';
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 3;
+        ctx.font = '14px sans-serif';
+        ctx.textAlign = 'center';
+        
+        const dimensionText = `⌀ ${(bed.dimensions.radius! * 2).toFixed(1)}m`;
+        const textY = screenY + 5;
+        
+        // Text with stroke for better visibility
+        ctx.strokeText(dimensionText, screenX, textY);
+        ctx.fillText(dimensionText, screenX, textY);
+        ctx.restore();
+      }
+      
       // Draw resize handle if selected
       if (isSelected && !isPreview) {
         ctx.fillStyle = '#FFFFFF';
@@ -141,7 +187,8 @@ export const useCanvasRenderer = ({ canvasRef, gridSize }: UseCanvasRendererProp
     viewport: CanvasViewport, 
     beds: Bed[] = [], 
     selectedBedIds: string[] = [], 
-    previewBed?: Bed | null
+    previewBed?: Bed | null,
+    placementBed?: Bed | null
   ) => {
     const canvas = activeCanvasRef.current;
     if (!canvas) return;
@@ -162,12 +209,17 @@ export const useCanvasRenderer = ({ canvasRef, gridSize }: UseCanvasRendererProp
     // 4. Draw all beds
     beds.forEach(bed => {
       const isSelected = selectedBedIds.includes(bed.id);
-      drawBed(ctx, bed, viewport, isSelected, false);
+      drawBed(ctx, bed, viewport, isSelected, false, false);
     });
 
-    // 5. Draw preview bed if it exists
+    // 5. Draw placement bed if it exists (confirmed bed awaiting creation)
+    if (placementBed) {
+      drawBed(ctx, placementBed, viewport, false, false, true);
+    }
+
+    // 6. Draw preview bed if it exists (follows cursor)
     if (previewBed) {
-      drawBed(ctx, previewBed, viewport, false, true);
+      drawBed(ctx, previewBed, viewport, false, true, false);
     }
   }, [activeCanvasRef, drawGrid, drawBed]);
 
@@ -175,14 +227,15 @@ export const useCanvasRenderer = ({ canvasRef, gridSize }: UseCanvasRendererProp
     viewport: CanvasViewport, 
     beds: Bed[] = [], 
     selectedBedIds: string[] = [], 
-    previewBed?: Bed | null
+    previewBed?: Bed | null,
+    placementBed?: Bed | null
   ) => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
     
     animationFrameRef.current = requestAnimationFrame(() => {
-      render(viewport, beds, selectedBedIds, previewBed);
+      render(viewport, beds, selectedBedIds, previewBed, placementBed);
     });
   }, [render]);
 

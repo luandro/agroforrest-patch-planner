@@ -10,7 +10,6 @@ interface CanvasKeyboardHandlerProps {
   handleFitAll: () => void;
   isCreating: boolean;
   cancelCreation: () => void;
-  setIsCreatingBed: (creating: boolean) => void;
   setTool: (tool: CanvasTool) => void;
   selectedBedIds: string[];
   deleteSelected: () => void;
@@ -23,7 +22,6 @@ export const CanvasKeyboardHandler: React.FC<CanvasKeyboardHandlerProps> = ({
   handleFitAll,
   isCreating,
   cancelCreation,
-  setIsCreatingBed,
   setTool,
   selectedBedIds,
   deleteSelected
@@ -80,7 +78,6 @@ export const CanvasKeyboardHandler: React.FC<CanvasKeyboardHandlerProps> = ({
         case 'Escape':
           if (isCreating) {
             cancelCreation();
-            setIsCreatingBed(false);
           }
           setTool('pan' as CanvasTool);
           break;
@@ -89,7 +86,7 @@ export const CanvasKeyboardHandler: React.FC<CanvasKeyboardHandlerProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [pan, isCreating, selectedBedIds, handleZoomIn, handleZoomOut, handleFitAll, cancelCreation, setIsCreatingBed, setTool, deleteSelected, undo, redo]);
+  }, [pan, isCreating, selectedBedIds, handleZoomIn, handleZoomOut, handleFitAll, cancelCreation, setTool, deleteSelected, undo, redo]);
 
   return null;
 };

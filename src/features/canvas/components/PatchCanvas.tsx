@@ -35,20 +35,24 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
     undo,
     redo,
     canUndo,
-    canRedo,
-    isCreatingBed,
-    setIsCreatingBed
+    canRedo
   } = useBedStore();
 
-  // Bed creation with auto-zoom
+  // Enhanced bed creation with preview and confirmation
   const {
     bedConfig,
     updateBedConfig,
     isCreating,
     previewBed,
-    startCreation,
-    updateCreation,
-    finishCreation,
+    placementBed,
+    showConfirmation,
+    multiCreationMode,
+    setMultiCreationMode,
+    startPreview,
+    updatePreview,
+    placeBed,
+    confirmPlacement,
+    cancelPlacement,
     cancelCreation
   } = useBedCreation({ 
     viewport, 
@@ -78,8 +82,7 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
     const y = e.clientY - rect.top;
 
     if (tool === 'create-rectangle' || tool === 'create-circle') {
-      setIsCreatingBed(true);
-      startCreation(x, y);
+      startPreview(x, y);
     } else if (tool === 'select') {
       const isMultiSelect = e.shiftKey || e.ctrlKey;
       startSelection(x, y, isMultiSelect);
@@ -91,17 +94,19 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    if (isCreating) {
-      updateCreation(x, y);
+    if (isCreating && (tool === 'create-rectangle' || tool === 'create-circle')) {
+      updatePreview(x, y);
     } else {
       updateSelection(x, y);
     }
   };
 
-  const handlePointerUp = () => {
-    if (isCreating) {
-      finishCreation();
-      setIsCreatingBed(false);
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (isCreating && (tool === 'create-rectangle' || tool === 'create-circle')) {
+      const isDeliberate = e.timeStamp - (e as any).startTime > 100; // Minimum 100ms tap
+      if (isDeliberate) {
+        placeBed();
+      }
     } else {
       finishSelection();
     }
@@ -113,17 +118,24 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       
-      setTool('create-rectangle');
-      setIsCreatingBed(true);
-      startCreation(x, y);
-      
+      startPreview(x, y);
       setTimeout(() => {
-        updateCreation(x + 50, y + 20);
-        finishCreation();
-        setIsCreatingBed(false);
-        setTool('pan');
+        placeBed();
       }, 10);
     }
+  };
+
+  const handleConfirmPlacement = () => {
+    confirmPlacement();
+    
+    // Exit creation mode if not in multi-creation mode
+    if (!multiCreationMode) {
+      setTool('pan');
+    }
+  };
+
+  const handleCancelPlacement = () => {
+    cancelPlacement();
   };
 
   const handleZoomIn = () => {
@@ -150,10 +162,16 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
       updateBedConfig={updateBedConfig}
       isCreating={isCreating}
       previewBed={previewBed}
+      placementBed={placementBed}
+      showConfirmation={showConfirmation}
+      multiCreationMode={multiCreationMode}
+      setMultiCreationMode={setMultiCreationMode}
       handlePointerDown={handlePointerDown}
       handlePointerMove={handlePointerMove}
       handlePointerUp={handlePointerUp}
       handleDoubleClick={handleDoubleClick}
+      handleConfirmPlacement={handleConfirmPlacement}
+      handleCancelPlacement={handleCancelPlacement}
       pan={pan}
       zoomTo={zoomTo}
       handleZoomIn={handleZoomIn}
@@ -166,7 +184,6 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
       deleteSelected={deleteSelected}
       isSaving={isSaving}
       cancelCreation={cancelCreation}
-      setIsCreatingBed={setIsCreatingBed}
       gridSize={gridSize}
     />
   );
