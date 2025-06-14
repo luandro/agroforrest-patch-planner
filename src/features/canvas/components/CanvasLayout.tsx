@@ -15,8 +15,8 @@ interface CanvasLayoutProps {
   updateViewport: any;
   beds: any[];
   selectedBedIds: string[];
-  tool: string;
-  setTool: any;
+  tool: CanvasTool;
+  setTool: (tool: CanvasTool) => void;
   bedConfig: any;
   updateBedConfig: any;
   isCreating: boolean;
@@ -115,7 +115,7 @@ export const CanvasLayout: React.FC<CanvasLayoutProps> = ({
         isCreating={isCreating}
         cancelCreation={cancelCreation}
         setIsCreatingBed={setIsCreatingBed}
-        setTool={(tool: CanvasTool) => setTool(tool)}
+        setTool={setTool}
         selectedBedIds={selectedBedIds}
         deleteSelected={deleteSelected}
       />
