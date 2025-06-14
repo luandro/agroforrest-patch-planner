@@ -1,12 +1,9 @@
 
 import React from 'react';
-import { CanvasLayoutProvider } from './CanvasLayoutProvider';
-import { CanvasViewport } from './CanvasViewport';
-import { CanvasOverlays } from './CanvasOverlays';
-import { CanvasControls } from './CanvasControls';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { CanvasTool } from '../types/bed.types';
 
-interface CanvasLayoutProps {
+interface CanvasLayoutProviderProps {
   viewport: any;
   updateViewport: any;
   beds: any[];
@@ -40,14 +37,22 @@ interface CanvasLayoutProps {
   isSaving: boolean;
   cancelCreation: () => void;
   gridSize?: number;
+  children: React.ReactNode;
 }
 
-export const CanvasLayout: React.FC<CanvasLayoutProps> = (props) => {
+export const CanvasLayoutProvider: React.FC<CanvasLayoutProviderProps> = ({
+  children,
+  ...props
+}) => {
+  const isMobile = useIsMobile();
+
   return (
-    <CanvasLayoutProvider {...props}>
-      <CanvasViewport {...props} />
-      <CanvasOverlays {...props} />
-      <CanvasControls {...props} />
-    </CanvasLayoutProvider>
+    <div className="relative w-full h-full">
+      {React.Children.map(children, child => 
+        React.isValidElement(child) 
+          ? React.cloneElement(child, { ...props, isMobile })
+          : child
+      )}
+    </div>
   );
 };

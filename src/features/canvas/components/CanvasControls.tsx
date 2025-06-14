@@ -1,65 +1,133 @@
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import React, { useState } from 'react';
+import { EnhancedMiniMap } from './EnhancedMiniMap';
+import { MobileControls } from './MobileControls';
+import { DesktopSidebar } from './DesktopSidebar';
+import { ViewControls } from './ViewControls';
+import { DevelopmentInfo } from './DevelopmentInfo';
+import { CanvasTool } from '../types/bed.types';
 
 interface CanvasControlsProps {
-  zoom: number;
-  onZoomIn: () => void;
-  onZoomOut: () => void;
-  onReset: () => void;
-  className?: string;
+  viewport: any;
+  updateViewport: any;
+  beds: any[];
+  selectedBedIds: string[];
+  tool: CanvasTool;
+  setTool: (tool: CanvasTool) => void;
+  bedConfig: any;
+  updateBedConfig: any;
+  isCreating: boolean;
+  showConfirmation: boolean;
+  handleZoomIn: () => void;
+  handleZoomOut: () => void;
+  handleFitAll: () => void;
+  undo: () => void;
+  redo: () => void;
+  canUndo: () => boolean;
+  canRedo: () => boolean;
+  deleteSelected: () => void;
+  isSaving: boolean;
+  isMobile?: boolean;
 }
 
 export const CanvasControls: React.FC<CanvasControlsProps> = ({
-  zoom,
-  onZoomIn,
-  onZoomOut,
-  onReset,
-  className
+  viewport,
+  updateViewport,
+  beds,
+  selectedBedIds,
+  tool,
+  setTool,
+  bedConfig,
+  updateBedConfig,
+  isCreating,
+  showConfirmation,
+  handleZoomIn,
+  handleZoomOut,
+  handleFitAll,
+  undo,
+  redo,
+  canUndo,
+  canRedo,
+  deleteSelected,
+  isSaving,
+  isMobile = false
 }) => {
+  const [showMobileControls, setShowMobileControls] = useState(false);
+  const [showDesktopSidebar, setShowDesktopSidebar] = useState(true);
+
+  // Hide minimap when in creation mode or showing controls
+  const shouldHideMiniMap = isCreating || showMobileControls || showConfirmation;
+
   return (
-    <div className={cn(
-      "absolute top-4 right-4 flex flex-col gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-lg",
-      className
-    )}>
-      {/* Zoom Level Indicator */}
-      <div className="text-xs text-gray-600 text-center px-2 py-1">
-        {zoom.toFixed(1)}x
-      </div>
-      
-      {/* Zoom In */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onZoomIn}
-        className="w-10 h-10 p-0 touch-manipulation"
-        aria-label="Aumentar zoom"
-      >
-        <span className="text-lg font-bold">+</span>
-      </Button>
-      
-      {/* Zoom Out */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onZoomOut}
-        className="w-10 h-10 p-0 touch-manipulation"
-        aria-label="Diminuir zoom"
-      >
-        <span className="text-lg font-bold">−</span>
-      </Button>
-      
-      {/* Reset View */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onReset}
-        className="w-10 h-10 p-0 text-xs touch-manipulation"
-        aria-label="Resetar visualização"
-      >
-        ⌂
-      </Button>
-    </div>
+    <>
+      {/* Enhanced MiniMap - hide during creation */}
+      {!shouldHideMiniMap && (
+        <EnhancedMiniMap 
+          viewport={viewport} 
+          beds={beds}
+          onNavigate={(x, y) => updateViewport({ centerX: x, centerY: y })}
+          className="fixed top-20 left-4 z-50 transition-opacity duration-200"
+        />
+      )}
+
+      {/* View Controls - always visible in top-right */}
+      <ViewControls
+        zoom={viewport.zoom}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onFitAll={handleFitAll}
+        bedsCount={beds.length}
+        className="fixed top-20 right-4 z-50"
+      />
+
+      {/* Mobile Controls */}
+      {isMobile && (
+        <MobileControls
+          activeTool={tool}
+          onToolChange={setTool}
+          bedConfig={bedConfig}
+          onBedConfigChange={updateBedConfig}
+          onUndo={undo}
+          onRedo={redo}
+          canUndo={canUndo()}
+          canRedo={canRedo()}
+          onDeleteSelected={deleteSelected}
+          selectedCount={selectedBedIds.length}
+          isVisible={showMobileControls}
+          onToggle={setShowMobileControls}
+          isSaving={isSaving}
+        />
+      )}
+
+      {/* Desktop Sidebar */}
+      {!isMobile && (
+        <DesktopSidebar
+          activeTool={tool}
+          onToolChange={setTool}
+          bedConfig={bedConfig}
+          onBedConfigChange={updateBedConfig}
+          onUndo={undo}
+          onRedo={redo}
+          canUndo={canUndo()}
+          canRedo={canRedo()}
+          onDeleteSelected={deleteSelected}
+          selectedCount={selectedBedIds.length}
+          isCollapsed={!showDesktopSidebar}
+          onToggleCollapse={setShowDesktopSidebar}
+          isSaving={isSaving}
+          beds={beds}
+          viewport={viewport}
+        />
+      )}
+
+      {/* Development Info */}
+      <DevelopmentInfo
+        viewport={viewport}
+        tool={tool}
+        beds={beds}
+        selectedBedIds={selectedBedIds}
+        isMobile={isMobile}
+      />
+    </>
   );
 };
