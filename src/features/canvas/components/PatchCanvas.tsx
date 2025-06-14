@@ -12,7 +12,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { EnhancedMiniMap } from './EnhancedMiniMap';
 import { MobileControls } from './MobileControls';
 import { DesktopSidebar } from './DesktopSidebar';
-import { BedRenderer } from './BedRenderer';
 import { ViewControls } from './ViewControls';
 
 export const PatchCanvas: React.FC<PatchCanvasProps> = ({
@@ -261,18 +260,18 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
         ctx.scale(dpr, dpr);
       }
 
-      scheduleRender(viewport);
+      scheduleRender(viewport, beds, selectedBedIds, previewBed);
     };
 
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
     return () => window.removeEventListener('resize', resizeCanvas);
-  }, [viewport, scheduleRender]);
+  }, [viewport, scheduleRender, beds, selectedBedIds, previewBed]);
 
-  // Render when viewport changes
+  // Render when viewport or beds change
   useEffect(() => {
-    scheduleRender(viewport);
-  }, [viewport, scheduleRender]);
+    scheduleRender(viewport, beds, selectedBedIds, previewBed);
+  }, [viewport, beds, selectedBedIds, previewBed, scheduleRender]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -311,15 +310,6 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
           onDoubleClick={handleDoubleClick}
         />
       </div>
-
-      {/* Render beds on canvas */}
-      <BedRenderer
-        beds={beds}
-        selectedBedIds={selectedBedIds}
-        viewport={viewport}
-        previewBed={previewBed}
-        canvasRef={canvasRef}
-      />
 
       {/* Enhanced MiniMap - always visible */}
       <EnhancedMiniMap 
