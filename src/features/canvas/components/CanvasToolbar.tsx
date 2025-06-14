@@ -69,7 +69,6 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
       {/* Tools */}
       <div className="flex gap-1">
         {tools.map((tool) => {
-          const Icon = typeof tool.icon === 'string' ? null : tool.icon;
           const isActive = activeTool === tool.id;
           
           return (
@@ -85,10 +84,10 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
               title={tool.label}
               aria-label={tool.label}
             >
-              {Icon ? (
-                <Icon className="w-4 h-4" />
-              ) : (
+              {typeof tool.icon === 'string' ? (
                 <span className="text-sm">{tool.icon}</span>
+              ) : (
+                <tool.icon className="w-4 h-4" />
               )}
             </Button>
           );
