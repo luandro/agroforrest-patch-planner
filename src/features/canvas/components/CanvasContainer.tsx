@@ -49,12 +49,14 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
     spacing
   });
 
-  // Handle gestures only when in pan mode or when not creating
+  // Handle gestures with tool and creation state awareness
   useCanvasGestures({
-    onPan: (tool === 'pan' && !isCreating) ? pan : () => {},
+    onPan: pan,
     onZoom: (zoom) => zoomTo(zoom),
     canvasRef,
-    currentZoom: viewport.zoom
+    currentZoom: viewport.zoom,
+    tool,
+    isCreating
   });
 
   // Handle canvas resize
@@ -110,6 +112,8 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
     if (tool === 'select') return 'pointer';
     return 'grab';
   };
+
+  console.log('CanvasContainer render:', { tool, isCreating });
 
   return (
     <div 

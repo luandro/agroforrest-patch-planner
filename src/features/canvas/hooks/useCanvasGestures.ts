@@ -7,13 +7,17 @@ interface UseCanvasGesturesProps {
   onZoom: (zoom: number, centerX?: number, centerY?: number) => void;
   canvasRef: React.RefObject<HTMLCanvasElement>;
   currentZoom: number;
+  tool: string;
+  isCreating: boolean;
 }
 
 export const useCanvasGestures = ({
   onPan,
   onZoom,
   canvasRef,
-  currentZoom
+  currentZoom,
+  tool,
+  isCreating
 }: UseCanvasGesturesProps) => {
   const gestureRef = useRef<CanvasGesture>({
     isPanning: false,
@@ -38,9 +42,19 @@ export const useCanvasGestures = ({
     };
   }, [canvasRef]);
 
+  // Check if we should handle gestures (only for pan tool when not creating)
+  const shouldHandleGestures = tool === 'pan' && !isCreating;
+
   // Touch event handlers
   const handleTouchStart = useCallback((e: TouchEvent) => {
-    e.preventDefault();
+    console.log('Touch start:', { tool, isCreating, shouldHandle: shouldHandleGestures, touches: e.touches.length });
+    
+    // Only prevent default for pan gestures
+    if (shouldHandleGestures) {
+      e.preventDefault();
+    }
+    
+    if (!shouldHandleGestures) return;
     
     if (e.touches.length === 1) {
       // Single finger - start panning
@@ -60,10 +74,15 @@ export const useCanvasGestures = ({
         initialZoom: currentZoom
       };
     }
-  }, [getCanvasPoint, getDistance, currentZoom]);
+  }, [getCanvasPoint, getDistance, currentZoom, shouldHandleGestures, tool, isCreating]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
-    e.preventDefault();
+    // Only prevent default for pan gestures
+    if (shouldHandleGestures) {
+      e.preventDefault();
+    }
+    
+    if (!shouldHandleGestures) return;
     
     const gesture = gestureRef.current;
     
@@ -72,6 +91,7 @@ export const useCanvasGestures = ({
       const deltaX = point.x - gesture.lastPanPoint.x;
       const deltaY = point.y - gesture.lastPanPoint.y;
       
+      console.log('Touch pan:', { deltaX, deltaY });
       onPan(deltaX, deltaY);
       gesture.lastPanPoint = point;
     } else if (gesture.isZooming && e.touches.length === 2 && gesture.initialDistance && gesture.initialZoom) {
@@ -79,12 +99,18 @@ export const useCanvasGestures = ({
       const scale = distance / gesture.initialDistance;
       const newZoom = gesture.initialZoom * scale;
       
+      console.log('Touch zoom:', { scale, newZoom });
       onZoom(newZoom);
     }
-  }, [getCanvasPoint, getDistance, onPan, onZoom]);
+  }, [getCanvasPoint, getDistance, onPan, onZoom, shouldHandleGestures]);
 
   const handleTouchEnd = useCallback((e: TouchEvent) => {
-    e.preventDefault();
+    console.log('Touch end:', { tool, touches: e.touches.length });
+    
+    // Only prevent default for pan gestures
+    if (shouldHandleGestures) {
+      e.preventDefault();
+    }
     
     if (e.touches.length === 0) {
       gestureRef.current = {
@@ -92,11 +118,12 @@ export const useCanvasGestures = ({
         isZooming: false
       };
     }
-  }, []);
+  }, [shouldHandleGestures]);
 
-  // Mouse event handlers
+  // Mouse event handlers - only for desktop pan
   const handleMouseDown = useCallback((e: MouseEvent) => {
     if (e.button !== 0) return; // Only handle left click
+    if (!shouldHandleGestures) return;
     
     const point = getCanvasPoint(e.clientX, e.clientY);
     gestureRef.current = {
@@ -104,9 +131,11 @@ export const useCanvasGestures = ({
       isZooming: false,
       lastPanPoint: point
     };
-  }, [getCanvasPoint]);
+  }, [getCanvasPoint, shouldHandleGestures]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!shouldHandleGestures) return;
+    
     const gesture = gestureRef.current;
     
     if (gesture.isPanning && gesture.lastPanPoint) {
@@ -117,7 +146,7 @@ export const useCanvasGestures = ({
       onPan(deltaX, deltaY);
       gesture.lastPanPoint = point;
     }
-  }, [getCanvasPoint, onPan]);
+  }, [getCanvasPoint, onPan, shouldHandleGestures]);
 
   const handleMouseUp = useCallback(() => {
     gestureRef.current = {
@@ -140,29 +169,35 @@ export const useCanvasGestures = ({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Touch events
+    // Touch events - always listen, but conditionally handle
     canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
     canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
     canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 
-    // Mouse events
-    canvas.addEventListener('mousedown', handleMouseDown);
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    // Mouse events - only for pan mode
+    if (shouldHandleGestures) {
+      canvas.addEventListener('mousedown', handleMouseDown);
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
     
-    // Wheel event
+    // Wheel event - always active for zoom
     canvas.addEventListener('wheel', handleWheel, { passive: false });
 
     return () => {
       canvas.removeEventListener('touchstart', handleTouchStart);
       canvas.removeEventListener('touchmove', handleTouchMove);
       canvas.removeEventListener('touchend', handleTouchEnd);
-      canvas.removeEventListener('mousedown', handleMouseDown);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      
+      if (shouldHandleGestures) {
+        canvas.removeEventListener('mousedown', handleMouseDown);
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      }
+      
       canvas.removeEventListener('wheel', handleWheel);
     };
-  }, [canvasRef, handleTouchStart, handleTouchMove, handleTouchEnd, handleMouseDown, handleMouseMove, handleMouseUp, handleWheel]);
+  }, [canvasRef, handleTouchStart, handleTouchMove, handleTouchEnd, handleMouseDown, handleMouseMove, handleMouseUp, handleWheel, shouldHandleGestures]);
 
   return gestureRef.current;
 };
