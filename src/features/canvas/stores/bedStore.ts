@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { Bed, BedAction, CanvasTool } from '../types/bed.types';
 
@@ -48,7 +49,16 @@ export const useBedStore = create<BedStore>((set, get) => ({
   history: [],
   historyIndex: -1,
 
-  setTool: (tool) => set({ tool }),
+  setTool: (tool) => {
+    const state = get();
+    // Clear selection when switching tools
+    if (tool !== state.tool) {
+      set({ tool, selectedBedIds: [] });
+    } else {
+      set({ tool });
+    }
+  },
+  
   setIsCreatingBed: (creating) => set({ isCreatingBed: creating }),
 
   addBed: (bed) => {

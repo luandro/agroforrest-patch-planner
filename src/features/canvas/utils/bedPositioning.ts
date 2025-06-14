@@ -1,10 +1,19 @@
 
 import { CanvasViewport } from '../types/canvas.types';
-import { BedConfig } from '../types/bed.types';
+import { BedConfig, Bed } from '../types/bed.types';
 
 export interface WorldPosition {
   x: number;
   y: number;
+}
+
+export interface BedFootprint {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  shape: 'rectangle' | 'circle';
+  radius?: number;
 }
 
 // Convert screen coordinates to world coordinates with proper canvas transformation
@@ -77,8 +86,82 @@ export const calculateBedPosition = (
   }
 };
 
-// Check if position has collision with existing beds
-export const checkCollision = (position: WorldPosition, dimensions: any): boolean => {
+// Calculate the full footprint of a bed including spacing
+export const calculateBedFootprint = (bed: Bed, spacing: number): BedFootprint => {
+  if (bed.shape === 'rectangle') {
+    const length = bed.dimensions.length || 0;
+    const width = bed.dimensions.width || 0;
+    
+    return {
+      x: bed.position.x - (length / 2) - spacing,
+      y: bed.position.y - (width / 2) - spacing,
+      width: length + (spacing * 2),
+      height: width + (spacing * 2),
+      shape: 'rectangle'
+    };
+  } else {
+    const radius = bed.dimensions.radius || 0;
+    
+    return {
+      x: bed.position.x,
+      y: bed.position.y,
+      width: (radius + spacing) * 2,
+      height: (radius + spacing) * 2,
+      shape: 'circle',
+      radius: radius + spacing
+    };
+  }
+};
+
+// Check if two bed footprints collide
+export const checkCollision = (footprint1: BedFootprint, footprint2: BedFootprint): boolean => {
+  if (footprint1.shape === 'rectangle' && footprint2.shape === 'rectangle') {
+    // Rectangle-Rectangle collision
+    const rect1 = {
+      left: footprint1.x,
+      right: footprint1.x + footprint1.width,
+      top: footprint1.y,
+      bottom: footprint1.y + footprint1.height
+    };
+    
+    const rect2 = {
+      left: footprint2.x,
+      right: footprint2.x + footprint2.width,
+      top: footprint2.y,
+      bottom: footprint2.y + footprint2.height
+    };
+    
+    return !(rect1.right <= rect2.left || 
+             rect1.left >= rect2.right || 
+             rect1.bottom <= rect2.top || 
+             rect1.top >= rect2.bottom);
+  } else if (footprint1.shape === 'circle' && footprint2.shape === 'circle') {
+    // Circle-Circle collision
+    const dx = footprint1.x - footprint2.x;
+    const dy = footprint1.y - footprint2.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    return distance < (footprint1.radius! + footprint2.radius!);
+  } else {
+    // Circle-Rectangle collision
+    const circle = footprint1.shape === 'circle' ? footprint1 : footprint2;
+    const rect = footprint1.shape === 'rectangle' ? footprint1 : footprint2;
+    
+    // Find the closest point on the rectangle to the circle center
+    const closestX = Math.max(rect.x, Math.min(circle.x, rect.x + rect.width));
+    const closestY = Math.max(rect.y, Math.min(circle.y, rect.y + rect.height));
+    
+    // Calculate distance from circle center to closest point
+    const dx = circle.x - closestX;
+    const dy = circle.y - closestY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    return distance < circle.radius!;
+  }
+};
+
+// Check if position has collision with existing beds (legacy function)
+export const checkCollisionLegacy = (position: WorldPosition, dimensions: any): boolean => {
   // This would check against existing beds in a real implementation
   // For now, just return false
   return false;

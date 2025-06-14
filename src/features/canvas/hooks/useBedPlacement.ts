@@ -2,6 +2,7 @@
 import { useState, useCallback } from 'react';
 import { Bed, BedConfig } from '../types/bed.types';
 import { useBedStore } from '../stores/bedStore';
+import { checkCollision, calculateBedFootprint } from '../utils/bedPositioning';
 
 interface UseBedPlacementProps {
   bedConfig: BedConfig;
@@ -9,83 +10,122 @@ interface UseBedPlacementProps {
 }
 
 export const useBedPlacement = ({ bedConfig, onBedCreated }: UseBedPlacementProps) => {
-  const { addBed } = useBedStore();
-  const [placementBed, setPlacementBed] = useState<Bed | null>(null);
+  const { addBed, beds } = useBedStore();
+  const [placementBeds, setPlacementBeds] = useState<Bed[]>([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [multiCreationMode, setMultiCreationMode] = useState(false);
+  const [hasCollision, setHasCollision] = useState(false);
+
+  const createBedGroup = useCallback((baseBed: Bed): Bed[] => {
+    const beds: Bed[] = [];
+    const timestamp = Date.now();
+    
+    for (let i = 0; i < bedConfig.quantity; i++) {
+      // Calculate offset for parallel placement
+      const offsetY = i * (
+        (baseBed.shape === 'rectangle' ? baseBed.dimensions.width || bedConfig.width : (baseBed.dimensions.radius || bedConfig.length) * 2) + 
+        (bedConfig.spacing * 2)
+      );
+      
+      const bedId = `bed-${timestamp}-${i}`;
+      const bed: Bed = {
+        id: bedId,
+        shape: baseBed.shape,
+        position: {
+          x: baseBed.position.x,
+          y: baseBed.position.y + offsetY
+        },
+        dimensions: baseBed.dimensions,
+        rotation: 0,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      };
+
+      beds.push(bed);
+    }
+
+    return beds;
+  }, [bedConfig]);
+
+  const checkGroupCollision = useCallback((bedGroup: Bed[]): boolean => {
+    for (const bed of bedGroup) {
+      const footprint = calculateBedFootprint(bed, bedConfig.spacing);
+      
+      // Check against existing beds
+      for (const existingBed of beds) {
+        const existingFootprint = calculateBedFootprint(existingBed, bedConfig.spacing);
+        if (checkCollision(footprint, existingFootprint)) {
+          return true;
+        }
+      }
+      
+      // Check against other beds in the same group
+      for (const otherBed of bedGroup) {
+        if (bed.id !== otherBed.id) {
+          const otherFootprint = calculateBedFootprint(otherBed, bedConfig.spacing);
+          if (checkCollision(footprint, otherFootprint)) {
+            return true;
+          }
+        }
+      }
+    }
+    
+    return false;
+  }, [beds, bedConfig.spacing]);
 
   const placeBed = useCallback((previewBed: Bed | null) => {
     if (!previewBed) return;
 
-    // Move from preview to placement
-    setPlacementBed(previewBed);
+    const bedGroup = createBedGroup(previewBed);
+    const collision = checkGroupCollision(bedGroup);
+    
+    setPlacementBeds(bedGroup);
+    setHasCollision(collision);
     setShowConfirmation(true);
-  }, []);
+  }, [createBedGroup, checkGroupCollision]);
 
   const confirmPlacement = useCallback(() => {
-    if (!placementBed) return;
+    if (placementBeds.length === 0 || hasCollision) return false;
 
-    // Create final bed(s) based on configuration
-    const beds: Bed[] = [];
-    
-    for (let i = 0; i < bedConfig.quantity; i++) {
-      const offsetY = i * (bedConfig.spacing + (placementBed.dimensions.width || bedConfig.width));
-      
-      const bedId = `bed-${Date.now()}-${i}`;
-      const bed: Bed = {
-        id: bedId,
-        shape: placementBed.shape,
-        position: {
-          x: placementBed.position.x,
-          y: placementBed.position.y + offsetY
-        },
-        dimensions: placementBed.dimensions,
-        rotation: 0,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      };
-
-      beds.push(bed);
+    // Add all beds in the group
+    placementBeds.forEach((bed, index) => {
       addBed(bed);
       
       // Call auto-zoom callback for the first bed
-      if (i === 0 && onBedCreated) {
-        onBedCreated(bedId);
+      if (index === 0 && onBedCreated) {
+        onBedCreated(bed.id);
       }
-    }
+    });
 
     // Reset state
-    setPlacementBed(null);
+    setPlacementBeds([]);
     setShowConfirmation(false);
+    setHasCollision(false);
 
     return !multiCreationMode; // Return true if should exit creation mode
-  }, [placementBed, bedConfig, addBed, onBedCreated, multiCreationMode]);
+  }, [placementBeds, hasCollision, addBed, onBedCreated, multiCreationMode]);
 
-  const cancelPlacement = useCallback((cursorPosition: { x: number; y: number } | null) => {
-    if (placementBed && cursorPosition) {
-      // Resume preview at cursor position - this will be handled by the main hook
-      setPlacementBed(null);
-      setShowConfirmation(false);
-      return { resumePreview: true, bed: placementBed };
-    } else {
-      // Cancel completely
-      setPlacementBed(null);
-      setShowConfirmation(false);
-      return { resumePreview: false, bed: null };
-    }
-  }, [placementBed]);
+  const cancelPlacement = useCallback(() => {
+    setPlacementBeds([]);
+    setShowConfirmation(false);
+    setHasCollision(false);
+    return { resumePreview: false, bed: null };
+  }, []);
 
   const clearPlacement = useCallback(() => {
-    setPlacementBed(null);
+    setPlacementBeds([]);
     setShowConfirmation(false);
     setMultiCreationMode(false);
+    setHasCollision(false);
   }, []);
 
   return {
-    placementBed,
+    placementBed: placementBeds[0] || null, // For backward compatibility
+    placementBeds,
     showConfirmation,
     multiCreationMode,
     setMultiCreationMode,
+    hasCollision,
     placeBed,
     confirmPlacement,
     cancelPlacement,

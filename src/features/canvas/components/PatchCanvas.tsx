@@ -29,7 +29,6 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
   // Bed management
   const { 
     tool, 
-    setTool, 
     beds, 
     selectedBedIds,
     undo,
@@ -44,16 +43,20 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
     updateBedConfig,
     isCreating,
     previewBed,
+    previewBeds,
     placementBed,
+    placementBeds,
     showConfirmation,
     multiCreationMode,
     setMultiCreationMode,
+    hasCollision,
     startPreview,
     updatePreview,
     placeBed,
     confirmPlacement,
     cancelPlacement,
-    cancelCreation
+    cancelCreation,
+    handleToolChange
   } = useBedCreation({ 
     viewport, 
     gridSize, 
@@ -127,7 +130,7 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
     
     // Exit creation mode if not in multi-creation mode
     if (!multiCreationMode) {
-      setTool('pan');
+      handleToolChange('pan');
     }
   };
 
@@ -154,15 +157,18 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
       beds={beds}
       selectedBedIds={selectedBedIds}
       tool={tool}
-      setTool={setTool}
+      setTool={handleToolChange}
       bedConfig={bedConfig}
       updateBedConfig={updateBedConfig}
       isCreating={isCreating}
       previewBed={previewBed}
+      previewBeds={previewBeds}
       placementBed={placementBed}
+      placementBeds={placementBeds}
       showConfirmation={showConfirmation}
       multiCreationMode={multiCreationMode}
       setMultiCreationMode={setMultiCreationMode}
+      hasCollision={hasCollision}
       handlePointerDown={handlePointerDown}
       handlePointerMove={handlePointerMove}
       handlePointerUp={handlePointerUp}

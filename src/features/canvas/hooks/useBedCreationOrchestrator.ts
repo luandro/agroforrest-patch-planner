@@ -5,7 +5,6 @@ import { useBedStore } from '../stores/bedStore';
 import { useBedConfiguration } from './useBedConfiguration';
 import { useBedPreview } from './useBedPreview';
 import { useBedPlacement } from './useBedPlacement';
-import { checkCollision } from '../utils/bedPositioning';
 import { 
   createBedConfigUpdater, 
   createPreviewManager, 
@@ -23,7 +22,7 @@ export const useBedCreationOrchestrator = ({
   gridSize = 1, 
   onBedCreated 
 }: UseBedCreationOrchestratorProps) => {
-  const { tool } = useBedStore();
+  const { tool, setTool } = useBedStore();
 
   // Bed configuration management
   const { bedConfig, updateBedConfig: updateBedConfigBase } = useBedConfiguration();
@@ -32,6 +31,8 @@ export const useBedCreationOrchestrator = ({
   const {
     isCreating,
     previewBed,
+    previewBeds,
+    hasCollision: previewHasCollision,
     cursorPosition,
     startPreview: startPreviewBase,
     updatePreview: updatePreviewBase,
@@ -42,9 +43,11 @@ export const useBedCreationOrchestrator = ({
   // Bed placement management
   const {
     placementBed,
+    placementBeds,
     showConfirmation,
     multiCreationMode,
     setMultiCreationMode,
+    hasCollision: placementHasCollision,
     placeBed: placeBedBase,
     confirmPlacement: confirmPlacementBase,
     cancelPlacement: cancelPlacementBase,
@@ -56,6 +59,15 @@ export const useBedCreationOrchestrator = ({
     createBedConfigUpdater(updateBedConfigBase, updatePreviewWithConfig),
     [updateBedConfigBase, updatePreviewWithConfig]
   );
+
+  // Clear preview when tool changes
+  const handleToolChange = useCallback((newTool: any) => {
+    if (newTool !== tool) {
+      clearPreview();
+      clearPlacement();
+    }
+    setTool(newTool);
+  }, [tool, clearPreview, clearPlacement, setTool]);
 
   const { startPreview, updatePreview } = createPreviewManager(
     startPreviewBase,
@@ -78,21 +90,31 @@ export const useBedCreationOrchestrator = ({
     cursorPosition
   );
 
+  // Enhanced cancel creation that clears all states
+  const cancelCreationEnhanced = useCallback(() => {
+    clearPreview();
+    clearPlacement();
+    setTool('pan'); // Always return to pan mode
+  }, [clearPreview, clearPlacement, setTool]);
+
   return {
     bedConfig,
     updateBedConfig,
     isCreating,
     previewBed,
+    previewBeds,
     placementBed,
+    placementBeds,
     showConfirmation,
     multiCreationMode,
     setMultiCreationMode,
+    hasCollision: previewHasCollision || placementHasCollision,
     startPreview,
     updatePreview,
     placeBed,
     confirmPlacement,
     cancelPlacement,
-    cancelCreation,
-    checkCollision
+    cancelCreation: cancelCreationEnhanced,
+    handleToolChange
   };
 };

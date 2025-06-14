@@ -17,10 +17,13 @@ interface CanvasLayoutProps {
   updateBedConfig: any;
   isCreating: boolean;
   previewBed: any;
+  previewBeds?: any[];
   placementBed: any;
+  placementBeds?: any[];
   showConfirmation: boolean;
   multiCreationMode: boolean;
   setMultiCreationMode: (enabled: boolean) => void;
+  hasCollision?: boolean;
   handlePointerDown: (e: React.PointerEvent) => void;
   handlePointerMove: (e: React.PointerEvent) => void;
   handlePointerUp: () => void;
