@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { EnhancedMiniMap } from './EnhancedMiniMap';
@@ -7,6 +8,7 @@ import { ViewControls } from './ViewControls';
 import { CanvasContainer } from './CanvasContainer';
 import { CanvasKeyboardHandler } from './CanvasKeyboardHandler';
 import { DevelopmentInfo } from './DevelopmentInfo';
+import { CanvasTool } from '../types/bed.types';
 
 interface CanvasLayoutProps {
   viewport: any;
@@ -113,7 +115,7 @@ export const CanvasLayout: React.FC<CanvasLayoutProps> = ({
         isCreating={isCreating}
         cancelCreation={cancelCreation}
         setIsCreatingBed={setIsCreatingBed}
-        setTool={setTool}
+        setTool={(tool: CanvasTool) => setTool(tool)}
         selectedBedIds={selectedBedIds}
         deleteSelected={deleteSelected}
       />

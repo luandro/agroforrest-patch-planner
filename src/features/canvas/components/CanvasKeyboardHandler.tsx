@@ -1,6 +1,7 @@
 
 import { useEffect } from 'react';
 import { useBedStore } from '../stores/bedStore';
+import { CanvasTool } from '../types/bed.types';
 
 interface CanvasKeyboardHandlerProps {
   pan: (deltaX: number, deltaY: number) => void;
@@ -10,7 +11,7 @@ interface CanvasKeyboardHandlerProps {
   isCreating: boolean;
   cancelCreation: () => void;
   setIsCreatingBed: (creating: boolean) => void;
-  setTool: (tool: any) => void;
+  setTool: (tool: CanvasTool) => void;
   selectedBedIds: string[];
   deleteSelected: () => void;
 }
@@ -81,7 +82,7 @@ export const CanvasKeyboardHandler: React.FC<CanvasKeyboardHandlerProps> = ({
             cancelCreation();
             setIsCreatingBed(false);
           }
-          setTool('pan');
+          setTool('pan' as CanvasTool);
           break;
       }
     };
