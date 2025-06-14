@@ -1,18 +1,21 @@
-
 import { useCallback, useRef } from 'react';
 import { CanvasViewport } from '../types/canvas.types';
 import { Bed } from '../types/bed.types';
 
 interface UseCanvasRendererProps {
-  canvasRef: React.RefObject<HTMLCanvasElement>;
+  canvasRef?: React.RefObject<HTMLCanvasElement>;
   gridSize: number;
 }
 
 export const useCanvasRenderer = ({ canvasRef, gridSize }: UseCanvasRendererProps) => {
   const animationFrameRef = useRef<number>();
+  const internalCanvasRef = useRef<HTMLCanvasElement>(null);
+  
+  // Use provided canvasRef or internal one
+  const activeCanvasRef = canvasRef || internalCanvasRef;
 
   const drawGrid = useCallback((ctx: CanvasRenderingContext2D, viewport: CanvasViewport) => {
-    const canvas = canvasRef.current;
+    const canvas = activeCanvasRef.current;
     if (!canvas) return;
 
     const { width, height } = canvas;
@@ -49,7 +52,7 @@ export const useCanvasRenderer = ({ canvasRef, gridSize }: UseCanvasRendererProp
       ctx.lineTo(width, y);
       ctx.stroke();
     }
-  }, [canvasRef, gridSize]);
+  }, [activeCanvasRef, gridSize]);
 
   const drawBed = useCallback((
     ctx: CanvasRenderingContext2D, 
@@ -140,7 +143,7 @@ export const useCanvasRenderer = ({ canvasRef, gridSize }: UseCanvasRendererProp
     selectedBedIds: string[] = [], 
     previewBed?: Bed | null
   ) => {
-    const canvas = canvasRef.current;
+    const canvas = activeCanvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
@@ -166,7 +169,7 @@ export const useCanvasRenderer = ({ canvasRef, gridSize }: UseCanvasRendererProp
     if (previewBed) {
       drawBed(ctx, previewBed, viewport, false, true);
     }
-  }, [canvasRef, drawGrid, drawBed]);
+  }, [activeCanvasRef, drawGrid, drawBed]);
 
   const scheduleRender = useCallback((
     viewport: CanvasViewport, 
@@ -192,6 +195,7 @@ export const useCanvasRenderer = ({ canvasRef, gridSize }: UseCanvasRendererProp
   return {
     render,
     scheduleRender,
-    cleanup
+    cleanup,
+    canvasRef: activeCanvasRef
   };
 };
