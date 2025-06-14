@@ -6,8 +6,8 @@ import { CanvasTool } from '../types/bed.types';
 import { 
   Square, 
   Circle, 
-  undo as UndoIcon,
-  redo as RedoIcon
+  Undo,
+  Redo
 } from 'lucide-react';
 
 interface CanvasToolbarProps {
@@ -109,7 +109,7 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
           title="Desfazer (Ctrl+Z)"
           aria-label="Desfazer"
         >
-          <UndoIcon className="w-4 h-4" />
+          <Undo className="w-4 h-4" />
         </Button>
         <Button
           variant="outline"
@@ -120,7 +120,7 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
           title="Refazer (Ctrl+Shift+Z)"
           aria-label="Refazer"
         >
-          <RedoIcon className="w-4 h-4" />
+          <Redo className="w-4 h-4" />
         </Button>
       </div>
 
