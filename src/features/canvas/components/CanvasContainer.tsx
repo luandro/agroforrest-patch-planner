@@ -18,6 +18,7 @@ interface CanvasContainerProps {
   previewBed: any;
   placementBed?: any;
   gridSize?: number;
+  spacing?: number;
 }
 
 export const CanvasContainer: React.FC<CanvasContainerProps> = ({
@@ -34,12 +35,14 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
   selectedBedIds,
   previewBed,
   placementBed,
-  gridSize = 1
+  gridSize = 1,
+  spacing = 0.4
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   
   const { scheduleRender, canvasRef } = useCanvasRenderer({
-    gridSize
+    gridSize,
+    spacing
   });
 
   // Handle gestures only when in pan mode or when not creating
@@ -93,15 +96,22 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
   return (
     <div 
       ref={containerRef} 
-      className="touch-none select-none overscroll-none w-full h-full"
+      className="w-full h-full"
+      style={{ 
+        touchAction: 'none',
+        userSelect: 'none',
+        WebkitUserSelect: 'none'
+      }}
     >
       <canvas
         ref={canvasRef}
-        className="block touch-none cursor-grab active:cursor-grabbing"
+        className="block w-full h-full"
         style={{ 
           touchAction: 'none',
           background: '#FAFAF9',
-          cursor: getCursorStyle()
+          cursor: getCursorStyle(),
+          userSelect: 'none',
+          WebkitUserSelect: 'none'
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}

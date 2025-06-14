@@ -53,19 +53,22 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
   isMobile = false,
   showDesktopSidebar = true
 }) => {
-  // Calculate canvas dimensions based on sidebar state
-  const canvasStyle = {
-    width: isMobile ? '100vw' : showDesktopSidebar ? 'calc(100vw - 300px)' : '100vw',
-    height: 'calc(100vh - 4rem)', // Subtract header height
-    position: 'fixed' as const,
-    top: '4rem', // Header height
+  // Fix canvas positioning to ensure full access
+  const canvasStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: 0,
     left: 0,
-    zIndex: 10
+    width: '100%',
+    height: '100%',
+    zIndex: 1,
+    // Ensure pointer events work throughout the entire canvas
+    pointerEvents: 'auto',
+    touchAction: 'none'
   };
 
   return (
-    <>
-      {/* Full-screen canvas container */}
+    <div className="relative w-full h-full overflow-hidden">
+      {/* Canvas container with full accessibility */}
       <div style={canvasStyle}>
         <CanvasContainer
           viewport={viewport}
@@ -97,6 +100,6 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
         selectedBedIds={selectedBedIds}
         deleteSelected={deleteSelected}
       />
-    </>
+    </div>
   );
 };
