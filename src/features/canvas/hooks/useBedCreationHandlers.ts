@@ -35,6 +35,7 @@ export const useBedCreationHandlers = ({
 
   // Enhanced bed config update handler that also updates preview
   const updateBedConfig = useCallback((updates: any) => {
+    console.log('Updating bed config:', updates);
     updateBedConfigBase(updates);
     updatePreviewWithConfig(updates);
   }, [updateBedConfigBase, updatePreviewWithConfig]);
@@ -42,8 +43,17 @@ export const useBedCreationHandlers = ({
   // Enhanced preview start with tool validation
   const startPreview = useCallback((screenX: number, screenY: number) => {
     console.log('Starting preview with tool:', tool, 'at position:', screenX, screenY);
-    startPreviewBase(screenX, screenY, tool);
-  }, [startPreviewBase, tool]);
+    
+    // Ensure we have a valid creation tool
+    const validTool = (tool === 'create-rectangle' || tool === 'create-circle') ? tool : 'create-rectangle';
+    
+    if (validTool !== tool) {
+      console.log('Switching to valid creation tool:', validTool);
+      setTool(validTool);
+    }
+    
+    startPreviewBase(screenX, screenY, validTool);
+  }, [startPreviewBase, tool, setTool]);
 
   // Enhanced preview update
   const updatePreview = useCallback((screenX: number, screenY: number) => {
@@ -62,14 +72,27 @@ export const useBedCreationHandlers = ({
   // Enhanced placement confirmation
   const confirmPlacement = useCallback(() => {
     console.log('Confirming placement');
-    return confirmPlacementBase();
-  }, [confirmPlacementBase]);
+    const shouldExitCreation = confirmPlacementBase();
+    
+    // If should exit creation mode, switch to pan
+    if (shouldExitCreation) {
+      console.log('Exiting creation mode, switching to pan');
+      setTool('pan');
+    }
+    
+    return shouldExitCreation;
+  }, [confirmPlacementBase, setTool]);
 
   // Enhanced placement cancellation
   const cancelPlacement = useCallback(() => {
     console.log('Canceling placement');
-    return cancelPlacementBase(cursorPosition);
-  }, [cancelPlacementBase, cursorPosition]);
+    const result = cancelPlacementBase(cursorPosition);
+    
+    // Return to pan mode after cancellation
+    setTool('pan');
+    
+    return result;
+  }, [cancelPlacementBase, cursorPosition, setTool]);
 
   // Enhanced cancel creation that clears all states
   const cancelCreation = useCallback(() => {
@@ -82,10 +105,14 @@ export const useBedCreationHandlers = ({
   // Tool change handler that clears states
   const handleToolChange = useCallback((newTool: any) => {
     console.log('Tool change from', tool, 'to', newTool);
-    if (newTool !== tool) {
+    
+    // Clear states when changing away from creation tools
+    if ((tool === 'create-rectangle' || tool === 'create-circle') && 
+        (newTool !== 'create-rectangle' && newTool !== 'create-circle')) {
       clearPreview();
       clearPlacement();
     }
+    
     setTool(newTool);
   }, [tool, clearPreview, clearPlacement, setTool]);
 

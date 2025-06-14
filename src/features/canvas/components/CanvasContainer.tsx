@@ -113,6 +113,40 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
     return 'grab';
   };
 
+  // Enhanced pointer event handling
+  const handlePointerDownWithLogging = (e: React.PointerEvent) => {
+    console.log('CanvasContainer.pointerDown:', { 
+      tool, 
+      isCreating, 
+      pointerType: e.pointerType,
+      isPrimary: e.isPrimary 
+    });
+    
+    // Only handle primary pointer events to avoid conflicts
+    if (!e.isPrimary) return;
+    
+    handlePointerDown(e);
+  };
+
+  const handlePointerMoveWithLogging = (e: React.PointerEvent) => {
+    // Only handle primary pointer events and when needed
+    if (!e.isPrimary) return;
+    
+    // Only call move handler for creation tools or selection
+    if (isCreating || tool === 'select') {
+      handlePointerMove(e);
+    }
+  };
+
+  const handlePointerUpWithLogging = (e: React.PointerEvent) => {
+    console.log('CanvasContainer.pointerUp:', { tool, isCreating, pointerType: e.pointerType });
+    
+    // Only handle primary pointer events
+    if (!e.isPrimary) return;
+    
+    handlePointerUp();
+  };
+
   console.log('CanvasContainer render:', { tool, isCreating });
 
   return (
@@ -135,9 +169,9 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
           userSelect: 'none',
           WebkitUserSelect: 'none'
         }}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
+        onPointerDown={handlePointerDownWithLogging}
+        onPointerMove={handlePointerMoveWithLogging}
+        onPointerUp={handlePointerUpWithLogging}
         onDoubleClick={handleDoubleClick}
       />
     </div>

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { PatchCanvasProps } from '../types/canvas.types';
 import { useCanvasViewport } from '../hooks/useCanvasViewport';
@@ -83,17 +84,23 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    console.log('PatchCanvas.handlePointerDown:', { tool, x, y, isCreating });
+    console.log('PatchCanvas.handlePointerDown:', { tool, x, y, isCreating, pointerType: e.pointerType });
+
+    // For touch interactions, only handle creation tools
+    if (e.pointerType === 'touch' && tool !== 'create-rectangle' && tool !== 'create-circle') {
+      console.log('Touch interaction on non-creation tool, ignoring');
+      return;
+    }
 
     if (tool === 'create-rectangle' || tool === 'create-circle') {
       console.log('Starting preview for creation tool');
       startPreview(x, y);
-    } else if (tool === 'select') {
-      console.log('Starting selection');
+    } else if (tool === 'select' && e.pointerType !== 'touch') {
+      console.log('Starting selection (desktop only)');
       const isMultiSelect = e.shiftKey || e.ctrlKey;
       startSelection(x, y, isMultiSelect);
     } else if (tool === 'pan') {
-      console.log('Pan mode - no action on pointer down');
+      console.log('Pan mode - gesture handler will manage');
     }
   };
 
@@ -105,7 +112,7 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
     if (isCreating && (tool === 'create-rectangle' || tool === 'create-circle')) {
       console.log('Updating preview during creation');
       updatePreview(x, y);
-    } else if (tool === 'select') {
+    } else if (tool === 'select' && e.pointerType !== 'touch') {
       updateSelection(x, y);
     }
   };
@@ -124,16 +131,26 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
   const handleDoubleClick = (e: React.MouseEvent) => {
     console.log('PatchCanvas.handleDoubleClick:', { isMobile, tool });
     
-    if (isMobile && tool === 'pan') {
+    // Enhanced mobile double-click for bed creation
+    if (isMobile) {
       const rect = e.currentTarget.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       
       console.log('Mobile double-click creating bed at:', x, y);
+      
+      // Always use rectangle for mobile quick creation
+      if (tool !== 'create-rectangle' && tool !== 'create-circle') {
+        handleToolChange('create-rectangle');
+      }
+      
+      // Start preview and immediately place
       startPreview(x, y);
+      
+      // Small delay to ensure preview is created
       setTimeout(() => {
         placeBed();
-      }, 10);
+      }, 50);
     }
   };
 
