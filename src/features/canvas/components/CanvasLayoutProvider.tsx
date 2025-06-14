@@ -46,11 +46,17 @@ export const CanvasLayoutProvider: React.FC<CanvasLayoutProviderProps> = ({
 }) => {
   const isMobile = useIsMobile();
 
+  // Create enhanced props that include isMobile
+  const enhancedProps = {
+    ...props,
+    isMobile
+  };
+
   return (
     <div className="relative w-full h-full">
       {React.Children.map(children, child => 
         React.isValidElement(child) 
-          ? React.cloneElement(child, { ...props, isMobile })
+          ? React.cloneElement(child, enhancedProps)
           : child
       )}
     </div>
