@@ -1,10 +1,7 @@
-
 import React from 'react';
 import { CanvasLayoutProvider } from './CanvasLayoutProvider';
 import { CanvasViewport } from './CanvasViewport';
 import { CanvasOverlays } from './CanvasOverlays';
-import { CanvasControls } from './CanvasControls';
-import { CanvasTool } from '../types/bed.types';
 
 interface CanvasLayoutProps {
   viewport: any;
@@ -61,7 +58,6 @@ export const CanvasLayout: React.FC<CanvasLayoutProps> = (props) => {
     <CanvasLayoutProvider {...props}>
       <CanvasViewport {...props} />
       <CanvasOverlays {...props} />
-      <CanvasControls {...props} />
     </CanvasLayoutProvider>
   );
 };

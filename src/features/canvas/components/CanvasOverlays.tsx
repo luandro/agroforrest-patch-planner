@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ViewControls } from './ViewControls';
 import { FocusModeControls } from './FocusModeControls';
@@ -84,7 +83,7 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
 
   return (
     <>
-      {/* Bed Confirmation Panel */}
+      {/* Bed Confirmation Panel - always positioned absolutely/fixed so never hidden at bottom */}
       {showConfirmation && placementBed && (
         <BedConfirmationPanel
           bed={placementBed}
@@ -95,6 +94,12 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
           onConfirm={handleConfirmPlacement}
           onCancel={handleCancelPlacement}
           hasCollision={hasCollision}
+          // Fix position on desktop and mobile
+          className={
+            isMobile
+              ? "fixed inset-x-0 bottom-0 z-[150] max-w-full"
+              : "fixed bottom-8 left-1/2 -translate-x-1/2 z-[150] w-[340px] max-w-full"
+          }
         />
       )}
 
@@ -108,8 +113,10 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
         />
       )}
 
-      {/* View Controls - positioned to not conflict with focus mode */}
-      {!isInFocusMode && (
+      {/* Only one menu: ViewControls (toolbar/FAB/undo-redo) or Sidebar, never duplicated */}
+
+      {/* On desktop, show ViewControls on left if not in focus mode */}
+      {!isMobile && !isInFocusMode && (
         <ViewControls
           zoom={viewport.zoom}
           onZoomIn={handleZoomIn}
@@ -118,31 +125,11 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
           bedsCount={beds.length}
           activeTool={tool}
           onToolChange={setTool}
+          className="fixed top-28 left-4 z-40"
         />
       )}
 
-      {/* Mobile Controls */}
-      {isMobile && !isInFocusMode && (
-        <MobileControls
-          activeTool={tool}
-          onToolChange={setTool}
-          bedConfig={bedConfig}
-          onBedConfigChange={updateBedConfig}
-          onUndo={undo}
-          onRedo={redo}
-          canUndo={canUndo()}
-          canRedo={canRedo()}
-          onDeleteSelected={deleteSelected}
-          selectedCount={selectedBedIds.length}
-          isVisible={false}
-          onToggle={() => {}}
-          isSaving={isSaving}
-          showConfirmation={showConfirmation}
-          isInFocusMode={isInFocusMode}
-        />
-      )}
-
-      {/* Desktop Sidebar */}
+      {/* Desktop Sidebar - only one sidebar at a time, left side */}
       {!isMobile && !isInFocusMode && (
         <DesktopSidebar
           activeTool={tool}
@@ -162,6 +149,27 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
           viewport={viewport}
           isInFocusMode={isInFocusMode}
           onEnterFocus={selectedBedIds.length === 1 ? () => onEnterFocus?.(selectedBedIds[0]) : undefined}
+        />
+      )}
+
+      {/* Mobile Controls (FAB and panels) - only one! */}
+      {isMobile && !isInFocusMode && (
+        <MobileControls
+          activeTool={tool}
+          onToolChange={setTool}
+          bedConfig={bedConfig}
+          onBedConfigChange={updateBedConfig}
+          onUndo={undo}
+          onRedo={redo}
+          canUndo={canUndo()}
+          canRedo={canRedo()}
+          onDeleteSelected={deleteSelected}
+          selectedCount={selectedBedIds.length}
+          isVisible={!showConfirmation}
+          onToggle={() => {}} // handled elsewhere
+          isSaving={isSaving}
+          showConfirmation={showConfirmation}
+          isInFocusMode={isInFocusMode}
         />
       )}
 
