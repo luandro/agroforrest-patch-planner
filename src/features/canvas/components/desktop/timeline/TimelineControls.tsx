@@ -59,15 +59,16 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
   };
 
   const cycleSpeed = () => {
-    setPlaybackSpeed(prev => {
-      switch (prev) {
+    const newSpeed = (() => {
+      switch (playbackSpeed) {
         case 0.5: return 1;
         case 1: return 2;
         case 2: return 4;
         case 4: return 0.5;
         default: return 1;
       }
-    });
+    })();
+    setPlaybackSpeed(newSpeed);
   };
 
   const getCurrentProgress = (): number => {
