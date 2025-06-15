@@ -28,6 +28,7 @@ interface BulkPlacementActions {
   cancelBulkPlacement: () => void;
   setShowPreview: (show: boolean) => void;
   reset: () => void;
+  calculatePreview: () => void;
 }
 
 type BulkPlacementStore = BulkPlacementState & BulkPlacementActions;
@@ -64,16 +65,43 @@ export const useBulkPlacementStore = create<BulkPlacementStore>()(
         config: defaultConfig,
         preview: null,
         showPreview: false,
-        isCalculating: false,
+        isCalculating: true,
       });
 
-      // Since we can't await in the store initializer, we'll let a useEffect handle the first calculation
+      // Defer calculation to allow UI to update
+      setTimeout(() => get().calculatePreview(), 0);
     },
     
     updateConfig: (updates) => {
       const currentConfig = get().config;
       if (currentConfig) {
-        set({ config: { ...currentConfig, ...updates } });
+        set({ config: { ...currentConfig, ...updates }, isCalculating: true });
+        // Defer calculation to allow UI to update
+        setTimeout(() => get().calculatePreview(), 0);
+      }
+    },
+
+    calculatePreview: () => {
+      const { selectedSpecies, selectedBed, config } = get();
+      if (!selectedSpecies || !selectedBed || !config) {
+        set({ preview: null, isCalculating: false });
+        return;
+      }
+
+      try {
+        const { getPlacementsForBed } = usePlantPlacementStore.getState();
+        const existingPlacements = getPlacementsForBed(selectedBed.id);
+        
+        const previewResult = calculateBulkPlacement(
+          selectedBed,
+          selectedSpecies,
+          config,
+          existingPlacements
+        );
+        set({ preview: previewResult, isCalculating: false });
+      } catch (error) {
+        console.error('Error calculating bulk placement:', error);
+        set({ preview: null, isCalculating: false });
       }
     },
 
