@@ -1,6 +1,7 @@
+
 import React, { useState, useMemo, useCallback } from 'react';
 import { PlantSpecies, PlantCategory, CompatibilityLevel } from '../types/species.types';
-import { mockPlantSpecies } from '../data/mockSpecies';
+import { mockSpecies } from '../data/mockSpecies';
 import { usePlantPlacementStore } from '../stores/plantPlacementStore';
 import { useBedStore } from '../stores/bedStore';
 import { useBulkPlacement } from '../hooks/useBulkPlacement';
@@ -59,7 +60,7 @@ export const PlantSelectionPanelContent: React.FC<PlantSelectionPanelContentProp
   const showBulkButton = focusMode.isActive;
 
   const filteredSpecies = useMemo(() => {
-    return mockPlantSpecies.filter(species => {
+    return mockSpecies.filter(species => {
       // Search term filter
       const matchesSearch = searchTerm === '' || 
         species.commonName.toLowerCase().includes(searchTerm.toLowerCase()) ||
