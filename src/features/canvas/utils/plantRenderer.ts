@@ -30,9 +30,14 @@ export const drawPlantPlacements = (
   const bedScreenX = (displayWidth / 2) + (bed.position.x - viewport.centerX) * pixelsPerMeter;
   const bedScreenY = (displayHeight / 2) - (bed.position.y - viewport.centerY) * pixelsPerMeter;
 
-  // Create clipping path for bed shape
+  // Save context before potentially clipping
   ctx.save();
-  createBedClippingPath(ctx, bed, bedScreenX, bedScreenY, pixelsPerMeter);
+  
+  // Clip to bed shape ONLY when not in timeline growth view.
+  // This allows canopies to grow beyond bed boundaries.
+  if (growthMonth === undefined) {
+    createBedClippingPath(ctx, bed, bedScreenX, bedScreenY, pixelsPerMeter);
+  }
 
   // Draw existing placements with growth timeline
   placements.forEach(placement => {
@@ -86,6 +91,7 @@ export const drawPlantPlacements = (
     drawPlant(ctx, previewScreenX, previewScreenY, null, false, true, false, growthMonth);
   }
 
+  // Restore from save, removing clipping path if it was applied
   ctx.restore();
 
   // Draw enhanced selection area outside of clipping (so it shows over bed boundaries)
