@@ -15,23 +15,17 @@ export const useSelectionState = ({ onEnterFocus, onExitFocus }: UseSelectionSta
     toggleBedSelection 
   } = useBedStore();
 
-  // Handle focus mode when selection changes
+  // Handle selection changes without automatic focus mode
   const handleSelectionChange = useCallback((newSelectedIds: string[]) => {
     selectBeds(newSelectedIds);
-    
-    // Trigger focus mode for single selection, exit for multiple or no selection
-    if (newSelectedIds.length === 1) {
-      onEnterFocus?.(newSelectedIds[0]);
-    } else if (newSelectedIds.length !== 1) {
-      onExitFocus?.();
-    }
-  }, [selectBeds, onEnterFocus, onExitFocus]);
+    // Remove automatic focus mode trigger - let user explicitly enter focus mode
+  }, [selectBeds]);
 
-  // Handle focus mode when clearing selection
+  // Handle clearing selection without automatic focus exit
   const handleClearSelection = useCallback(() => {
     clearSelection();
-    onExitFocus?.();
-  }, [clearSelection, onExitFocus]);
+    // Remove automatic focus mode exit - let user explicitly exit focus mode
+  }, [clearSelection]);
 
   return {
     selectedBedIds,

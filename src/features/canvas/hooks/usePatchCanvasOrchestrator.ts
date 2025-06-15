@@ -43,7 +43,7 @@ export const usePatchCanvasOrchestrator = ({
     updateViewport
   });
 
-  // Find the focused bed for rendering and plant placement
+  // Get the focused bed directly from the beds array using the focused bed ID
   const focusedBed = focusedBedId ? beds.find(bed => bed.id === focusedBedId) : null;
 
   // Plant placement integration
@@ -98,15 +98,13 @@ export const usePatchCanvasOrchestrator = ({
     handleToolChange
   });
 
-  // Bed selection management
+  // Bed selection management - Updated to remove automatic focus mode
   const { startSelection, updateSelection, finishSelection, deleteSelected } = useBedSelection({ 
     viewport, 
     canvasRef,
-    onEnterFocus: handleEnterFocus,
-    onExitFocus: () => {
-      handleExitFocus();
-      cancelPlantPlacement(); // Cancel plant placement when exiting focus
-    }
+    // Remove automatic focus mode triggers
+    onEnterFocus: undefined,
+    onExitFocus: undefined
   });
 
   // Enhanced plant selection handler that integrates with both systems
@@ -140,7 +138,9 @@ export const usePatchCanvasOrchestrator = ({
     // Plant placement props
     viewport,
     focusedBed,
-    canvasRef
+    canvasRef,
+    // Add focus mode trigger to double-click
+    onEnterFocus: handleEnterFocus
   });
 
   const { isSaving } = useAutoSave();
@@ -209,7 +209,7 @@ export const usePatchCanvasOrchestrator = ({
     // Focus mode props
     isInFocusMode,
     focusedBedId,
-    focusedBed,
+    focusedBed, // Now properly derived from the store state
     onEnterFocus: handleEnterFocus,
     onExitFocus: handleExitFocus,
     // Plant placement integration

@@ -42,6 +42,7 @@ interface CanvasOverlaysProps {
   onExitFocus?: () => void;
   onOpenPlantSelection?: () => void;
   onSelectPlantSpecies?: (species: any) => void;
+  onEnterFocus?: (bedId: string) => void;
 }
 
 export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
@@ -76,7 +77,8 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
   focusedBedId = null,
   onExitFocus,
   onOpenPlantSelection,
-  onSelectPlantSpecies
+  onSelectPlantSpecies,
+  onEnterFocus
 }) => {
   const isMobile = useIsMobile();
 
@@ -116,6 +118,8 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
           bedsCount={beds.length}
           activeTool={tool}
           onToolChange={setTool}
+          // Add focus mode action for selected beds
+          onEnterFocus={selectedBedIds.length === 1 ? () => onEnterFocus?.(selectedBedIds[0]) : undefined}
         />
       )}
 
@@ -159,6 +163,7 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
           beds={beds}
           viewport={viewport}
           isInFocusMode={isInFocusMode}
+          onEnterFocus={selectedBedIds.length === 1 ? () => onEnterFocus?.(selectedBedIds[0]) : undefined}
         />
       )}
 
