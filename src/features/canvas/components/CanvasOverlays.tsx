@@ -33,6 +33,8 @@ interface CanvasOverlaysProps {
   gridSize?: number;
   isCollapsed?: boolean;
   onToggleCollapse?: (collapsed: boolean) => void;
+  placementBed?: any;
+  hasCollision?: boolean;
   // Focus mode props
   isInFocusMode?: boolean;
   focusedBedId?: string | null;
@@ -66,6 +68,8 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
   gridSize = 1,
   isCollapsed = false,
   onToggleCollapse,
+  placementBed,
+  hasCollision = false,
   // Focus mode props
   isInFocusMode = false,
   focusedBedId = null,
@@ -78,10 +82,16 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
   return (
     <>
       {/* Bed Confirmation Panel */}
-      {showConfirmation && (
+      {showConfirmation && placementBed && (
         <BedConfirmationPanel
+          bed={placementBed}
+          beds={beds}
+          bedConfig={bedConfig}
+          multiCreationMode={multiCreationMode}
+          onMultiCreationToggle={setMultiCreationMode}
           onConfirm={handleConfirmPlacement}
           onCancel={handleCancelPlacement}
+          hasCollision={hasCollision}
         />
       )}
 
@@ -102,6 +112,9 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
           onFitAll={handleFitAll}
+          bedsCount={beds.length}
+          activeTool={tool}
+          onToolChange={setTool}
         />
       )}
 
@@ -116,8 +129,8 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
           setMultiCreationMode={setMultiCreationMode}
           undo={undo}
           redo={redo}
-          canUndo={canUndo}
-          canRedo={canRedo}
+          canUndo={canUndo()}
+          canRedo={canRedo()}
           deleteSelected={deleteSelected}
           selectedBedIds={selectedBedIds}
           isSaving={isSaving}
@@ -135,8 +148,8 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
           setMultiCreationMode={setMultiCreationMode}
           undo={undo}
           redo={redo}
-          canUndo={canUndo}
-          canRedo={canRedo}
+          canUndo={canUndo()}
+          canRedo={canRedo()}
           deleteSelected={deleteSelected}
           beds={beds}
           selectedBedIds={selectedBedIds}
@@ -153,7 +166,7 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
           beds={beds}
           selectedBedIds={selectedBedIds}
           tool={tool}
-          gridSize={gridSize}
+          isMobile={isMobile}
         />
       )}
     </>

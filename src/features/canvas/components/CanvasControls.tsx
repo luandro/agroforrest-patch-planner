@@ -33,6 +33,8 @@ interface CanvasControlsProps {
   focusedBedId?: string | null;
   onExitFocus?: () => void;
   onEnterFocus?: (bedId: string) => void;
+  onOpenPlantSelection?: () => void;
+  onSelectPlantSpecies?: (species: any) => void;
 }
 
 export const CanvasControls: React.FC<CanvasControlsProps> = ({
@@ -59,7 +61,9 @@ export const CanvasControls: React.FC<CanvasControlsProps> = ({
   isInFocusMode = false,
   focusedBedId = null,
   onExitFocus,
-  onEnterFocus
+  onEnterFocus,
+  onOpenPlantSelection,
+  onSelectPlantSpecies
 }) => {
   const [showMobileControls, setShowMobileControls] = useState(false);
   const [showDesktopSidebar, setShowDesktopSidebar] = useState(true);
@@ -73,11 +77,14 @@ export const CanvasControls: React.FC<CanvasControlsProps> = ({
   return (
     <>
       {/* Focus Mode Controls */}
-      <FocusModeControls
-        isActive={isInFocusMode}
-        focusedBedId={focusedBedId}
-        onExitFocus={onExitFocus || (() => {})}
-      />
+      {isInFocusMode && focusedBedId && onExitFocus && (
+        <FocusModeControls
+          focusedBedId={focusedBedId}
+          onExitFocus={onExitFocus}
+          onOpenPlantSelection={onOpenPlantSelection || (() => {})}
+          onSelectSpecies={onSelectPlantSpecies}
+        />
+      )}
 
       {/* Enhanced MiniMap - hide during creation or focus mode */}
       {!shouldHideMiniMap && (
