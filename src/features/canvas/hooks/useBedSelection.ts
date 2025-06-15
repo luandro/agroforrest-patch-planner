@@ -1,8 +1,12 @@
 
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { useBedStore } from '../stores/bedStore';
-import { Bed, SelectionArea } from '../types/bed.types';
 import { CanvasViewport } from '../types/canvas.types';
+import { useSelectionState } from './useSelectionState';
+import { useSelectionArea } from './useSelectionArea';
+import { useBedDragging } from './useBedDragging';
+import { useCoordinateTransforms } from './useCoordinateTransforms';
+import { useBedHitTesting } from './useBedHitTesting';
 
 interface UseBedSelectionProps {
   viewport: CanvasViewport;
@@ -12,89 +16,47 @@ interface UseBedSelectionProps {
 }
 
 export const useBedSelection = ({ viewport, canvasRef, onEnterFocus, onExitFocus }: UseBedSelectionProps) => {
+  const { removeBeds } = useBedStore();
+
+  // Coordinate transformation utilities
+  const { canvasToWorld } = useCoordinateTransforms({ viewport, canvasRef });
+
+  // Selection state management
   const { 
-    beds, 
     selectedBedIds, 
-    selectBeds, 
-    clearSelection, 
-    toggleBedSelection,
-    updateBed,
-    removeBeds 
-  } = useBedStore();
+    handleSelectionChange, 
+    handleClearSelection, 
+    toggleBedSelection 
+  } = useSelectionState({ onEnterFocus, onExitFocus });
 
-  const [isSelecting, setIsSelecting] = useState(false);
-  const [selectionArea, setSelectionArea] = useState<SelectionArea | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
+  // Area selection functionality
+  const {
+    isSelecting,
+    selectionArea,
+    startAreaSelection,
+    updateAreaSelection,
+    finishAreaSelection,
+    getSelectionBounds
+  } = useSelectionArea();
 
-  // Handle focus mode when selection changes
-  const handleSelectionChange = useCallback((newSelectedIds: string[]) => {
-    selectBeds(newSelectedIds);
-    
-    // Trigger focus mode for single selection, exit for multiple or no selection
-    if (newSelectedIds.length === 1) {
-      onEnterFocus?.(newSelectedIds[0]);
-    } else if (newSelectedIds.length !== 1) {
-      onExitFocus?.();
-    }
-  }, [selectBeds, onEnterFocus, onExitFocus]);
+  // Bed dragging functionality
+  const {
+    isDragging,
+    startDragging,
+    updateDragging,
+    finishDragging
+  } = useBedDragging();
 
-  // Handle focus mode when clearing selection
-  const handleClearSelection = useCallback(() => {
-    clearSelection();
-    onExitFocus?.();
-  }, [clearSelection, onExitFocus]);
-
-  // Convert canvas-relative coordinates to world coordinates
-  const canvasToWorld = useCallback((canvasX: number, canvasY: number): { x: number; y: number } => {
-    const canvas = canvasRef?.current;
-    if (!canvas) return { x: 0, y: 0 };
-
-    // Get canvas display dimensions
-    const displayWidth = canvas.clientWidth;
-    const displayHeight = canvas.clientHeight;
-    
-    // Scale factor: pixels per meter in world space
-    const pixelsPerMeter = 50 * viewport.zoom;
-    
-    // Convert canvas-relative coordinates to world coordinates with proper centering
-    const worldX = viewport.centerX + (canvasX - displayWidth / 2) / pixelsPerMeter;
-    const worldY = viewport.centerY - (canvasY - displayHeight / 2) / pixelsPerMeter;
-    
-    return { x: worldX, y: worldY };
-  }, [viewport, canvasRef]);
-
-  // Check if a point is inside a bed
-  const isPointInBed = useCallback((x: number, y: number, bed: Bed): boolean => {
-    const dx = x - bed.position.x;
-    const dy = y - bed.position.y;
-
-    if (bed.shape === 'circle') {
-      const radius = bed.dimensions.radius || 0;
-      return Math.sqrt(dx * dx + dy * dy) <= radius;
-    } else {
-      const length = bed.dimensions.length || 0;
-      const width = bed.dimensions.width || 0;
-      return Math.abs(dx) <= length / 2 && Math.abs(dy) <= width / 2;
-    }
-  }, []);
+  // Hit testing utilities
+  const { getBedAtWorldPoint, getBedsInArea } = useBedHitTesting();
 
   // Find bed at canvas coordinates
-  const getBedAtPoint = useCallback((canvasX: number, canvasY: number): Bed | null => {
+  const getBedAtPoint = useCallback((canvasX: number, canvasY: number) => {
     const worldPos = canvasToWorld(canvasX, canvasY);
-    
-    // Check beds in reverse order (top to bottom in visual stack)
-    for (let i = beds.length - 1; i >= 0; i--) {
-      const bed = beds[i];
-      if (isPointInBed(worldPos.x, worldPos.y, bed)) {
-        return bed;
-      }
-    }
-    
-    return null;
-  }, [beds, canvasToWorld, isPointInBed]);
+    return getBedAtWorldPoint(worldPos.x, worldPos.y);
+  }, [canvasToWorld, getBedAtWorldPoint]);
 
-  // Start selection (single click or area selection) - now takes canvas-relative coordinates
+  // Start selection (single click or area selection) - takes canvas-relative coordinates
   const startSelection = useCallback((canvasX: number, canvasY: number, isMultiSelect: boolean = false) => {
     const bed = getBedAtPoint(canvasX, canvasY);
     
@@ -115,8 +77,8 @@ export const useBedSelection = ({ viewport, canvasRef, onEnterFocus, onExitFocus
       } else {
         if (selectedBedIds.includes(bed.id)) {
           // Already selected, start dragging
-          setIsDragging(true);
-          setDragStart(canvasToWorld(canvasX, canvasY));
+          const worldPos = canvasToWorld(canvasX, canvasY);
+          startDragging(worldPos.x, worldPos.y);
         } else {
           // Select this bed and enter focus mode
           handleSelectionChange([bed.id]);
@@ -129,74 +91,37 @@ export const useBedSelection = ({ viewport, canvasRef, onEnterFocus, onExitFocus
       }
       
       // Start area selection
-      setIsSelecting(true);
       const worldPos = canvasToWorld(canvasX, canvasY);
-      setSelectionArea({
-        startX: worldPos.x,
-        startY: worldPos.y,
-        endX: worldPos.x,
-        endY: worldPos.y
-      });
+      startAreaSelection(worldPos.x, worldPos.y);
     }
-  }, [getBedAtPoint, selectedBedIds, toggleBedSelection, handleSelectionChange, handleClearSelection, canvasToWorld, onEnterFocus, onExitFocus]);
+  }, [getBedAtPoint, selectedBedIds, toggleBedSelection, handleSelectionChange, handleClearSelection, canvasToWorld, startDragging, startAreaSelection, onEnterFocus, onExitFocus]);
 
-  // Update selection area or drag selected beds - now takes canvas-relative coordinates
+  // Update selection area or drag selected beds - takes canvas-relative coordinates
   const updateSelection = useCallback((canvasX: number, canvasY: number) => {
     const worldPos = canvasToWorld(canvasX, canvasY);
 
-    if (isSelecting && selectionArea) {
-      // Update selection area
-      setSelectionArea({
-        ...selectionArea,
-        endX: worldPos.x,
-        endY: worldPos.y
-      });
-    } else if (isDragging && dragStart) {
-      // Drag selected beds
-      const deltaX = worldPos.x - dragStart.x;
-      const deltaY = worldPos.y - dragStart.y;
-
-      selectedBedIds.forEach(bedId => {
-        const bed = beds.find(b => b.id === bedId);
-        if (bed) {
-          updateBed(bedId, {
-            position: {
-              x: bed.position.x + deltaX,
-              y: bed.position.y + deltaY
-            }
-          });
-        }
-      });
-
-      setDragStart(worldPos);
+    if (isSelecting) {
+      updateAreaSelection(worldPos.x, worldPos.y);
+    } else if (isDragging) {
+      updateDragging(worldPos.x, worldPos.y);
     }
-  }, [isSelecting, selectionArea, isDragging, dragStart, canvasToWorld, selectedBedIds, beds, updateBed]);
+  }, [isSelecting, isDragging, canvasToWorld, updateAreaSelection, updateDragging]);
 
   // Finish selection
   const finishSelection = useCallback(() => {
-    if (isSelecting && selectionArea) {
-      // Select all beds in selection area
-      const minX = Math.min(selectionArea.startX, selectionArea.endX);
-      const maxX = Math.max(selectionArea.startX, selectionArea.endX);
-      const minY = Math.min(selectionArea.startY, selectionArea.endY);
-      const maxY = Math.max(selectionArea.startY, selectionArea.endY);
-
-      const selectedIds = beds
-        .filter(bed => 
-          bed.position.x >= minX && bed.position.x <= maxX &&
-          bed.position.y >= minY && bed.position.y <= maxY
-        )
-        .map(bed => bed.id);
-
-      handleSelectionChange(selectedIds);
+    if (isSelecting) {
+      const bounds = getSelectionBounds();
+      if (bounds) {
+        const selectedIds = getBedsInArea(bounds.minX, bounds.maxX, bounds.minY, bounds.maxY);
+        handleSelectionChange(selectedIds);
+      }
+      finishAreaSelection();
     }
 
-    // Reset state
-    setIsSelecting(false);
-    setSelectionArea(null);
-    setIsDragging(false);
-    setDragStart(null);
-  }, [isSelecting, selectionArea, beds, handleSelectionChange]);
+    if (isDragging) {
+      finishDragging();
+    }
+  }, [isSelecting, isDragging, getSelectionBounds, getBedsInArea, handleSelectionChange, finishAreaSelection, finishDragging]);
 
   // Delete selected beds
   const deleteSelected = useCallback(() => {
