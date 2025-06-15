@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { PlantSpecies, PlantCategory, CompatibilityLevel } from '../types/species.types';
 import { mockPlantSpecies } from '../data/mockSpecies';
 import { usePlantPlacementStore } from '../stores/plantPlacementStore';
@@ -13,6 +13,36 @@ interface PlantSelectionPanelContentProps {
   onSelectSpecies: (species: PlantSpecies) => void;
 }
 
+const BulkPlacementManager: React.FC<{
+  speciesForBulk: PlantSpecies;
+  onCancel: () => void;
+}> = ({ speciesForBulk, onCancel }) => {
+  const bulkPlacement = useBulkPlacement();
+
+  const { initializeBulkPlacement } = bulkPlacement;
+  React.useEffect(() => {
+    if (initializeBulkPlacement) {
+      initializeBulkPlacement(speciesForBulk);
+    }
+  }, [speciesForBulk, initializeBulkPlacement]);
+
+  const { isActive } = bulkPlacement;
+  React.useEffect(() => {
+    // When bulk placement is finished/cancelled, it becomes inactive.
+    // We then trigger the onCancel callback to switch back to the individual tab.
+    if (!isActive) {
+      // Use a timeout to avoid state update loops if isActive flips rapidly.
+      const timer = setTimeout(() => {
+        onCancel();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [isActive, onCancel]);
+
+  return <PlantSelectionBulkMode bulkPlacementProps={bulkPlacement} />;
+};
+
+
 export const PlantSelectionPanelContent: React.FC<PlantSelectionPanelContentProps> = ({
   onSelectSpecies
 }) => {
@@ -21,12 +51,11 @@ export const PlantSelectionPanelContent: React.FC<PlantSelectionPanelContentProp
   const [selectedCompatibility, setSelectedCompatibility] = useState<CompatibilityLevel | 'all'>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState<'individual' | 'bulk'>('individual');
+  const [speciesForBulk, setSpeciesForBulk] = useState<PlantSpecies | null>(null);
 
   const { selectedSpecies, isPlacing } = usePlantPlacementStore();
   const { focusMode } = useBedStore();
-  const bulkPlacement = useBulkPlacement();
 
-  // Show bulk buttons only when a bed is in focus mode
   const showBulkButton = focusMode.isActive;
 
   const filteredSpecies = useMemo(() => {
@@ -75,21 +104,32 @@ export const PlantSelectionPanelContent: React.FC<PlantSelectionPanelContentProp
 
   const hasActiveFilters = selectedCategory !== 'all' || selectedCompatibility !== 'all' || searchTerm !== '';
 
-  // Auto-switch tabs based on bulk placement state
-  React.useEffect(() => {
-    if (bulkPlacement.isActive) {
-      setActiveTab('bulk');
-    } else if (activeTab === 'bulk' && !bulkPlacement.isActive) {
-      setActiveTab('individual');
+  const handleStartBulkPlacement = useCallback((species: PlantSpecies) => {
+    setSpeciesForBulk(species);
+    setActiveTab('bulk');
+  }, []);
+
+  const handleCancelBulkPlacement = useCallback(() => {
+    setSpeciesForBulk(null);
+    setActiveTab('individual');
+  }, []);
+
+  const handleTabChange = useCallback((tab: 'individual' | 'bulk') => {
+    if (tab === 'individual' && activeTab === 'bulk') {
+      // If user manually clicks "Individual" tab, cancel bulk placement.
+      handleCancelBulkPlacement();
+    } else {
+      setActiveTab(tab);
     }
-  }, [bulkPlacement.isActive, activeTab]);
+  }, [activeTab, handleCancelBulkPlacement]);
+
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       {/* Mode Tabs */}
       <PlantSelectionTabs
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
       />
 
       {activeTab === 'individual' ? (
@@ -109,13 +149,16 @@ export const PlantSelectionPanelContent: React.FC<PlantSelectionPanelContentProp
           selectedSpecies={selectedSpecies}
           isPlacing={isPlacing}
           onSelectSpecies={handleSpeciesSelect}
-          onBulkSelect={(species) => {
-            bulkPlacement.initializeBulkPlacement(species);
-          }}
+          onBulkSelect={handleStartBulkPlacement}
           showBulkButton={showBulkButton}
         />
+      ) : speciesForBulk ? (
+        <BulkPlacementManager 
+          speciesForBulk={speciesForBulk}
+          onCancel={handleCancelBulkPlacement}
+        />
       ) : (
-        <PlantSelectionBulkMode bulkPlacementProps={bulkPlacement} />
+        <PlantSelectionBulkMode bulkPlacementProps={{ isActive: false } as any} />
       )}
     </div>
   );
