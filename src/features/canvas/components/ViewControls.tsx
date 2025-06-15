@@ -5,7 +5,8 @@ import { cn } from '@/lib/utils';
 import { CanvasTool } from '../types/bed.types';
 import { 
   Square, 
-  Move
+  Move,
+  Sprout
 } from 'lucide-react';
 
 interface ViewControlsProps {
@@ -16,6 +17,7 @@ interface ViewControlsProps {
   bedsCount: number;
   activeTool: CanvasTool;
   onToolChange: (tool: CanvasTool) => void;
+  onOpenPlantSelection?: () => void;
   className?: string;
   hideZoomControls?: boolean;
 }
@@ -28,6 +30,7 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
   bedsCount,
   activeTool,
   onToolChange,
+  onOpenPlantSelection,
   className,
   hideZoomControls = false
 }) => {
@@ -132,6 +135,23 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
           </Button>
         );
       })}
+
+      {/* Plant Selection Button */}
+      {onOpenPlantSelection && (
+        <>
+          <div className="w-full h-px bg-gray-300 my-1" />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onOpenPlantSelection}
+            className="w-11 h-11 p-0 touch-manipulation hover:bg-green-50 hover:border-green-300"
+            title="Selecionar plantas"
+            aria-label="Abrir seleção de plantas"
+          >
+            <Sprout className="w-5 h-5 text-green-600" />
+          </Button>
+        </>
+      )}
     </div>
   );
 };

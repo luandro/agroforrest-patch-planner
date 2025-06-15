@@ -2,12 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import PatchCanvas from '../features/canvas/components/PatchCanvas';
 import MainLayout from '../components/layout/MainLayout';
+import { PlantSelectionPanel } from '../features/canvas/components/PlantSelectionPanel';
 import { CanvasViewport } from '../features/canvas/types/canvas.types';
+import { PlantSpecies } from '../features/canvas/types/species.types';
 import { useBedStore } from '../features/canvas/stores/bedStore';
 
 const PatchCreatorPage: React.FC = () => {
   const [viewport, setViewport] = useState<CanvasViewport | null>(null);
   const [fps, setFps] = useState(0);
+  const [isPlantSelectionOpen, setIsPlantSelectionOpen] = useState(false);
   const { beds, selectedBedIds, tool, setTool, loadBeds } = useBedStore();
 
   // Ensure pan tool is default on page load
@@ -34,6 +37,20 @@ const PatchCreatorPage: React.FC = () => {
     loadBeds([]);
     setTool('pan');
     console.log('Creating new patch');
+  };
+
+  const handleOpenPlantSelection = () => {
+    setIsPlantSelectionOpen(true);
+  };
+
+  const handleClosePlantSelection = () => {
+    setIsPlantSelectionOpen(false);
+  };
+
+  const handleSelectSpecies = (species: PlantSpecies) => {
+    console.log('Selected species:', species);
+    // TODO: Add logic to associate plant with selected bed or create planting plan
+    // For now, just log the selection
   };
 
   // FPS counter for development
@@ -87,11 +104,20 @@ const PatchCreatorPage: React.FC = () => {
       <main className="relative">
         <PatchCanvas
           onViewportChange={handleViewportChange}
+          onOpenPlantSelection={handleOpenPlantSelection}
           gridSize={1}
           minZoom={0.5}
           maxZoom={5}
         />
       </main>
+
+      {/* Plant Selection Panel */}
+      <PlantSelectionPanel
+        isOpen={isPlantSelectionOpen}
+        onClose={handleClosePlantSelection}
+        onSelectSpecies={handleSelectSpecies}
+        selectedBedId={selectedBedIds[0]} // Pass first selected bed if any
+      />
 
       {/* Hidden stats for development */}
       {process.env.NODE_ENV === 'development' && viewport && (
