@@ -5,3 +5,5 @@ import React from 'react';
 // It is kept for legacy purposes but all features are now controlled from CanvasOverlays.
 
 export const CanvasControls: React.FC = () => null;
+
+export default CanvasControls;
