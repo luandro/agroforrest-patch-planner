@@ -21,7 +21,7 @@ export const PlantSelectionPanelContent: React.FC<PlantSelectionPanelContentProp
   const [activeTab, setActiveTab] = useState<'individual' | 'bulk'>('individual');
 
   const { selectedSpecies, isPlacing } = usePlantPlacementStore();
-  const { isActive: isBulkActive, initializeBulkPlacement } = useBulkPlacement();
+  const bulkPlacement = useBulkPlacement();
 
   const filteredSpecies = useMemo(() => {
     return mockPlantSpecies.filter(species => {
@@ -57,13 +57,8 @@ export const PlantSelectionPanelContent: React.FC<PlantSelectionPanelContentProp
   }, [filteredSpecies]);
 
   const handleSpeciesSelect = (species: PlantSpecies) => {
-    if (activeTab === 'bulk') {
-      initializeBulkPlacement(species);
-    } else {
-      // Direct selection - immediately enters placement mode
-      onSelectSpecies(species);
-    }
-    // Keep panel open for easy species switching
+    // Direct selection - immediately enters placement mode
+    onSelectSpecies(species);
   };
 
   const clearFilters = () => {
@@ -74,26 +69,24 @@ export const PlantSelectionPanelContent: React.FC<PlantSelectionPanelContentProp
 
   const hasActiveFilters = selectedCategory !== 'all' || selectedCompatibility !== 'all' || searchTerm !== '';
 
-  // Auto-switch to bulk tab when bulk placement is active
+  // Auto-switch tabs based on bulk placement state
   React.useEffect(() => {
-    if (isBulkActive) {
+    if (bulkPlacement.isActive) {
       setActiveTab('bulk');
+    } else if (activeTab === 'bulk' && !bulkPlacement.isActive) {
+      setActiveTab('individual');
     }
-  }, [isBulkActive]);
+  }, [bulkPlacement.isActive, activeTab]);
 
   return (
-    <>
+    <div className="flex flex-col flex-1 overflow-hidden">
       {/* Mode Tabs */}
       <PlantSelectionTabs
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
 
-      {activeTab === 'bulk' && isBulkActive ? (
-        /* Bulk Placement Mode */
-        <PlantSelectionBulkMode isBulkActive={isBulkActive} />
-      ) : (
-        /* Individual Placement Mode */
+      {activeTab === 'individual' ? (
         <PlantSelectionIndividualMode
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
@@ -111,11 +104,12 @@ export const PlantSelectionPanelContent: React.FC<PlantSelectionPanelContentProp
           isPlacing={isPlacing}
           onSelectSpecies={handleSpeciesSelect}
           onBulkSelect={(species) => {
-            setActiveTab('bulk');
-            initializeBulkPlacement(species);
+            bulkPlacement.initializeBulkPlacement(species);
           }}
         />
+      ) : (
+        <PlantSelectionBulkMode bulkPlacementProps={bulkPlacement} />
       )}
-    </>
+    </div>
   );
 };

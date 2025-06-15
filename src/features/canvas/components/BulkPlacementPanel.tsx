@@ -7,36 +7,44 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { useBulkPlacement } from '../hooks/useBulkPlacement';
-import { BulkPlacementConfig } from '../types/bulkPlacement.types';
+import { BulkPlacementConfig, BulkPlacementPreview } from '../types/bulkPlacement.types';
+import { PlantSpecies } from '../types/species.types';
+import { Bed } from '../types/bed.types';
 import { Eye, Grid3X3, Rows, Triangle, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BulkPlacementPanelProps {
   className?: string;
+  selectedSpecies: PlantSpecies | null;
+  selectedBed: Bed | null;
+  config: BulkPlacementConfig | null;
+  preview: BulkPlacementPreview | null;
+  showPreview: boolean;
+  isCalculating: boolean;
+  canExecute: boolean;
+  hasConflicts: boolean;
+  updateConfig: (updates: Partial<BulkPlacementConfig>) => void;
+  executeBulkPlacement: () => boolean;
+  cancelBulkPlacement: () => void;
+  setShowPreview: (show: boolean) => void;
 }
 
 export const BulkPlacementPanel: React.FC<BulkPlacementPanelProps> = ({
-  className
+  className,
+  selectedSpecies,
+  selectedBed,
+  config,
+  preview,
+  showPreview,
+  isCalculating,
+  canExecute,
+  hasConflicts,
+  updateConfig,
+  executeBulkPlacement,
+  cancelBulkPlacement,
+  setShowPreview,
 }) => {
-  const {
-    isActive,
-    selectedSpecies,
-    selectedBed,
-    config,
-    preview,
-    showPreview,
-    isCalculating,
-    canExecute,
-    hasConflicts,
-    updateConfig,
-    calculatePreview,
-    executeBulkPlacement,
-    cancelBulkPlacement,
-    setShowPreview
-  } = useBulkPlacement();
-
-  if (!isActive || !selectedSpecies || !selectedBed || !config) {
+  if (!selectedSpecies || !selectedBed || !config) {
     return null;
   }
 

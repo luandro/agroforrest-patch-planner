@@ -13,11 +13,11 @@ import { BulkPlacementConfig } from '../types/bulkPlacement.types';
 export const useBulkPlacement = () => {
   const bulkStore = useBulkPlacementStore();
   const { addPlacement, getPlacementsForBed } = usePlantPlacementStore();
-  const { focusMode } = useBedStore();
+  const { beds, focusMode } = useBedStore();
 
   // Get current focused bed
   const focusedBed = focusMode.isActive && focusMode.bedId 
-    ? useBedStore().beds.find(b => b.id === focusMode.bedId) || null
+    ? beds.find(b => b.id === focusMode.bedId) || null
     : null;
 
   // Initialize bulk placement for a species
