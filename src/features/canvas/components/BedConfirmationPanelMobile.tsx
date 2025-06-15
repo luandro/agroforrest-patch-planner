@@ -43,6 +43,14 @@ export const BedConfirmationPanelMobile: React.FC<BedConfirmationPanelProps> = (
   const actualBedsCount = beds.length > 0 ? beds.length : bedConfig.quantity;
 
   return (
+    <>
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black/50 z-40"
+        onClick={onCancel}
+      />
+      
+      {/* Modal Panel */}
       <div className={`fixed inset-x-0 bottom-0 z-50 bg-white border-t border-gray-200 shadow-lg animate-slide-in-bottom ${className}`}>
         <div className="p-4">
           {/* Handle bar */}
@@ -120,5 +128,6 @@ export const BedConfirmationPanelMobile: React.FC<BedConfirmationPanelProps> = (
           </div>
         </div>
       </div>
-    );
+    </>
+  );
 };

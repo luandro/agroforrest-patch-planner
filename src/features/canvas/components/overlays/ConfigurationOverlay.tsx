@@ -37,10 +37,15 @@ export const ConfigurationOverlay: React.FC<ConfigurationOverlayProps> = ({
   cancelCreation,
   isInFocusMode
 }) => {
+  // Don't render any configuration overlays in focus mode
+  if (isInFocusMode) {
+    return null;
+  }
+
   return (
     <>
-      {/* Bed Configuration Panel */}
-      {isCreating && tool === 'create-rectangle' && !showConfirmation && !isInFocusMode && (
+      {/* Bed Configuration Panel - only show when creating and NOT confirming */}
+      {isCreating && tool === 'create-rectangle' && !showConfirmation && (
         <BedConfigPanel
           config={bedConfig}
           onConfigChange={updateBedConfig}
@@ -48,8 +53,8 @@ export const ConfigurationOverlay: React.FC<ConfigurationOverlayProps> = ({
         />
       )}
 
-      {/* Bed Confirmation Panel */}
-      {showConfirmation && placementBed && !isInFocusMode && (
+      {/* Bed Confirmation Panel - only show when confirmation is needed */}
+      {showConfirmation && placementBed && (
         <BedConfirmationPanel
           bed={placementBed}
           beds={beds}

@@ -80,7 +80,17 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
   };
 
   const shouldShowFAB = activeTool !== 'pan' || canUndo || canRedo;
-  const isFABHidden = showConfirmation;
+  // Hide FAB when confirmation modal is shown or in focus mode
+  const isFABHidden = showConfirmation || isInFocusMode;
+
+  // Don't render mobile controls in focus mode
+  if (isInFocusMode) {
+    return (
+      <div className="fixed top-20 right-4 z-30">
+        <SaveStatus isSaving={isSaving} />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -89,7 +99,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
         <div className={cn(
           "fixed transition-all duration-200",
           // Bottom-right positioning that avoids conflicts
-          "bottom-6 right-4 z-40",
+          "bottom-6 right-4 z-30", // Reduced z-index to be below modals
           // Responsive behavior
           "sm:bottom-8 sm:right-6",
           // Visibility states
@@ -125,7 +135,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
               activeTool === 'pan' && "bg-blue-600 hover:bg-blue-700 active:bg-blue-800",
               // Visibility states
               isVisible && !isFABHidden && "scale-110",
-              isFABHidden && "pointer-events-none"
+              isFABHidden && "pointer-events-none opacity-0"
             )}
             onClick={() => !isFABHidden && onToggle(!isVisible)}
             disabled={isFABHidden}
@@ -137,14 +147,14 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
       )}
 
       {/* Save Status - Positioned to avoid header overlap */}
-      <div className="fixed top-20 right-4 z-30">
+      <div className="fixed top-20 right-4 z-20">
         <SaveStatus isSaving={isSaving} />
       </div>
 
-      {/* Backdrop - Proper z-index for mobile interaction */}
+      {/* Backdrop - Proper z-index for mobile interaction, only show when FAB is visible */}
       {isVisible && !isFABHidden && (
         <div 
-          className="fixed inset-0 bg-black/20 z-30 touch-manipulation"
+          className="fixed inset-0 bg-black/20 z-20 touch-manipulation"
           onClick={() => onToggle(false)}
         />
       )}
