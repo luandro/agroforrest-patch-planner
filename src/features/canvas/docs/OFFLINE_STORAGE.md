@@ -60,6 +60,7 @@ Automatic Saving on Changes
 - **Debounced**: Prevents excessive saves during rapid changes
 - **Ordered**: Saves patches first, then beds, then plants
 - **Coordinated**: Prevents race conditions between different data types
+- **Optimized**: Uses upsert operations instead of full rebuilds for better performance
 
 ### ✅ Data Integrity
 - **Patch Association**: All beds and plants are properly linked to patches
@@ -154,9 +155,9 @@ Each bed belongs to one patch, and each plant placement belongs to one bed and o
 ### Auto-Save Timing
 
 - **Patches**: 2 seconds debounce
-- **Beds**: 3 seconds debounce
+- **Beds**: 3 seconds debounce  
 - **Plants**: 5 seconds debounce
-- **Periodic Save**: Every 30 seconds if dirty
+- **Periodic Save**: Every 10 seconds if dirty (testing mode)
 
 ### Storage Keys (localStorage fallback)
 

@@ -6,6 +6,8 @@ import {
   openDB,
   saveToLocalStorageFallback,
   loadFromLocalStorageFallback,
+  upsertBedsForPatch,
+  loadPatchData,
   BEDS_STORE_NAME
 } from '../utils/storageManager';
 
@@ -37,65 +39,8 @@ export const useAutoSave = ({ debounceMs = 3000 }: UseAutoSaveProps = {}) => {
       setSaveError(null);
       console.log('💾 Saving beds to storage for patch:', currentPatchId, 'beds count:', beds.length);
 
-      // Try IndexedDB first, fallback to localStorage
-      try {
-        const db = await openDB();
-        const transaction = db.transaction([BEDS_STORE_NAME], 'readwrite');
-        const store = transaction.objectStore(BEDS_STORE_NAME);
-
-        // Get all existing beds to filter out old patch beds
-        const getAllRequest = store.getAll();
-        const allBeds = await new Promise<any[]>((resolve, reject) => {
-          getAllRequest.onsuccess = () => resolve(getAllRequest.result || []);
-          getAllRequest.onerror = () => reject(new Error('Failed to get existing beds'));
-        });
-
-        // Filter out beds from current patch
-        const otherPatchBeds = allBeds.filter(bed => bed.patchId !== currentPatchId);
-
-        // Clear and rebuild with all beds
-        store.clear();
-
-        // Add beds from other patches
-        otherPatchBeds.forEach(bed => {
-          store.add(bed);
-        });
-
-        // Add current patch beds with patch reference
-        const bedsWithPatch = beds.map(bed => ({
-          ...bed,
-          patchId: currentPatchId
-        }));
-
-        bedsWithPatch.forEach(bed => {
-          store.add(bed);
-        });
-
-        await new Promise<void>((resolve, reject) => {
-          transaction.oncomplete = () => resolve();
-          transaction.onerror = () => {
-            console.error('Transaction error:', transaction.error);
-            reject(new Error('Failed to save beds'));
-          };
-        });
-
-        db.close();
-      } catch (indexedDBError) {
-        console.warn('⚠️ IndexedDB failed, using localStorage fallback:', indexedDBError);
-
-        // Load existing beds from localStorage
-        const existingBeds = loadFromLocalStorageFallback('beds', []);
-        const otherPatchBeds = existingBeds.filter((bed: any) => bed.patchId !== currentPatchId);
-
-        // Add current patch beds
-        const bedsWithPatch = beds.map(bed => ({
-          ...bed,
-          patchId: currentPatchId
-        }));
-
-        const allBeds = [...otherPatchBeds, ...bedsWithPatch];
-        saveToLocalStorageFallback('beds', allBeds);
-      }
+      // Use optimized upsert operation for current patch
+      await upsertBedsForPatch(currentPatchId, beds);
 
       markClean();
       console.log('✅ Beds saved successfully for patch:', currentPatchId);
@@ -118,43 +63,10 @@ export const useAutoSave = ({ debounceMs = 3000 }: UseAutoSaveProps = {}) => {
     try {
       console.log('📂 Loading beds from storage for patch:', currentPatchId);
 
-      // Try IndexedDB first, fallback to localStorage
-      try {
-        const db = await openDB();
-        if (!db.objectStoreNames.contains(BEDS_STORE_NAME)) {
-          console.log('🆕 Beds store does not exist yet. It will be created.');
-          loadBeds([]);
-          db.close();
-          return;
-        }
-
-        const transaction = db.transaction([BEDS_STORE_NAME], 'readonly');
-        const store = transaction.objectStore(BEDS_STORE_NAME);
-        const getAllRequest = store.getAll();
-
-        const allBeds = await new Promise<any[]>((resolve, reject) => {
-          getAllRequest.onsuccess = () => resolve(getAllRequest.result || []);
-          getAllRequest.onerror = () => {
-            console.error('Get all request error:', getAllRequest.error);
-            reject(new Error('Failed to load beds'));
-          };
-        });
-
-        // Filter beds for current patch
-        const patchBeds = allBeds.filter(bed => bed.patchId === currentPatchId);
-        loadBeds(patchBeds);
-        console.log('✅ Beds loaded successfully for patch:', currentPatchId, 'count:', patchBeds.length);
-
-        db.close();
-      } catch (indexedDBError) {
-        console.warn('⚠️ IndexedDB failed, using localStorage fallback:', indexedDBError);
-
-        // Load from localStorage fallback
-        const allBeds = loadFromLocalStorageFallback('beds', []);
-        const patchBeds = allBeds.filter((bed: any) => bed.patchId === currentPatchId);
-        loadBeds(patchBeds);
-        console.log('✅ Beds loaded from localStorage for patch:', currentPatchId, 'count:', patchBeds.length);
-      }
+      // Use optimized patch data loading
+      const { beds: patchBeds } = await loadPatchData(currentPatchId);
+      loadBeds(patchBeds);
+      console.log('✅ Beds loaded successfully for patch:', currentPatchId, 'count:', patchBeds.length);
     } catch (error) {
       console.error('❌ Failed to load beds:', error);
       loadBeds([]);
@@ -190,12 +102,12 @@ export const useAutoSave = ({ debounceMs = 3000 }: UseAutoSaveProps = {}) => {
     loadBedsFromStorage();
   }, [currentPatchId]);
 
-  const manualSave = () => {
+  const manualSave = async (): Promise<void> => {
     console.log('🔧 Manual beds save triggered for patch:', currentPatchId);
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    saveBeds();
+    return await saveBeds();
   };
 
   return {

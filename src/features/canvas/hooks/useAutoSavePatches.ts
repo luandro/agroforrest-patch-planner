@@ -6,6 +6,7 @@ import {
   openDB,
   saveToLocalStorageFallback,
   loadFromLocalStorageFallback,
+  upsertPatches,
   PATCHES_STORE_NAME
 } from '../utils/storageManager';
 
@@ -34,31 +35,8 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
       setSaveError(null);
       console.log('💾 Saving patches to storage...', patches.length);
 
-      // Try IndexedDB first, fallback to localStorage
-      try {
-        const db = await openDB();
-        const transaction = db.transaction([PATCHES_STORE_NAME], 'readwrite');
-        const store = transaction.objectStore(PATCHES_STORE_NAME);
-
-        // Clear and save all patches
-        store.clear();
-        patches.forEach(patch => {
-          store.add(patch);
-        });
-
-        await new Promise<void>((resolve, reject) => {
-          transaction.oncomplete = () => resolve();
-          transaction.onerror = () => {
-            console.error('Transaction error:', transaction.error);
-            reject(new Error('Failed to save patches'));
-          };
-        });
-
-        db.close();
-      } catch (indexedDBError) {
-        console.warn('⚠️ IndexedDB failed, using localStorage fallback:', indexedDBError);
-        saveToLocalStorageFallback('patches', patches);
-      }
+      // Use optimized upsert operation
+      await upsertPatches(patches);
 
       markClean();
       console.log('✅ Patches saved successfully:', patches.length);
@@ -185,12 +163,12 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
     }
   }, []);
 
-  const manualSave = () => {
+  const manualSave = async (): Promise<void> => {
     console.log('🔧 Manual patch save triggered');
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    savePatches();
+    return await savePatches();
   };
 
   return {

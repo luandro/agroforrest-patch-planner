@@ -87,7 +87,7 @@ export const useAutoSaveOrchestrator = () => {
     }));
   }, [patchAutoSave.saveError, bedAutoSave.saveError, plantAutoSave.saveError]);
 
-  // Manual save all with proper order
+  // Manual save all with proper order and optimized operations
   const manualSaveAll = async () => {
     if (!storageInit.isInitialized) {
       console.warn('⚠️ Storage not initialized, cannot save');
@@ -97,65 +97,71 @@ export const useAutoSaveOrchestrator = () => {
     console.log('🔧 Manual save all triggered');
     
     try {
-      // Save in order: patches -> beds -> plants
+      const savePromises: Promise<void>[] = [];
+      
+      // Direct async save operations with proper error handling
       if (patchesDirty) {
-        await new Promise<void>((resolve) => {
-          patchAutoSave.manualSave();
-          // Wait for save to complete
-          const checkSave = () => {
-            if (!patchAutoSave.isSaving) {
-              resolve();
-            } else {
-              setTimeout(checkSave, 100);
-            }
-          };
-          checkSave();
-        });
-        
-        setState(prev => ({
-          ...prev,
-          saveCounts: { ...prev.saveCounts, patches: prev.saveCounts.patches + 1 }
-        }));
+        console.log('💾 Saving patches...');
+        savePromises.push(
+          patchAutoSave.manualSave()
+            .then(() => {
+              setState(prev => ({
+                ...prev,
+                saveCounts: { ...prev.saveCounts, patches: prev.saveCounts.patches + 1 }
+              }));
+              console.log('✅ Patches saved successfully');
+            })
+            .catch((error) => {
+              console.error('❌ Failed to save patches:', error);
+              throw error;
+            })
+        );
       }
 
       if (bedsDirty) {
-        await new Promise<void>((resolve) => {
-          bedAutoSave.manualSave();
-          // Wait for save to complete
-          const checkSave = () => {
-            if (!bedAutoSave.isSaving) {
-              resolve();
-            } else {
-              setTimeout(checkSave, 100);
-            }
-          };
-          checkSave();
-        });
-        
-        setState(prev => ({
-          ...prev,
-          saveCounts: { ...prev.saveCounts, beds: prev.saveCounts.beds + 1 }
-        }));
+        console.log('💾 Saving beds...');
+        savePromises.push(
+          bedAutoSave.manualSave()
+            .then(() => {
+              setState(prev => ({
+                ...prev,
+                saveCounts: { ...prev.saveCounts, beds: prev.saveCounts.beds + 1 }
+              }));
+              console.log('✅ Beds saved successfully');
+            })
+            .catch((error) => {
+              console.error('❌ Failed to save beds:', error);
+              throw error;
+            })
+        );
       }
 
       if (plantsDirty) {
-        await new Promise<void>((resolve) => {
-          plantAutoSave.manualSave();
-          // Wait for save to complete
-          const checkSave = () => {
-            if (!plantAutoSave.isSaving) {
-              resolve();
-            } else {
-              setTimeout(checkSave, 100);
-            }
-          };
-          checkSave();
-        });
-        
-        setState(prev => ({
-          ...prev,
-          saveCounts: { ...prev.saveCounts, plants: prev.saveCounts.plants + 1 }
-        }));
+        console.log('💾 Saving plants...');
+        savePromises.push(
+          plantAutoSave.manualSave()
+            .then(() => {
+              setState(prev => ({
+                ...prev,
+                saveCounts: { ...prev.saveCounts, plants: prev.saveCounts.plants + 1 }
+              }));
+              console.log('✅ Plants saved successfully');
+            })
+            .catch((error) => {
+              console.error('❌ Failed to save plants:', error);
+              throw error;
+            })
+        );
+      }
+
+      // Wait for all save operations to complete with timeout
+      if (savePromises.length > 0) {
+        await Promise.race([
+          Promise.all(savePromises),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Save operation timeout')), 15000)
+          )
+        ]);
       }
 
       setState(prev => ({
@@ -166,6 +172,11 @@ export const useAutoSaveOrchestrator = () => {
       console.log('✅ Manual save all completed');
     } catch (error) {
       console.error('❌ Manual save all failed:', error);
+      // Don't throw - we want graceful degradation
+      setState(prev => ({
+        ...prev,
+        saveErrors: [...prev.saveErrors, error instanceof Error ? error.message : 'Save failed']
+      }));
     }
   };
 

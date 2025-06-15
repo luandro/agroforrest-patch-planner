@@ -177,6 +177,213 @@ export const clearAllStorage = async (): Promise<void> => {
 };
 
 /**
+ * Upsert (insert or update) patches data efficiently
+ */
+export const upsertPatches = async (patches: unknown[]): Promise<void> => {
+  try {
+    if (await isIndexedDBAvailable()) {
+      const db = await openDB();
+      const transaction = db.transaction([PATCHES_STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(PATCHES_STORE_NAME);
+      
+      // Use put() for upsert operation (insert or update)
+      patches.forEach(patch => {
+        store.put(patch);
+      });
+      
+      await new Promise<void>((resolve, reject) => {
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+      });
+      
+      db.close();
+      console.log('✅ Patches upserted successfully:', patches.length);
+    } else {
+      // For localStorage, we still need to load all and merge
+      const existing = loadFromLocalStorageFallback('patches', []);
+      const patchMap = new Map(existing.map((p: unknown) => [(p as any).id, p]));
+      
+      // Update existing or add new
+      patches.forEach(patch => {
+        patchMap.set((patch as any).id, patch);
+      });
+      
+      saveToLocalStorageFallback('patches', Array.from(patchMap.values()));
+      console.log('✅ Patches upserted to localStorage:', patches.length);
+    }
+  } catch (error) {
+    console.error('❌ Failed to upsert patches:', error);
+    throw error;
+  }
+};
+
+/**
+ * Upsert beds data efficiently for a specific patch
+ */
+export const upsertBedsForPatch = async (patchId: string, beds: unknown[]): Promise<void> => {
+  try {
+    if (await isIndexedDBAvailable()) {
+      const db = await openDB();
+      const transaction = db.transaction([BEDS_STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(BEDS_STORE_NAME);
+      
+      // First, remove existing beds for this patch
+      const index = store.index('patchId');
+      const range = IDBKeyRange.only(patchId);
+      const existingBedsRequest = index.getAll(range);
+      
+      const existingBeds = await new Promise<unknown[]>((resolve, reject) => {
+        existingBedsRequest.onsuccess = () => resolve(existingBedsRequest.result || []);
+        existingBedsRequest.onerror = () => reject(existingBedsRequest.error);
+      });
+      
+      // Delete existing beds for this patch
+      existingBeds.forEach(bed => {
+        store.delete((bed as any).id);
+      });
+      
+      // Add new beds with patch reference
+      const bedsWithPatch = beds.map(bed => ({
+        ...(bed as any),
+        patchId
+      }));
+      
+      bedsWithPatch.forEach(bed => {
+        store.put(bed);
+      });
+      
+      await new Promise<void>((resolve, reject) => {
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+      });
+      
+      db.close();
+      console.log('✅ Beds upserted successfully for patch:', patchId, 'count:', beds.length);
+    } else {
+      // For localStorage, load all beds and update
+      const allBeds = loadFromLocalStorageFallback('beds', []);
+      const otherPatchBeds = allBeds.filter((bed: unknown) => (bed as any).patchId !== patchId);
+      const bedsWithPatch = beds.map(bed => ({ ...(bed as any), patchId }));
+      
+      saveToLocalStorageFallback('beds', [...otherPatchBeds, ...bedsWithPatch]);
+      console.log('✅ Beds upserted to localStorage for patch:', patchId, 'count:', beds.length);
+    }
+  } catch (error) {
+    console.error('❌ Failed to upsert beds:', error);
+    throw error;
+  }
+};
+
+/**
+ * Upsert plant placements data efficiently for a specific patch
+ */
+export const upsertPlacementsForPatch = async (patchId: string, placements: unknown[]): Promise<void> => {
+  try {
+    if (await isIndexedDBAvailable()) {
+      const db = await openDB();
+      const transaction = db.transaction([PLACEMENTS_STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(PLACEMENTS_STORE_NAME);
+      
+      // First, remove existing placements for this patch
+      const index = store.index('patchId');
+      const range = IDBKeyRange.only(patchId);
+      const existingPlacementsRequest = index.getAll(range);
+      
+      const existingPlacements = await new Promise<unknown[]>((resolve, reject) => {
+        existingPlacementsRequest.onsuccess = () => resolve(existingPlacementsRequest.result || []);
+        existingPlacementsRequest.onerror = () => reject(existingPlacementsRequest.error);
+      });
+      
+      // Delete existing placements for this patch
+      existingPlacements.forEach(placement => {
+        store.delete((placement as any).id);
+      });
+      
+      // Add new placements with patch reference
+      const placementsWithPatch = placements.map(placement => ({
+        ...(placement as any),
+        patchId
+      }));
+      
+      placementsWithPatch.forEach(placement => {
+        store.put(placement);
+      });
+      
+      await new Promise<void>((resolve, reject) => {
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+      });
+      
+      db.close();
+      console.log('✅ Placements upserted successfully for patch:', patchId, 'count:', placements.length);
+    } else {
+      // For localStorage, load all placements and update
+      const allPlacements = loadFromLocalStorageFallback('placements', []);
+      const otherPatchPlacements = allPlacements.filter((placement: unknown) => (placement as any).patchId !== patchId);
+      const placementsWithPatch = placements.map(placement => ({ ...(placement as any), patchId }));
+      
+      saveToLocalStorageFallback('placements', [...otherPatchPlacements, ...placementsWithPatch]);
+      console.log('✅ Placements upserted to localStorage for patch:', patchId, 'count:', placements.length);
+    }
+  } catch (error) {
+    console.error('❌ Failed to upsert placements:', error);
+    throw error;
+  }
+};
+
+/**
+ * Load data for a specific patch efficiently
+ */
+export const loadPatchData = async (patchId: string) => {
+  try {
+    let beds: unknown[] = [];
+    let placements: unknown[] = [];
+    
+    if (await isIndexedDBAvailable()) {
+      const db = await openDB();
+      const transaction = db.transaction([BEDS_STORE_NAME, PLACEMENTS_STORE_NAME], 'readonly');
+      
+      // Load beds for patch
+      const bedStore = transaction.objectStore(BEDS_STORE_NAME);
+      const bedIndex = bedStore.index('patchId');
+      const bedRange = IDBKeyRange.only(patchId);
+      const bedRequest = bedIndex.getAll(bedRange);
+      
+      beds = await new Promise<unknown[]>((resolve, reject) => {
+        bedRequest.onsuccess = () => resolve(bedRequest.result || []);
+        bedRequest.onerror = () => reject(bedRequest.error);
+      });
+      
+      // Load placements for patch
+      const placementStore = transaction.objectStore(PLACEMENTS_STORE_NAME);
+      const placementIndex = placementStore.index('patchId');
+      const placementRange = IDBKeyRange.only(patchId);
+      const placementRequest = placementIndex.getAll(placementRange);
+      
+      placements = await new Promise<unknown[]>((resolve, reject) => {
+        placementRequest.onsuccess = () => resolve(placementRequest.result || []);
+        placementRequest.onerror = () => reject(placementRequest.error);
+      });
+      
+      db.close();
+    } else {
+      // Load from localStorage fallback
+      const allBeds = loadFromLocalStorageFallback('beds', []);
+      const allPlacements = loadFromLocalStorageFallback('placements', []);
+      
+      beds = allBeds.filter((bed: unknown) => (bed as any).patchId === patchId);
+      placements = allPlacements.filter((placement: unknown) => (placement as any).patchId === patchId);
+    }
+    
+    console.log('✅ Loaded patch data for:', patchId, 'beds:', beds.length, 'placements:', placements.length);
+    return { beds, placements };
+  } catch (error) {
+    console.error('❌ Failed to load patch data:', error);
+    throw error;
+  }
+};
+
+/**
  * Export/import functionality for data backup
  */
 export const exportAllData = async (): Promise<string> => {
@@ -193,19 +400,19 @@ export const exportAllData = async (): Promise<string> => {
       const db = await openDB();
       const transaction = db.transaction([PATCHES_STORE_NAME, BEDS_STORE_NAME, PLACEMENTS_STORE_NAME], 'readonly');
       
-      // Get all data
-      const [patches, beds, placements] = await Promise.all([
-        new Promise<any[]>((resolve, reject) => {
+        // Get all data
+        const [patches, beds, placements] = await Promise.all([
+          new Promise<unknown[]>((resolve, reject) => {
           const request = transaction.objectStore(PATCHES_STORE_NAME).getAll();
           request.onsuccess = () => resolve(request.result || []);
           request.onerror = () => reject(request.error);
         }),
-        new Promise<any[]>((resolve, reject) => {
+        new Promise<unknown[]>((resolve, reject) => {
           const request = transaction.objectStore(BEDS_STORE_NAME).getAll();
           request.onsuccess = () => resolve(request.result || []);
           request.onerror = () => reject(request.error);
         }),
-        new Promise<any[]>((resolve, reject) => {
+        new Promise<unknown[]>((resolve, reject) => {
           const request = transaction.objectStore(PLACEMENTS_STORE_NAME).getAll();
           request.onsuccess = () => resolve(request.result || []);
           request.onerror = () => reject(request.error);
@@ -250,15 +457,15 @@ export const importAllData = async (jsonData: string): Promise<void> => {
       transaction.objectStore(PLACEMENTS_STORE_NAME).clear();
       
       // Import new data
-      data.patches?.forEach((patch: any) => {
+      data.patches?.forEach((patch: unknown) => {
         transaction.objectStore(PATCHES_STORE_NAME).add(patch);
       });
       
-      data.beds?.forEach((bed: any) => {
+      data.beds?.forEach((bed: unknown) => {
         transaction.objectStore(BEDS_STORE_NAME).add(bed);
       });
       
-      data.placements?.forEach((placement: any) => {
+      data.placements?.forEach((placement: unknown) => {
         transaction.objectStore(PLACEMENTS_STORE_NAME).add(placement);
       });
       
