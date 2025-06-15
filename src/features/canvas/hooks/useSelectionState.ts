@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useBedStore } from '../stores/bedStore';
 
 interface UseSelectionStateProps {
@@ -15,24 +15,30 @@ export const useSelectionState = ({ onEnterFocus, onExitFocus }: UseSelectionSta
     toggleBedSelection 
   } = useBedStore();
 
-  // Automatically trigger focus mode on single selection
-  useEffect(() => {
-    if (selectedBedIds.length === 1 && onEnterFocus) {
-      onEnterFocus(selectedBedIds[0]);
-    } else if ((selectedBedIds.length === 0 || selectedBedIds.length > 1) && onExitFocus) {
-      onExitFocus();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedBedIds, onEnterFocus, onExitFocus]);
-
-  // These handlers just update selection, auto-focus is now done in useEffect
+  // Handle selection changes with automatic focus mode logic
   const handleSelectionChange = useCallback((newSelectedIds: string[]) => {
+    const previousLength = selectedBedIds.length;
     selectBeds(newSelectedIds);
-  }, [selectBeds]);
+    
+    // Trigger focus mode logic after selection update
+    if (newSelectedIds.length === 1 && previousLength !== 1 && onEnterFocus) {
+      // Use setTimeout to ensure state has updated
+      setTimeout(() => onEnterFocus(newSelectedIds[0]), 0);
+    } else if ((newSelectedIds.length === 0 || newSelectedIds.length > 1) && previousLength === 1 && onExitFocus) {
+      // Use setTimeout to ensure state has updated
+      setTimeout(() => onExitFocus(), 0);
+    }
+  }, [selectedBedIds.length, selectBeds, onEnterFocus, onExitFocus]);
 
   const handleClearSelection = useCallback(() => {
+    const hadSingleSelection = selectedBedIds.length === 1;
     clearSelection();
-  }, [clearSelection]);
+    
+    // Exit focus if we had a single selection
+    if (hadSingleSelection && onExitFocus) {
+      setTimeout(() => onExitFocus(), 0);
+    }
+  }, [clearSelection, selectedBedIds.length, onExitFocus]);
 
   return {
     selectedBedIds,

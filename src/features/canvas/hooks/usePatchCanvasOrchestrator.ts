@@ -30,11 +30,11 @@ export const usePatchCanvasOrchestrator = ({
     onViewportChange,
   });
 
-  // Always get tool from the bedStore
+  // Get store state
   const bedStore = useBedStore();
   const { beds, selectedBedIds, undo, redo, canUndo, canRedo, tool, setTool } = bedStore;
 
-  // Focus mode integration
+  // Focus mode integration with stable callbacks
   const { 
     focusMode, 
     isInFocusMode, 
@@ -61,7 +61,7 @@ export const usePatchCanvasOrchestrator = ({
     onOpenPlantSelection
   });
 
-  // Bed creation management (delegates tool completely to store)
+  // Bed creation management
   const {
     bedConfig,
     updateBedConfig,
@@ -91,21 +91,23 @@ export const usePatchCanvasOrchestrator = ({
     },
   });
 
-  // Tool management - gets/set the store tool only, updates bed creation flow as needed
+  // Stable tool change handler
+  const stableHandleToolChange = useCallback((newTool) => {
+    setTool(newTool);
+    bedCreationHandleToolChange(newTool);
+  }, [setTool, bedCreationHandleToolChange]);
+
+  // Tool management
   const { tool: activeTool } = useCanvasTools({
     isInFocusMode,
     handleExitFocus: () => {
       handleExitFocus();
       cancelPlantPlacement(); // Cancel plant placement when exiting focus
     },
-    handleToolChange: (newTool) => {
-      // synchronize tool between orchestrator/store and bed creation hook
-      setTool(newTool);
-      bedCreationHandleToolChange(newTool);
-    }
+    handleToolChange: stableHandleToolChange
   });
 
-  // Bed selection management: pass in the focus handlers
+  // Bed selection management with stable focus handlers
   const { startSelection, updateSelection, finishSelection, deleteSelected } = useBedSelectionFlow({ 
     viewport, 
     canvasRef,
@@ -129,10 +131,7 @@ export const usePatchCanvasOrchestrator = ({
     startSelection,
     updateSelection,
     finishSelection,
-    handleToolChange: (newTool) => {
-      setTool(newTool);
-      bedCreationHandleToolChange(newTool);
-    },
+    handleToolChange: stableHandleToolChange,
     viewport,
     focusedBed,
     canvasRef
@@ -147,10 +146,7 @@ export const usePatchCanvasOrchestrator = ({
     beds,
     selectedBedIds,
     tool: activeTool,
-    handleToolChange: (newTool) => {
-      setTool(newTool);
-      bedCreationHandleToolChange(newTool);
-    },
+    handleToolChange: stableHandleToolChange,
     bedConfig,
     updateBedConfig,
     isCreating,

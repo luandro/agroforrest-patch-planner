@@ -1,5 +1,6 @@
 
 import { useBedSelection } from './useBedSelection';
+import { useSelectionState } from './useSelectionState';
 
 interface UseBedSelectionFlowProps {
   viewport: any;
@@ -9,11 +10,18 @@ interface UseBedSelectionFlowProps {
 }
 
 export const useBedSelectionFlow = ({ viewport, canvasRef, onEnterFocus, onExitFocus }: UseBedSelectionFlowProps) => {
+  // Get selection state management with focus handlers
+  const { handleSelectionChange, handleClearSelection } = useSelectionState({
+    onEnterFocus,
+    onExitFocus
+  });
+
+  // Get bed selection mechanics (without focus logic)
   const { startSelection, updateSelection, finishSelection, deleteSelected } = useBedSelection({ 
     viewport, 
     canvasRef,
-    onEnterFocus,
-    onExitFocus
+    onSelectionChange: handleSelectionChange,
+    onClearSelection: handleClearSelection
   });
 
   return {
