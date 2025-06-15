@@ -57,23 +57,41 @@ export const openDB = (): Promise<IDBDatabase> => {
         const placementStore = transaction.objectStore(PLACEMENTS_STORE_NAME);
         const bedStore = transaction.objectStore(BEDS_STORE_NAME);
         
+        const migrationPromises: Promise<void>[] = [];
+        
         placementStore.openCursor().onsuccess = (event) => {
           const cursor = (event.target as IDBRequest).result;
           if (cursor) {
             const placement = cursor.value;
             if (!placement.patchId && placement.bedId) {
-              // Find the bed to get its patchId
-              const bedRequest = bedStore.get(placement.bedId);
-              bedRequest.onsuccess = () => {
-                const bed = bedRequest.result;
-                if (bed && bed.patchId) {
-                  placement.patchId = bed.patchId;
-                  cursor.update(placement);
-                  console.log('🔄 Migrated placement', placement.id, 'to patch', bed.patchId);
-                }
-              };
+              const migrationPromise = new Promise<void>((resolve, reject) => {
+                const bedRequest = bedStore.get(placement.bedId);
+                bedRequest.onsuccess = () => {
+                  const bed = bedRequest.result;
+                  if (bed && bed.patchId) {
+                    placement.patchId = bed.patchId;
+                    const updateRequest = cursor.update(placement);
+                    updateRequest.onsuccess = () => {
+                      console.log('🔄 Migrated placement', placement.id, 'to patch', bed.patchId);
+                      resolve();
+                    };
+                    updateRequest.onerror = () => reject(updateRequest.error);
+                  } else {
+                    resolve(); // Skip if bed not found
+                  }
+                };
+                bedRequest.onerror = () => reject(bedRequest.error);
+              });
+              migrationPromises.push(migrationPromise);
             }
             cursor.continue();
+          } else {
+            // All cursor operations complete, wait for migrations
+            Promise.all(migrationPromises).then(() => {
+              console.log('🔄 Migration completed successfully');
+            }).catch((error) => {
+              console.error('❌ Migration failed:', error);
+            });
           }
         };
       }
@@ -147,8 +165,10 @@ export const loadFromLocalStorageFallback = <T>(key: keyof typeof STORAGE_KEYS, 
  * Clear all storage (both IndexedDB and localStorage)
  */
 export const clearAllStorage = async (): Promise<void> => {
+  const errors: Error[] = [];
+  
+  // Always attempt both, collect errors
   try {
-    // Clear IndexedDB
     if (await isIndexedDBAvailable()) {
       const db = await openDB();
       const transaction = db.transaction([PATCHES_STORE_NAME, BEDS_STORE_NAME, PLACEMENTS_STORE_NAME], 'readwrite');
@@ -164,16 +184,23 @@ export const clearAllStorage = async (): Promise<void> => {
       
       db.close();
     }
-    
-    // Clear localStorage
+  } catch (error) {
+    errors.push(error instanceof Error ? error : new Error('IndexedDB clear failed'));
+  }
+  
+  try {
     Object.values(STORAGE_KEYS).forEach(key => {
       localStorage.removeItem(key);
     });
-    
-    console.log('🧹 All storage cleared');
   } catch (error) {
-    console.error('❌ Failed to clear storage:', error);
+    errors.push(error instanceof Error ? error : new Error('localStorage clear failed'));
   }
+  
+  if (errors.length > 0) {
+    throw new Error(`Storage clearing failed: ${errors.map(e => e.message).join(', ')}`);
+  }
+  
+  console.log('🧹 All storage cleared');
 };
 
 /**

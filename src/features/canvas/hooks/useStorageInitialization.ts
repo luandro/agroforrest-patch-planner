@@ -37,8 +37,8 @@ export const useStorageInitialization = () => {
   });
 
   const initializationRef = useRef(false);
-  const { loadPatches, setCurrentPatch, createPatch } = usePatchStore();
-  const { loadBeds } = useBedStore();
+  const { loadPatches, setCurrentPatch, createPatch, currentPatchId } = usePatchStore();
+  const { loadBeds, beds } = useBedStore();
   const { loadPlacements } = usePlantPlacementStore();
 
   const initializeStorage = async () => {
@@ -71,6 +71,7 @@ export const useStorageInitialization = () => {
       console.log('✅ Storage initialization completed successfully');
     } catch (error) {
       console.error('❌ Storage initialization failed:', error);
+      initializationRef.current = false; // Reset flag to allow retry
       setState(prev => ({ 
         ...prev, 
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -135,7 +136,6 @@ export const useStorageInitialization = () => {
   const initializeBeds = async () => {
     console.log('🛏️ Initializing beds...');
     
-    const { currentPatchId } = usePatchStore.getState();
     if (!currentPatchId) {
       console.log('⏭️ No current patch, skipping beds initialization');
       return;
@@ -178,9 +178,6 @@ export const useStorageInitialization = () => {
 
   const initializePlants = async () => {
     console.log('🌱 Initializing plants...');
-    
-    const { currentPatchId } = usePatchStore.getState();
-    const { beds } = useBedStore.getState();
     
     if (!currentPatchId) {
       console.log('⏭️ No current patch, skipping plants initialization');
