@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { CanvasViewport } from '../types/canvas.types';
 
 interface UseCanvasInitializationProps {
@@ -11,21 +11,26 @@ export const useCanvasInitialization = ({
   updateViewport,
   beds
 }: UseCanvasInitializationProps) => {
-  // Initialize viewport to home position
+  const isInitialized = useRef(false);
+
+  // Initialize viewport to home position only once
   useEffect(() => {
-    // Reset to home position on page load
-    updateViewport({
-      centerX: 0,
-      centerY: 0,
-      zoom: 1
-    });
-    
-    console.log('Canvas initialized to home position');
-  }, [updateViewport]);
+    if (!isInitialized.current) {
+      // Reset to home position on page load
+      updateViewport({
+        centerX: 0,
+        centerY: 0,
+        zoom: 1
+      });
+      
+      isInitialized.current = true;
+      console.log('Canvas initialized to home position');
+    }
+  }, []); // Empty dependency array - run only once
 
   // Auto-fit when first beds are added
   useEffect(() => {
-    if (beds.length === 1) {
+    if (beds.length === 1 && isInitialized.current) {
       // Small delay to ensure bed is rendered
       setTimeout(() => {
         // Center on the first bed
@@ -37,5 +42,5 @@ export const useCanvasInitialization = ({
         });
       }, 100);
     }
-  }, [beds.length, beds, updateViewport]);
+  }, [beds.length, updateViewport]); // Only depend on beds.length and updateViewport
 };

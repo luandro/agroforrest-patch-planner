@@ -55,7 +55,8 @@ const PatchCreatorPage: React.FC = () => {
     console.log('Selected species for placement:', species);
     setSelectedSpecies(species);
     setIsPlacing(true); // Enable placement mode
-    // Panel will close automatically via the PlantSelectionPanel component
+    setIsPlantSelectionOpen(false); // Close the panel
+    console.log('Plant placement mode activated for species:', species.commonName);
   };
 
   // Handle exit focus mode with proper cleanup
