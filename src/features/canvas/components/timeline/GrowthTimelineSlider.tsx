@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Play, Pause, RotateCcw, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -11,12 +11,14 @@ interface GrowthTimelineSliderProps {
   isVisible: boolean;
   onClose?: () => void;
   className?: string;
+  isMinimal?: boolean;
 }
 
 export const GrowthTimelineSlider: React.FC<GrowthTimelineSliderProps> = ({
   isVisible,
   onClose,
-  className
+  className,
+  isMinimal = false
 }) => {
   const {
     currentMonth,
@@ -31,28 +33,55 @@ export const GrowthTimelineSlider: React.FC<GrowthTimelineSliderProps> = ({
     maxMonths
   } = useGrowthTimeline();
 
+  const [lastActivity, setLastActivity] = useState(Date.now());
+  const [isInactive, setIsInactive] = useState(false);
+
   // Auto-play effect
   useEffect(() => {
     if (!isPlaying) return;
 
     const interval = setInterval(() => {
       setCurrentMonth(prev => {
-        const next = prev + (playbackSpeed * 2); // 2 months per tick
+        const next = prev + (playbackSpeed * 2);
         if (next >= maxMonths) {
           stopPlayback();
           return maxMonths;
         }
         return next;
       });
-    }, 200); // 200ms intervals
+    }, 200);
 
     return () => clearInterval(interval);
   }, [isPlaying, playbackSpeed, maxMonths, setCurrentMonth, stopPlayback]);
+
+  // Auto-hide after inactivity (only in minimal mode)
+  useEffect(() => {
+    if (!isMinimal) return;
+
+    const checkInactivity = () => {
+      const now = Date.now();
+      if (now - lastActivity > 10000 && !isPlaying) { // 10 seconds
+        setIsInactive(true);
+      } else {
+        setIsInactive(false);
+      }
+    };
+
+    const interval = setInterval(checkInactivity, 1000);
+    return () => clearInterval(interval);
+  }, [lastActivity, isPlaying, isMinimal]);
+
+  // Reset activity timer on any interaction
+  const handleActivity = () => {
+    setLastActivity(Date.now());
+    setIsInactive(false);
+  };
 
   if (!isVisible) return null;
 
   const handleSliderChange = (values: number[]) => {
     setCurrentMonth(values[0]);
+    handleActivity();
   };
 
   const togglePlayback = () => {
@@ -61,6 +90,7 @@ export const GrowthTimelineSlider: React.FC<GrowthTimelineSliderProps> = ({
     } else {
       startPlayback();
     }
+    handleActivity();
   };
 
   const cycleSpeed = () => {
@@ -72,6 +102,17 @@ export const GrowthTimelineSlider: React.FC<GrowthTimelineSliderProps> = ({
         default: return 1;
       }
     });
+    handleActivity();
+  };
+
+  const handleReset = () => {
+    resetTimeline();
+    handleActivity();
+  };
+
+  const handleClose = () => {
+    onClose?.();
+    handleActivity();
   };
 
   const formatTime = (months: number): string => {
@@ -83,6 +124,92 @@ export const GrowthTimelineSlider: React.FC<GrowthTimelineSliderProps> = ({
     return remainingMonths > 0 ? `${years}a ${remainingMonths}m` : `${years}a`;
   };
 
+  // Minimal mobile UI when isMinimal is true
+  if (isMinimal) {
+    return (
+      <div 
+        className={cn(
+          "fixed bottom-4 left-4 right-4 z-50 transition-all duration-300",
+          isInactive && "opacity-30",
+          className
+        )}
+        onClick={handleActivity}
+      >
+        {/* Minimal Timeline Panel - Compressed height by 60% */}
+        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-200 p-3">
+          {/* Header - Compressed */}
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <Badge variant="secondary" className="text-xs">
+                {formatTime(currentMonth)}
+              </Badge>
+            </div>
+            {onClose && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleClose}
+                className="p-1 h-6 w-6 text-gray-500"
+              >
+                ×
+              </Button>
+            )}
+          </div>
+
+          {/* Slim Timeline Slider */}
+          <div className="mb-3">
+            <Slider
+              value={[currentMonth]}
+              onValueChange={handleSliderChange}
+              max={maxMonths}
+              min={0}
+              step={1}
+              className="w-full [&>*]:h-1"
+            />
+          </div>
+
+          {/* Minimal Controls */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={togglePlayback}
+                className="h-8 w-8 p-0"
+              >
+                {isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+              </Button>
+              
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleReset}
+                className="h-8 w-8 p-0"
+              >
+                <RotateCcw className="w-3 h-3" />
+              </Button>
+            </div>
+
+            {/* Compact time display */}
+            <div className="text-xs text-gray-600">
+              {currentStage.label}
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="mt-2 w-full bg-gray-200 rounded-full h-1">
+            <div 
+              className="bg-green-500 h-1 rounded-full transition-all duration-200"
+              style={{ width: `${(currentMonth / maxMonths) * 100}%` }}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Full desktop/tablet UI
   return (
     <div className={cn(
       "fixed bottom-4 left-4 right-4 z-50 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl border border-gray-200 p-4",
@@ -102,7 +229,7 @@ export const GrowthTimelineSlider: React.FC<GrowthTimelineSliderProps> = ({
           <Button
             size="sm"
             variant="ghost"
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1 h-6 w-6"
           >
             ×
@@ -166,7 +293,7 @@ export const GrowthTimelineSlider: React.FC<GrowthTimelineSliderProps> = ({
           <Button
             size="sm"
             variant="outline"
-            onClick={resetTimeline}
+            onClick={handleReset}
             className="flex items-center gap-2"
           >
             <RotateCcw className="w-4 h-4" />
