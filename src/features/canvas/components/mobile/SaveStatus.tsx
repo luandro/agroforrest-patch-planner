@@ -1,19 +1,24 @@
 
 import React from 'react';
+import { cn } from '@/lib/utils';
 
 interface SaveStatusProps {
-  isSaving: boolean;
+  isSaving?: boolean;
 }
 
-export const SaveStatus: React.FC<SaveStatusProps> = ({ isSaving }) => {
-  if (!isSaving) return null;
+export const SaveStatus: React.FC<SaveStatusProps> = ({ isSaving = false }) => {
+  if (!isSaving) {
+    return null;
+  }
 
   return (
-    <div className="fixed bottom-6 left-6 bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-gray-200 z-40">
-      <div className="flex items-center text-sm text-gray-600">
-        <div className="animate-spin w-3 h-3 border border-gray-400 border-t-transparent rounded-full mr-2" />
-        Salvando...
-      </div>
+    <div className={cn(
+      "bg-blue-500/90 text-white text-sm px-3 py-2 rounded-lg shadow-lg backdrop-blur-sm",
+      "flex items-center gap-2",
+      "animate-pulse"
+    )}>
+      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+      <span>Salvando...</span>
     </div>
   );
 };

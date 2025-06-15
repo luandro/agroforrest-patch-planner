@@ -84,30 +84,45 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
 
   return (
     <>
-      {/* Context-sensitive FAB - Hide during confirmation */}
+      {/* Context-sensitive FAB - Fixed positioning for mobile */}
       {shouldShowFAB && (
         <div className={cn(
-          "fixed bottom-6 right-6 z-50 transition-all duration-200",
+          "fixed z-40 transition-all duration-200",
+          // Better mobile positioning - ensure it doesn't overlap with other controls
+          "bottom-20 right-4",
+          // Responsive adjustments
+          "sm:bottom-6 sm:right-6",
           isVisible && !isFABHidden && "translate-y-0 opacity-100",
           isVisible && isFABHidden && "translate-y-0 opacity-0 pointer-events-none",
           !isVisible && !isFABHidden && "translate-y-2 opacity-90",
           !isVisible && isFABHidden && "translate-y-2 opacity-0 pointer-events-none"
         )}>
-          {/* FAB Content Panel */}
+          {/* FAB Content Panel - Improved mobile layout */}
           {isVisible && !isFABHidden && (
-            <div className="mb-4 bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-xl border border-gray-200 min-w-[280px] max-w-[320px]">
+            <div className={cn(
+              "mb-4 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl border border-gray-200",
+              // Better mobile sizing and positioning
+              "p-3 sm:p-4",
+              "min-w-[260px] max-w-[300px]",
+              "sm:min-w-[280px] sm:max-w-[320px]"
+            )}>
               {getFABContent()}
             </div>
           )}
 
-          {/* FAB Button */}
+          {/* FAB Button - Enhanced touch targets */}
           <Button
             className={cn(
-              "w-14 h-14 rounded-full shadow-lg border-2 border-white transition-all duration-200 touch-manipulation",
-              activeTool === 'create-rectangle' && "bg-green-600 hover:bg-green-700",
-              activeTool === 'select' && selectedCount > 0 && "bg-orange-600 hover:bg-orange-700",
-              activeTool === 'select' && selectedCount === 0 && "bg-gray-500 hover:bg-gray-600",
-              activeTool === 'pan' && "bg-blue-600 hover:bg-blue-700",
+              "rounded-full shadow-lg border-2 border-white transition-all duration-200",
+              // Larger touch targets for mobile
+              "w-16 h-16 sm:w-14 sm:h-14",
+              "touch-manipulation",
+              // Ensure proper tap behavior
+              "active:scale-95",
+              activeTool === 'create-rectangle' && "bg-green-600 hover:bg-green-700 active:bg-green-800",
+              activeTool === 'select' && selectedCount > 0 && "bg-orange-600 hover:bg-orange-700 active:bg-orange-800",
+              activeTool === 'select' && selectedCount === 0 && "bg-gray-500 hover:bg-gray-600 active:bg-gray-700",
+              activeTool === 'pan' && "bg-blue-600 hover:bg-blue-700 active:bg-blue-800",
               isVisible && !isFABHidden && "scale-110",
               isFABHidden && "pointer-events-none"
             )}
@@ -120,13 +135,15 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
         </div>
       )}
 
-      {/* Save Status */}
-      <SaveStatus isSaving={isSaving} />
+      {/* Save Status - Better mobile positioning */}
+      <div className="fixed top-20 right-4 z-30">
+        <SaveStatus isSaving={isSaving} />
+      </div>
 
-      {/* Backdrop - Only show when FAB panel is visible and not during confirmation */}
+      {/* Backdrop - Proper z-index and mobile optimization */}
       {isVisible && !isFABHidden && (
         <div 
-          className="fixed inset-0 bg-black/20 z-30"
+          className="fixed inset-0 bg-black/20 z-30 touch-manipulation"
           onClick={() => onToggle(false)}
         />
       )}

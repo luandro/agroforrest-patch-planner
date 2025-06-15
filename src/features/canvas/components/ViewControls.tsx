@@ -57,24 +57,33 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
 
   return (
     <div className={cn(
-      "flex flex-col gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-lg border border-gray-200",
+      "flex flex-col gap-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200",
+      // Mobile-first responsive sizing
+      "p-1.5 sm:p-2",
+      // Fixed z-index to avoid conflicts
+      "z-30",
       className
     )}>
-      {/* Zoom Level Indicator - hide in focus mode */}
+      {/* Zoom Level Indicator - Better mobile sizing */}
       {!hideZoomControls && (
         <div className="text-xs text-gray-600 text-center px-2 py-1 bg-gray-50 rounded">
           {zoom.toFixed(1)}x
         </div>
       )}
       
-      {/* Zoom Controls - hide in focus mode */}
+      {/* Zoom Controls - Enhanced mobile touch targets */}
       {!hideZoomControls && (
         <>
           <Button
             variant="outline"
             size="sm"
             onClick={onZoomIn}
-            className="w-11 h-11 p-0 touch-manipulation hover:bg-green-50 hover:border-green-300"
+            className={cn(
+              "p-0 touch-manipulation hover:bg-green-50 hover:border-green-300 active:bg-green-100",
+              // Larger touch targets on mobile
+              "w-12 h-12 sm:w-11 sm:h-11",
+              "active:scale-95"
+            )}
             aria-label="Aumentar zoom"
             title="Aumentar zoom"
           >
@@ -85,7 +94,11 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
             variant="outline"
             size="sm"
             onClick={onZoomOut}
-            className="w-11 h-11 p-0 touch-manipulation hover:bg-red-50 hover:border-red-300"
+            className={cn(
+              "p-0 touch-manipulation hover:bg-red-50 hover:border-red-300 active:bg-red-100",
+              "w-12 h-12 sm:w-11 sm:h-11",
+              "active:scale-95"
+            )}
             aria-label="Diminuir zoom"
             title="Diminuir zoom"
           >
@@ -97,7 +110,11 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
             size="sm"
             onClick={onFitAll}
             disabled={bedsCount === 0}
-            className="w-11 h-11 p-0 text-xs touch-manipulation hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50"
+            className={cn(
+              "p-0 text-xs touch-manipulation hover:bg-blue-50 hover:border-blue-300 active:bg-blue-100",
+              "w-12 h-12 sm:w-11 sm:h-11",
+              "disabled:opacity-50 active:scale-95"
+            )}
             aria-label="Ajustar visualização para todos os canteiros"
             title="Ver todos os canteiros"
           >
@@ -109,7 +126,7 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
         </>
       )}
       
-      {/* Tool Selection */}
+      {/* Tool Selection - Better mobile experience */}
       {tools.map((tool) => {
         const isActive = activeTool === tool.id;
         
@@ -120,9 +137,12 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
             size="sm"
             onClick={() => onToolChange(tool.id)}
             className={cn(
-              "w-11 h-11 p-0 touch-manipulation",
-              isActive && "ring-2 ring-blue-500 ring-offset-1 bg-blue-600 hover:bg-blue-700",
-              !isActive && "hover:bg-gray-50"
+              "p-0 touch-manipulation",
+              // Enhanced mobile touch targets
+              "w-12 h-12 sm:w-11 sm:h-11",
+              "active:scale-95",
+              isActive && "ring-2 ring-blue-500 ring-offset-1 bg-blue-600 hover:bg-blue-700 active:bg-blue-800",
+              !isActive && "hover:bg-gray-50 active:bg-gray-100"
             )}
             title={tool.tooltip}
             aria-label={tool.tooltip}
@@ -136,7 +156,7 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
         );
       })}
 
-      {/* Plant Selection Button */}
+      {/* Plant Selection Button - Mobile optimized */}
       {onOpenPlantSelection && (
         <>
           <div className="w-full h-px bg-gray-300 my-1" />
@@ -144,7 +164,11 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
             variant="outline"
             size="sm"
             onClick={onOpenPlantSelection}
-            className="w-11 h-11 p-0 touch-manipulation hover:bg-green-50 hover:border-green-300"
+            className={cn(
+              "p-0 touch-manipulation hover:bg-green-50 hover:border-green-300 active:bg-green-100",
+              "w-12 h-12 sm:w-11 sm:h-11",
+              "active:scale-95"
+            )}
             title="Selecionar plantas"
             aria-label="Abrir seleção de plantas"
           >
