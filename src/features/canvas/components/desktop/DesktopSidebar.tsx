@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -7,7 +6,6 @@ import { CanvasViewport } from '../../types/canvas.types';
 import { 
   ChevronLeft,
   ChevronRight,
-  Clock
 } from 'lucide-react';
 import { BedConfigurationPanel } from './BedConfigurationPanel';
 import { StatisticsPanel } from './StatisticsPanel';
@@ -105,19 +103,6 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           <div className="text-xs text-gray-500 rotate-90 mt-8">
             Controles
           </div>
-          
-          {/* Timeline Toggle in collapsed state */}
-          {isInFocusMode && placements.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTimelineActive(true)}
-              className="w-10 h-10 p-0"
-              title="Linha do Tempo"
-            >
-              <Clock className="w-4 h-4" />
-            </Button>
-          )}
         </div>
       ) : (
         /* Expanded State - Full Controls */
@@ -132,19 +117,6 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                 activeTool === 'select' ? 'Selecionar' : activeTool
               }</p>
             </div>
-            
-            {/* Timeline Toggle Button */}
-            {isInFocusMode && placements.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setTimelineActive(true)}
-                className="flex items-center gap-2"
-              >
-                <Clock className="w-4 h-4" />
-                Timeline
-              </Button>
-            )}
           </div>
 
           {/* Bed Configuration - only show for rectangle tool */}

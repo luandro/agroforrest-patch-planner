@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import PatchCanvas from '../features/canvas/components/PatchCanvas';
 import MainLayout from '../components/layout/MainLayout';
@@ -9,7 +8,6 @@ import { useBedStore } from '../features/canvas/stores/bedStore';
 import { usePlantPlacementStore } from '../features/canvas/stores/plantPlacementStore';
 import { useTimelineStore } from '../features/canvas/stores/timelineStore';
 import { GrowthTimelineProvider } from '../features/canvas/providers/GrowthTimelineProvider';
-import { DesktopGrowthTimeline } from '../features/canvas/components/desktop/DesktopGrowthTimeline';
 import { ArrowLeft, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -18,10 +16,9 @@ const PatchCreatorPage: React.FC = () => {
   const [viewport, setViewport] = useState<CanvasViewport | null>(null);
   const [fps, setFps] = useState(0);
   const [isPlantSelectionOpen, setIsPlantSelectionOpen] = useState(false);
-  const [isTimelineOpen, setIsTimelineOpen] = useState(false);
   const { beds, selectedBedIds, tool, setTool, loadBeds, focusMode, exitFocusMode } = useBedStore();
   const { setSelectedSpecies, setIsPlacing, placements } = usePlantPlacementStore();
-  const { setTimelineActive } = useTimelineStore();
+  const { isTimelineActive, setTimelineActive } = useTimelineStore();
   const isMobile = useIsMobile();
 
   // Ensure pan tool is default on page load
@@ -70,19 +67,6 @@ const PatchCreatorPage: React.FC = () => {
   const handleExitFocus = () => {
     exitFocusMode();
     console.log('Exited focus mode from header button');
-  };
-
-  // Timeline controls
-  const handleToggleTimeline = () => {
-    const newState = !isTimelineOpen;
-    setIsTimelineOpen(newState);
-    setTimelineActive(newState);
-    console.log('Timeline toggled:', newState);
-  };
-
-  const handleCloseTimeline = () => {
-    setIsTimelineOpen(false);
-    setTimelineActive(false);
   };
 
   // FPS counter for development
@@ -150,9 +134,9 @@ const PatchCreatorPage: React.FC = () => {
                 {/* Timeline Toggle Button */}
                 {placements.length > 0 && !isMobile && (
                   <Button
-                    variant={isTimelineOpen ? "default" : "outline"}
+                    variant={isTimelineActive ? "default" : "outline"}
                     size="sm"
-                    onClick={handleToggleTimeline}
+                    onClick={() => setTimelineActive(!isTimelineActive)}
                     className="flex items-center gap-2"
                   >
                     <Clock className="w-4 h-4" />
@@ -189,15 +173,6 @@ const PatchCreatorPage: React.FC = () => {
           onSelectSpecies={handleSelectSpecies}
           selectedBedId={focusMode.isActive ? focusMode.bedId : undefined}
         />
-
-        {/* Desktop Growth Timeline - Only show on desktop */}
-        {isTimelineOpen && !isMobile && (
-          <DesktopGrowthTimeline
-            onClose={handleCloseTimeline}
-            focusedBedId={focusMode.isActive ? focusMode.bedId : undefined}
-            isInFocusMode={focusMode.isActive}
-          />
-        )}
 
         {/* Hidden stats for development */}
         {process.env.NODE_ENV === 'development' && viewport && (
