@@ -1,5 +1,4 @@
-
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 interface UseCanvasLayoutPropsParams {
   viewport: any;
@@ -94,20 +93,39 @@ export const useCanvasLayoutProps = (params: UseCanvasLayoutPropsParams) => {
     handleExitFocus
   } = params;
 
-  // Enhanced zoom handlers
+  // Stable (memoized) event handlers: keep their reference across renders using useRef
+  // so dependency list is always [] which prevents recreating them and triggering render loops.
+  // This is important for parent memoized components!
+  const zoomToRef = useRef(zoomTo);
+  zoomToRef.current = zoomTo;
+
+  const fitAllBedsRef = useRef(fitAllBeds);
+  fitAllBedsRef.current = fitAllBeds;
+
+  // These handlers only update when minZoom, maxZoom, or the referenced function changes
   const handleZoomIn = useCallback(() => {
     const newZoom = Math.min(maxZoom, viewport.zoom * 1.2);
-    zoomTo(newZoom);
-  }, [viewport.zoom, maxZoom, zoomTo]);
+    zoomToRef.current(newZoom);
+  }, [maxZoom, viewport.zoom]);
 
   const handleZoomOut = useCallback(() => {
     const newZoom = Math.max(minZoom, viewport.zoom / 1.2);
-    zoomTo(newZoom);
-  }, [viewport.zoom, minZoom, zoomTo]);
+    zoomToRef.current(newZoom);
+  }, [minZoom, viewport.zoom]);
 
+  // This should never be recreated unless fitAllBeds changes, but with ref, stays stable
   const handleFitAll = useCallback(() => {
-    fitAllBeds();
-  }, [fitAllBeds]);
+    fitAllBedsRef.current();
+  }, []);
+
+  // Debug: warn if handlers are being recreated often
+  if (process.env.NODE_ENV === 'development') {
+    // eslint-disable-next-line no-console
+    console.debug(
+      '[useCanvasLayoutProps] render',
+      { handleZoomIn, handleZoomOut, handleFitAll }
+    );
+  }
 
   return {
     viewport,
@@ -131,7 +149,7 @@ export const useCanvasLayoutProps = (params: UseCanvasLayoutPropsParams) => {
     handlePointerMove,
     handlePointerUp,
     handleDoubleClick,
-    handleConfirmPlacement: confirmPlacement, // Use the corrected handler
+    handleConfirmPlacement: confirmPlacement,
     handleCancelPlacement: cancelPlacement,
     pan,
     zoomTo,
