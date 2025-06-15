@@ -1,14 +1,18 @@
 
 import { useCallback } from 'react';
 import { Bed, BedConfig } from '../types/bed.types';
+import { usePatchStore } from '../stores/patchStore';
 
 interface UseBedPreviewCreationProps {
   bedConfig: BedConfig;
 }
 
 export const useBedPreviewCreation = ({ bedConfig }: UseBedPreviewCreationProps) => {
+  const { activePatchId } = usePatchStore();
+
   const createPreviewBedGroup = useCallback((baseBed: Bed): Bed[] => {
     const beds: Bed[] = [];
+    if (!activePatchId) return beds;
     
     for (let i = 0; i < bedConfig.quantity; i++) {
       // Calculate offset for parallel placement
@@ -19,6 +23,7 @@ export const useBedPreviewCreation = ({ bedConfig }: UseBedPreviewCreationProps)
       
       const bed: Bed = {
         id: `preview-${Date.now()}-${i}`,
+        patchId: activePatchId,
         shape: baseBed.shape,
         position: {
           x: baseBed.position.x,
@@ -34,11 +39,13 @@ export const useBedPreviewCreation = ({ bedConfig }: UseBedPreviewCreationProps)
     }
 
     return beds;
-  }, [bedConfig]);
+  }, [bedConfig, activePatchId]);
 
   const createBaseBed = useCallback((position: { x: number; y: number }, shape: 'rectangle' | 'circle'): Bed => {
+    const patchId = activePatchId || 'preview-patch';
     return {
       id: `preview-${Date.now()}`,
+      patchId,
       shape,
       position,
       dimensions: shape === 'rectangle' 
@@ -48,7 +55,7 @@ export const useBedPreviewCreation = ({ bedConfig }: UseBedPreviewCreationProps)
       createdAt: Date.now(),
       updatedAt: Date.now()
     };
-  }, [bedConfig]);
+  }, [bedConfig, activePatchId]);
 
   return {
     createPreviewBedGroup,

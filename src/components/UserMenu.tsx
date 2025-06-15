@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { X, User, Settings, LogOut, Eye, Plus, Trash2, Download, HelpCircle, Info, AlertTriangle } from 'lucide-react';
 import { useMenuStore } from '@/stores/menuStore';
@@ -24,7 +23,7 @@ interface UserMenuProps {
 
 export const UserMenu: React.FC<UserMenuProps> = ({ onFitAll, onCreateNewPatch }) => {
   const { isMenuOpen, setMenuOpen } = useMenuStore();
-  const { beds, loadBeds, tool, setTool } = useBedStore();
+  const { beds, activePatchId, removeBedsForPatch } = useBedStore();
   const { toast } = useToast();
   const [confirmText, setConfirmText] = React.useState('');
   const [showClearDialog, setShowClearDialog] = React.useState(false);
@@ -85,20 +84,23 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onFitAll, onCreateNewPatch }
   };
 
   const handleClearCurrentPatch = () => {
-    loadBeds([]);
+    if (activePatchId) {
+      removeBedsForPatch(activePatchId);
+    }
     setShowClearDialog(false);
     setMenuOpen(false);
     toast({
-      title: "Canteiros removidos",
-      description: "Todos os canteiros foram removidos do projeto atual.",
+      title: "Área limpa",
+      description: "Todos os canteiros e plantas foram removidos da área atual.",
     });
   };
 
   const handleClearAllData = () => {
     if (confirmText !== 'DELETE') return;
     
-    // Clear IndexedDB and all stores
-    loadBeds([]);
+    // This is very destructive. Should probably clear stores and DB more gracefully.
+    // For now, it clears everything and reloads.
+    indexedDB.deleteDatabase('AgroForestDB');
     localStorage.clear();
     sessionStorage.clear();
     
@@ -108,11 +110,10 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onFitAll, onCreateNewPatch }
     
     toast({
       title: "Todos os dados foram apagados",
-      description: "Redirecionando para a página inicial...",
+      description: "A aplicação será recarregada.",
       variant: "destructive",
     });
     
-    // Redirect to landing page
     setTimeout(() => {
       window.location.href = '/';
     }, 2000);
@@ -248,7 +249,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onFitAll, onCreateNewPatch }
           <DialogHeader>
             <DialogTitle>Limpar Área Atual</DialogTitle>
             <DialogDescription>
-              Isto removerá todos os canteiros da área atual. Esta ação não pode ser desfeita.
+              Isto removerá todos os canteiros e plantas da área atual. Esta ação não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -256,7 +257,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onFitAll, onCreateNewPatch }
               Cancelar
             </Button>
             <Button variant="destructive" onClick={handleClearCurrentPatch}>
-              Limpar Canteiros
+              Limpar Área
             </Button>
           </DialogFooter>
         </DialogContent>

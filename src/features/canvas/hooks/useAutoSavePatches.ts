@@ -1,6 +1,7 @@
 
 import { useEffect, useRef, useState } from 'react';
-import { usePatchStore, Patch } from '../stores/patchStore';
+import { usePatchStore } from '../stores/patchStore';
+import { Patch } from '../types/patch.types';
 
 const DB_NAME = 'AgroForestDB';
 const DB_VERSION = 2; // Version incremented to handle schema changes

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PatchCanvas from '../features/canvas/components/PatchCanvas';
@@ -11,6 +10,8 @@ import { usePlantPlacementStore } from '../features/canvas/stores/plantPlacement
 import { usePatchManagement } from '../features/canvas/hooks/usePatchManagement';
 import { PatchSwitcherDialog } from '../features/canvas/components/PatchSwitcherDialog';
 import { usePatchStore } from '../features/canvas/stores/patchStore';
+import { Button } from '@/components/ui/button';
+import { ChevronsUpDown } from 'lucide-react';
 
 const PatchCreatorPage: React.FC = () => {
   usePatchManagement(); // Initialize and manage all patch-related data loading
@@ -61,20 +62,17 @@ const PatchCreatorPage: React.FC = () => {
   return (
     <MainLayout 
       showUserMenu={true}
-      onManagePatches={() => setIsPatchSwitcherOpen(true)}
     >
       <header className="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200 h-16">
         <div className="px-4 h-full flex items-center justify-between">
-          <div>
+          <div className="flex items-center gap-1">
             <h1 className="text-xl font-bold text-gray-900 truncate" title={activePatch?.name}>
               {activePatch?.name || 'Carregando...'}
             </h1>
-            <p className="text-sm text-gray-600 hidden sm:block">
-              {focusMode.isActive 
-                ? 'Modo Plantio - Foco no Canteiro'
-                : 'Crie e organize seus canteiros'
-              }
-            </p>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsPatchSwitcherOpen(true)}>
+              <ChevronsUpDown className="h-4 w-4 text-gray-600" />
+              <span className="sr-only">Trocar ou gerenciar canteiros</span>
+            </Button>
           </div>
           
           {process.env.NODE_ENV === 'development' && (

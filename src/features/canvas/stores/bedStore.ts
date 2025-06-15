@@ -42,22 +42,21 @@ export const useBedStore = () => {
       { fireImmediately: false }
     );
     
-    // Reset history when patch changes
-    historyStore.resetHistory();
+    // TODO: The `resetHistory` action is missing from `historyStore`.
+    // This should be implemented to clear history when switching patches.
+    // historyStore.resetHistory();
 
     return unsubscribe;
   }, [historyStore, activePatchId]);
 
 
   // Enhanced actions that are now patch-aware
-  const addBed = (bed: Omit<Bed, 'patchId'>) => {
-    if (!activePatchId) return;
-    bedState.addBed({ ...bed, patchId: activePatchId });
+  const addBed = (bed: Bed) => {
+    bedState.addBed(bed);
   };
 
   const addPlacement = (placement: Omit<PlantPlacement, 'patchId'| 'id' | 'plantedAt'>) => {
-    if (!activePatchId) return;
-    plantPlacementState.addPlacement({ ...placement, patchId: activePatchId });
+    plantPlacementState.addPlacement(placement);
   };
 
   const updateBed = (id: string, updates: Partial<Bed>) => {
@@ -77,6 +76,7 @@ export const useBedStore = () => {
   
   const removeBedsForPatch = (patchId: string) => {
       bedState.removeBedsForPatch(patchId);
+      plantPlacementState.clearPlacementsForPatch(patchId);
   }
 
   return {

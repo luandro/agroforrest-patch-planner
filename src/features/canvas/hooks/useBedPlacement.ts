@@ -1,8 +1,8 @@
-
 import { useState, useCallback } from 'react';
 import { Bed, BedConfig } from '../types/bed.types';
 import { useBedStore } from '../stores/bedStore';
 import { checkCollision, calculateBedFootprint } from '../utils/bedPositioning';
+import { usePatchStore } from '../stores/patchStore';
 
 interface UseBedPlacementProps {
   bedConfig: BedConfig;
@@ -11,6 +11,7 @@ interface UseBedPlacementProps {
 
 export const useBedPlacement = ({ bedConfig, onBedCreated }: UseBedPlacementProps) => {
   const { addBed, beds } = useBedStore();
+  const { activePatchId } = usePatchStore();
   const [placementBeds, setPlacementBeds] = useState<Bed[]>([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [multiCreationMode, setMultiCreationMode] = useState(false);
@@ -19,9 +20,9 @@ export const useBedPlacement = ({ bedConfig, onBedCreated }: UseBedPlacementProp
   const createBedGroup = useCallback((baseBed: Bed): Bed[] => {
     const beds: Bed[] = [];
     const timestamp = Date.now();
+    if (!activePatchId) return [];
     
     for (let i = 0; i < bedConfig.quantity; i++) {
-      // Calculate offset for parallel placement
       const offsetY = i * (
         (baseBed.shape === 'rectangle' ? baseBed.dimensions.width || bedConfig.width : (baseBed.dimensions.radius || bedConfig.length) * 2) + 
         (bedConfig.spacing * 2)
@@ -30,6 +31,7 @@ export const useBedPlacement = ({ bedConfig, onBedCreated }: UseBedPlacementProp
       const bedId = `bed-${timestamp}-${i}`;
       const bed: Bed = {
         id: bedId,
+        patchId: activePatchId,
         shape: baseBed.shape,
         position: {
           x: baseBed.position.x,
@@ -45,7 +47,7 @@ export const useBedPlacement = ({ bedConfig, onBedCreated }: UseBedPlacementProp
     }
 
     return beds;
-  }, [bedConfig]);
+  }, [bedConfig, activePatchId]);
 
   const checkGroupCollision = useCallback((bedGroup: Bed[]): boolean => {
     for (const bed of bedGroup) {

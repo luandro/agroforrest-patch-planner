@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { PlantSpecies } from '../types/species.types';
+import { usePatchStore } from './patchStore';
 
 export interface PlantPlacement {
   id: string;
@@ -22,7 +23,7 @@ interface PlantPlacementState {
 }
 
 interface PlantPlacementActions {
-  addPlacement: (placement: Omit<PlantPlacement, 'id' | 'plantedAt'>) => void;
+  addPlacement: (placement: Omit<PlantPlacement, 'patchId' | 'id' | 'plantedAt'>) => void;
   removePlacements: (ids: string[]) => void;
   updatePlacement: (id: string, updates: Partial<PlantPlacement>) => void;
   getPlacementsForBed: (bedId: string) => PlantPlacement[];
@@ -41,7 +42,6 @@ type PlantPlacementStore = PlantPlacementState & PlantPlacementActions;
 
 export const usePlantPlacementStore = create<PlantPlacementStore>()(
   subscribeWithSelector((set, get) => ({
-    // State
     placements: [],
     selectedPlacementIds: [],
     isPlacing: false,
@@ -49,10 +49,16 @@ export const usePlantPlacementStore = create<PlantPlacementStore>()(
     placementPreview: null,
     isDirty: false,
 
-    // Actions
     addPlacement: (placement) => {
+      const { activePatchId } = usePatchStore.getState();
+      if (!activePatchId) {
+        console.warn('Cannot add placement without an active patch.');
+        return;
+      }
+
       const newPlacement: PlantPlacement = {
-        ...placement,
+        ...(placement as Omit<PlantPlacement, 'id' | 'plantedAt'>),
+        patchId: activePatchId,
         id: `plant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         plantedAt: Date.now()
       };
