@@ -10,6 +10,7 @@ import { mockPlantSpecies } from '../data/mockSpecies';
 import { PlantSpeciesCard } from './PlantSpeciesCard';
 import { PlantCategoryFilter } from './PlantCategoryFilter';
 import { PlantCompatibilityFilter } from './PlantCompatibilityFilter';
+import { usePlantPlacementStore } from '../stores/plantPlacementStore';
 
 interface PlantSelectionPanelProps {
   isOpen: boolean;
@@ -28,6 +29,8 @@ export const PlantSelectionPanel: React.FC<PlantSelectionPanelProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<PlantCategory | 'all'>('all');
   const [selectedCompatibility, setSelectedCompatibility] = useState<CompatibilityLevel | 'all'>('all');
   const [showFilters, setShowFilters] = useState(false);
+
+  const { setSelectedSpecies } = usePlantPlacementStore();
 
   const filteredSpecies = useMemo(() => {
     return mockPlantSpecies.filter(species => {
@@ -70,8 +73,11 @@ export const PlantSelectionPanel: React.FC<PlantSelectionPanelProps> = ({
   };
 
   const handleSpeciesSelect = (species: PlantSpecies) => {
+    // Set the species for placement mode
+    setSelectedSpecies(species);
     onSelectSpecies(species);
-    // Don't close panel automatically to allow multiple selections
+    // Close panel when selecting for placement
+    onClose();
   };
 
   const clearFilters = () => {
@@ -114,7 +120,7 @@ export const PlantSelectionPanel: React.FC<PlantSelectionPanelProps> = ({
           
           {selectedBedId && (
             <p className="text-sm text-gray-600 mt-1">
-              Adicionando plantas ao canteiro
+              Selecione uma espécie para plantar no canteiro
             </p>
           )}
         </div>

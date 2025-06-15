@@ -1,47 +1,49 @@
 
 import React from 'react';
+import { ArrowLeft, Maximize2, Leaf } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Maximize2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { FocusModePlantTool } from './FocusModePlantTool';
 
 interface FocusModeControlsProps {
-  isActive: boolean;
-  focusedBedId: string | null;
+  focusedBedId: string;
   onExitFocus: () => void;
-  className?: string;
+  onOpenPlantSelection: () => void;
+  onSelectSpecies?: (species: any) => void;
 }
 
 export const FocusModeControls: React.FC<FocusModeControlsProps> = ({
-  isActive,
   focusedBedId,
   onExitFocus,
-  className
+  onOpenPlantSelection,
+  onSelectSpecies
 }) => {
-  if (!isActive || !focusedBedId) return null;
-
   return (
-    <div className={cn(
-      "fixed top-20 left-1/2 transform -translate-x-1/2 z-50",
-      "bg-white/95 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-gray-200",
-      "flex items-center gap-3",
-      className
-    )}>
-      <div className="flex items-center gap-2 text-sm text-gray-600">
-        <Maximize2 className="w-4 h-4 text-green-600" />
-        <span className="font-medium">Modo Foco Ativo</span>
-        <span className="text-gray-400">•</span>
-        <span>Grade fina (10cm) para plantio preciso</span>
+    <div className="fixed top-20 left-4 z-40 space-y-4">
+      {/* Exit Focus Mode */}
+      <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg p-3">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onExitFocus}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Sair do Modo Focado
+          </Button>
+          
+          <div className="text-sm text-gray-600">
+            Grade de plantio ativa (10cm)
+          </div>
+        </div>
       </div>
-      
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onExitFocus}
-        className="flex items-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Sair do Foco
-      </Button>
+
+      {/* Plant Tool */}
+      <FocusModePlantTool
+        focusedBedId={focusedBedId}
+        onOpenPlantSelection={onOpenPlantSelection}
+        onSelectSpecies={onSelectSpecies || (() => {})}
+      />
     </div>
   );
 };

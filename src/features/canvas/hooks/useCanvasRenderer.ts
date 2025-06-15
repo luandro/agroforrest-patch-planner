@@ -4,6 +4,8 @@ import { CanvasViewport } from '../types/canvas.types';
 import { Bed } from '../types/bed.types';
 import { drawGrid } from '../utils/gridRenderer';
 import { drawBed } from '../utils/shapeRenderer';
+import { drawPlantPlacements } from '../utils/plantRenderer';
+import { usePlantPlacementStore } from '../stores/plantPlacementStore';
 
 interface UseCanvasRendererProps {
   canvasRef?: React.RefObject<HTMLCanvasElement>;
@@ -18,6 +20,9 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedB
   
   // Use provided canvasRef or internal one
   const activeCanvasRef = canvasRef || internalCanvasRef;
+
+  // Get plant placement data
+  const { getPlacementsForBed, selectedPlacementIds, placementPreview } = usePlantPlacementStore();
 
   const render = useCallback((
     viewport: CanvasViewport, 
@@ -70,18 +75,31 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedB
       if (shouldDimBed) {
         ctx.restore();
       }
+
+      // 5. Draw plant placements for this bed (only in focus mode for the focused bed)
+      if (focusedBed && bed.id === focusedBed.id) {
+        const bedPlacements = getPlacementsForBed(bed.id);
+        drawPlantPlacements(
+          ctx, 
+          bed, 
+          bedPlacements, 
+          viewport, 
+          selectedPlacementIds,
+          placementPreview
+        );
+      }
     });
 
-    // 5. Draw placement bed if it exists (confirmed bed awaiting creation)
+    // 6. Draw placement bed if it exists (confirmed bed awaiting creation)
     if (placementBed) {
       drawBed(ctx, placementBed, viewport, false, false, true, focusedBed ? 0 : spacing);
     }
 
-    // 6. Draw preview bed if it exists (follows cursor)
+    // 7. Draw preview bed if it exists (follows cursor)
     if (previewBed) {
       drawBed(ctx, previewBed, viewport, false, true, false, focusedBed ? 0 : spacing);
     }
-  }, [activeCanvasRef, gridSize, spacing, focusedBed]);
+  }, [activeCanvasRef, gridSize, spacing, focusedBed, getPlacementsForBed, selectedPlacementIds, placementPreview]);
 
   const scheduleRender = useCallback((
     viewport: CanvasViewport, 

@@ -6,12 +6,14 @@ import { PlantSelectionPanel } from '../features/canvas/components/PlantSelectio
 import { CanvasViewport } from '../features/canvas/types/canvas.types';
 import { PlantSpecies } from '../features/canvas/types/species.types';
 import { useBedStore } from '../features/canvas/stores/bedStore';
+import { usePlantPlacementStore } from '../features/canvas/stores/plantPlacementStore';
 
 const PatchCreatorPage: React.FC = () => {
   const [viewport, setViewport] = useState<CanvasViewport | null>(null);
   const [fps, setFps] = useState(0);
   const [isPlantSelectionOpen, setIsPlantSelectionOpen] = useState(false);
-  const { beds, selectedBedIds, tool, setTool, loadBeds } = useBedStore();
+  const { beds, selectedBedIds, tool, setTool, loadBeds, focusMode } = useBedStore();
+  const { setSelectedSpecies } = usePlantPlacementStore();
 
   // Ensure pan tool is default on page load
   useEffect(() => {
@@ -48,9 +50,9 @@ const PatchCreatorPage: React.FC = () => {
   };
 
   const handleSelectSpecies = (species: PlantSpecies) => {
-    console.log('Selected species:', species);
-    // TODO: Add logic to associate plant with selected bed or create planting plan
-    // For now, just log the selection
+    console.log('Selected species for placement:', species);
+    setSelectedSpecies(species);
+    // Panel will close automatically via the PlantSelectionPanel component
   };
 
   // FPS counter for development
@@ -86,15 +88,21 @@ const PatchCreatorPage: React.FC = () => {
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 h-16">
         <div className="px-4 h-full flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Criador de Canteiros</h1>
+            <h1 className="text-xl font-bold text-gray-900">
+              {focusMode.isActive ? 'Modo Plantio - Canteiro Focado' : 'Criador de Canteiros'}
+            </h1>
             <p className="text-sm text-gray-600 hidden sm:block">
-              Crie e organize canteiros para seu sistema agroflorestal
+              {focusMode.isActive 
+                ? 'Plante espécies com precisão usando a grade de 10cm'
+                : 'Crie e organize canteiros para seu sistema agroflorestal'
+              }
             </p>
           </div>
           
           {process.env.NODE_ENV === 'development' && (
             <div className="text-xs text-gray-500 hidden md:block">
               FPS: {fps} | Canteiros: {beds.length} | Selecionados: {selectedBedIds.length} | Ferramenta: {tool}
+              {focusMode.isActive && ` | Focado: ${focusMode.bedId}`}
             </div>
           )}
         </div>
@@ -116,7 +124,7 @@ const PatchCreatorPage: React.FC = () => {
         isOpen={isPlantSelectionOpen}
         onClose={handleClosePlantSelection}
         onSelectSpecies={handleSelectSpecies}
-        selectedBedId={selectedBedIds[0]} // Pass first selected bed if any
+        selectedBedId={focusMode.isActive ? focusMode.bedId : undefined}
       />
 
       {/* Hidden stats for development */}

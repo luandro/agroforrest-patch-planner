@@ -10,6 +10,7 @@ import { useCanvasState } from './useCanvasState';
 import { useCanvasFocusMode } from './useCanvasFocusMode';
 import { useCanvasTools } from './useCanvasTools';
 import { useCanvasEventHandlers } from './useCanvasEventHandlers';
+import { usePlantPlacement } from './usePlantPlacement';
 
 export const usePatchCanvasOrchestrator = ({
   initialViewport,
@@ -40,6 +41,19 @@ export const usePatchCanvasOrchestrator = ({
   } = useCanvasFocusMode({
     viewport,
     updateViewport
+  });
+
+  // Find the focused bed for rendering and plant placement
+  const focusedBed = focusedBedId ? beds.find(bed => bed.id === focusedBedId) : null;
+
+  // Plant placement integration
+  const {
+    selectSpeciesForPlacement,
+    cancelPlacement: cancelPlantPlacement
+  } = usePlantPlacement({
+    viewport,
+    focusedBed,
+    canvasRef
   });
 
   // Bed creation management
@@ -77,7 +91,10 @@ export const usePatchCanvasOrchestrator = ({
   // Tool management
   const { tool, setTool } = useCanvasTools({
     isInFocusMode,
-    handleExitFocus,
+    handleExitFocus: () => {
+      handleExitFocus();
+      cancelPlantPlacement(); // Cancel plant placement when exiting focus
+    },
     handleToolChange
   });
 
@@ -86,8 +103,22 @@ export const usePatchCanvasOrchestrator = ({
     viewport, 
     canvasRef,
     onEnterFocus: handleEnterFocus,
-    onExitFocus: handleExitFocus
+    onExitFocus: () => {
+      handleExitFocus();
+      cancelPlantPlacement(); // Cancel plant placement when exiting focus
+    }
   });
+
+  // Enhanced plant selection handler that integrates with both systems
+  const handlePlantSelectionOpen = useCallback(() => {
+    if (onOpenPlantSelection) {
+      onOpenPlantSelection();
+    }
+  }, [onOpenPlantSelection]);
+
+  const handlePlantSpeciesSelect = useCallback((species: any) => {
+    selectSpeciesForPlacement(species);
+  }, [selectSpeciesForPlacement]);
 
   // Event handlers
   const {
@@ -105,13 +136,14 @@ export const usePatchCanvasOrchestrator = ({
     startSelection,
     updateSelection,
     finishSelection,
-    handleToolChange
+    handleToolChange,
+    // Plant placement props
+    viewport,
+    focusedBed,
+    canvasRef
   });
 
   const { isSaving } = useAutoSave();
-
-  // Find the focused bed for rendering
-  const focusedBed = focusedBedId ? beds.find(bed => bed.id === focusedBedId) : null;
 
   const handleConfirmPlacement = useCallback(() => {
     confirmPlacement();
@@ -173,13 +205,15 @@ export const usePatchCanvasOrchestrator = ({
     isSaving,
     cancelCreation,
     gridSize: isInFocusMode ? 0.1 : gridSize, // Use fine grid in focus mode
-    onOpenPlantSelection,
+    onOpenPlantSelection: handlePlantSelectionOpen,
     // Focus mode props
     isInFocusMode,
     focusedBedId,
     focusedBed,
     onEnterFocus: handleEnterFocus,
     onExitFocus: handleExitFocus,
+    // Plant placement integration
+    onSelectPlantSpecies: handlePlantSpeciesSelect,
   };
 
   return {

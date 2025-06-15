@@ -1,85 +1,159 @@
 
 import React from 'react';
+import { ViewControls } from './ViewControls';
+import { FocusModeControls } from './FocusModeControls';
 import { BedConfirmationPanel } from './BedConfirmationPanel';
-import { CanvasTool } from '../types/bed.types';
+import { MobileControls } from './MobileControls';
+import { DesktopSidebar } from './DesktopSidebar';
+import { DevelopmentInfo } from './DevelopmentInfo';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CanvasOverlaysProps {
-  tool: CanvasTool;
-  isCreating: boolean;
   showConfirmation: boolean;
-  placementBed: any;
-  placementBeds?: any[];
-  bedConfig: any;
-  multiCreationMode: boolean;
-  setMultiCreationMode: (enabled: boolean) => void;
   handleConfirmPlacement: () => void;
   handleCancelPlacement: () => void;
-  hasCollision?: boolean;
-  isMobile?: boolean;
+  viewport: any;
+  handleZoomIn: () => void;
+  handleZoomOut: () => void;
+  handleFitAll: () => void;
+  tool: string;
+  setTool: (tool: any) => void;
+  bedConfig: any;
+  updateBedConfig: any;
+  multiCreationMode: boolean;
+  setMultiCreationMode: (enabled: boolean) => void;
+  undo: () => void;
+  redo: () => void;
+  canUndo: () => boolean;
+  canRedo: () => boolean;
+  deleteSelected: () => void;
+  beds: any[];
+  selectedBedIds: string[];
+  isSaving: boolean;
+  gridSize?: number;
   isCollapsed?: boolean;
+  onToggleCollapse?: (collapsed: boolean) => void;
+  // Focus mode props
+  isInFocusMode?: boolean;
+  focusedBedId?: string | null;
+  onExitFocus?: () => void;
+  onOpenPlantSelection?: () => void;
+  onSelectPlantSpecies?: (species: any) => void;
 }
 
 export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
-  tool,
-  isCreating,
   showConfirmation,
-  placementBed,
-  placementBeds,
-  bedConfig,
-  multiCreationMode,
-  setMultiCreationMode,
   handleConfirmPlacement,
   handleCancelPlacement,
-  hasCollision = false,
-  isMobile = false,
-  isCollapsed,
+  viewport,
+  handleZoomIn,
+  handleZoomOut,
+  handleFitAll,
+  tool,
+  setTool,
+  bedConfig,
+  updateBedConfig,
+  multiCreationMode,
+  setMultiCreationMode,
+  undo,
+  redo,
+  canUndo,
+  canRedo,
+  deleteSelected,
+  beds,
+  selectedBedIds,
+  isSaving,
+  gridSize = 1,
+  isCollapsed = false,
+  onToggleCollapse,
+  // Focus mode props
+  isInFocusMode = false,
+  focusedBedId = null,
+  onExitFocus,
+  onOpenPlantSelection,
+  onSelectPlantSpecies
 }) => {
-  const desktopPanelPositionClass = isMobile
-    ? ''
-    : `top-1/2 transform -translate-y-1/2 -translate-x-1/2 ${
-        isCollapsed === false ? 'left-[calc(50%-10rem)]' : 'left-1/2'
-      }`;
+  const isMobile = useIsMobile();
 
   return (
     <>
-      {/* Creation Mode Indicator */}
-      {(isCreating || tool === 'create-rectangle' || tool === 'create-circle') && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-40">
-          <div className={`border px-3 py-1 rounded-full text-sm font-medium animate-fade-in ${
-            hasCollision 
-              ? 'bg-red-100 border-red-300 text-red-800'
-              : 'bg-green-100 border-green-300 text-green-800'
-          }`}>
-            {hasCollision ? (
-              <>❌ Posição inválida - sobreposição detectada</>
-            ) : (
-              <>Modo Criação • {tool === 'create-rectangle' ? 'Retângulo' : 'Círculo'}</>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Multi-bed indicator */}
-      {(isCreating || showConfirmation) && bedConfig.quantity > 1 && (
-        <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-40">
-          <div className="bg-blue-100 border border-blue-300 text-blue-800 px-3 py-1 rounded-full text-sm font-medium animate-fade-in">
-            📐 {bedConfig.quantity} canteiros • Espaçamento: {bedConfig.spacing}m
-          </div>
-        </div>
-      )}
-
       {/* Bed Confirmation Panel */}
-      {showConfirmation && placementBed && (
+      {showConfirmation && (
         <BedConfirmationPanel
-          bed={placementBed}
-          beds={placementBeds}
-          bedConfig={bedConfig}
-          multiCreationMode={multiCreationMode}
-          onMultiCreationToggle={setMultiCreationMode}
           onConfirm={handleConfirmPlacement}
           onCancel={handleCancelPlacement}
-          hasCollision={hasCollision}
-          className={desktopPanelPositionClass}
+        />
+      )}
+
+      {/* Focus Mode Controls */}
+      {isInFocusMode && focusedBedId && onExitFocus && (
+        <FocusModeControls
+          focusedBedId={focusedBedId}
+          onExitFocus={onExitFocus}
+          onOpenPlantSelection={onOpenPlantSelection || (() => {})}
+          onSelectSpecies={onSelectPlantSpecies}
+        />
+      )}
+
+      {/* View Controls - positioned to not conflict with focus mode */}
+      {!isInFocusMode && (
+        <ViewControls
+          zoom={viewport.zoom}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onFitAll={handleFitAll}
+        />
+      )}
+
+      {/* Mobile Controls */}
+      {isMobile && !isInFocusMode && (
+        <MobileControls
+          tool={tool}
+          setTool={setTool}
+          bedConfig={bedConfig}
+          updateBedConfig={updateBedConfig}
+          multiCreationMode={multiCreationMode}
+          setMultiCreationMode={setMultiCreationMode}
+          undo={undo}
+          redo={redo}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          deleteSelected={deleteSelected}
+          selectedBedIds={selectedBedIds}
+          isSaving={isSaving}
+        />
+      )}
+
+      {/* Desktop Sidebar */}
+      {!isMobile && !isInFocusMode && (
+        <DesktopSidebar
+          tool={tool}
+          setTool={setTool}
+          bedConfig={bedConfig}
+          updateBedConfig={updateBedConfig}
+          multiCreationMode={multiCreationMode}
+          setMultiCreationMode={setMultiCreationMode}
+          undo={undo}
+          redo={redo}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          deleteSelected={deleteSelected}
+          beds={beds}
+          selectedBedIds={selectedBedIds}
+          isSaving={isSaving}
+          isCollapsed={isCollapsed}
+          onToggleCollapse={onToggleCollapse}
+        />
+      )}
+
+      {/* Development Info */}
+      {process.env.NODE_ENV === 'development' && (
+        <DevelopmentInfo
+          viewport={viewport}
+          beds={beds}
+          selectedBedIds={selectedBedIds}
+          tool={tool}
+          gridSize={gridSize}
         />
       )}
     </>
