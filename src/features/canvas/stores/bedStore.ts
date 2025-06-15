@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo } from 'react';
 import { useBedState } from './bedState';
 import { useFocusModeStore } from './focusModeStore';
@@ -35,12 +36,18 @@ export const useBedStore = () => {
     
     const unsubscribe = useBedState.subscribe(
       state => state.beds.filter(b => b.patchId === activePatchId),
-      (beds, prevBeds) => {
-        if (JSON.stringify(beds) !== JSON.stringify(prevBeds)) {
-          addToHistoryForEffect(beds);
-        }
+      (beds) => {
+        // This listener now only fires when beds for the active patch actually change,
+        // thanks to the custom equality function below.
+        addToHistoryForEffect(beds);
       },
-      { fireImmediately: false }
+      {
+        fireImmediately: false,
+        // This is crucial: it prevents the subscription from firing on every
+        // minor state change in useBedState, which was causing an infinite loop.
+        // We do a deep compare on the relevant slice of state (beds for the active patch).
+        equalityFn: (a, b) => JSON.stringify(a) === JSON.stringify(b),
+      }
     );
     
     // TODO: The `resetHistory` action is missing from `historyStore`.
