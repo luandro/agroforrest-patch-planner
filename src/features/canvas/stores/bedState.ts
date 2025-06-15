@@ -1,7 +1,9 @@
+
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { BedState, BedActions } from './types';
 import { Bed, CanvasTool } from '../types/bed.types';
+import { useHistoryStore } from './historyStore';
 
 interface BedStateStore extends BedState, BedActions {
   removeBedsForPatch: (patchId: string) => void;
@@ -20,40 +22,40 @@ export const useBedState = create<BedStateStore>()(
 
     // Actions
     addBed: (bed) => {
-      const state = get();
-      const newBeds = [...state.beds, bed];
+      const newBeds = [...get().beds, bed];
       set({ beds: newBeds, isDirty: true });
+      useHistoryStore.getState().addToHistory(newBeds);
     },
 
     updateBed: (id, updates) => {
-      const state = get();
-      const newBeds = state.beds.map(bed => 
+      const newBeds = get().beds.map(bed => 
         bed.id === id ? { ...bed, ...updates } : bed
       );
       set({ beds: newBeds, isDirty: true });
+      useHistoryStore.getState().addToHistory(newBeds);
     },
 
     removeBeds: (ids) => {
-      const state = get();
-      const newBeds = state.beds.filter(bed => !ids.includes(bed.id));
-      const newSelectedIds = state.selectedBedIds.filter(id => !ids.includes(id));
+      const newBeds = get().beds.filter(bed => !ids.includes(bed.id));
+      const newSelectedIds = get().selectedBedIds.filter(id => !ids.includes(id));
       set({ 
         beds: newBeds, 
         selectedBedIds: newSelectedIds,
         isDirty: true
       });
+      useHistoryStore.getState().addToHistory(newBeds);
     },
 
     removeBedsForPatch: (patchId) => {
-        set(state => {
-            const bedsToKeep = state.beds.filter(b => b.patchId !== patchId);
-            const bedsToKeepIds = new Set(bedsToKeep.map(b => b.id));
-            return {
-                beds: bedsToKeep,
-                selectedBedIds: state.selectedBedIds.filter(id => bedsToKeepIds.has(id)),
-                isDirty: true,
-            };
+        const { beds, selectedBedIds } = get();
+        const bedsToKeep = beds.filter(b => b.patchId !== patchId);
+        const bedsToKeepIds = new Set(bedsToKeep.map(b => b.id));
+        set({
+            beds: bedsToKeep,
+            selectedBedIds: selectedBedIds.filter(id => bedsToKeepIds.has(id)),
+            isDirty: true,
         });
+        useHistoryStore.getState().addToHistory(bedsToKeep);
     },
 
     selectBeds: (ids) => set({ selectedBedIds: ids }),

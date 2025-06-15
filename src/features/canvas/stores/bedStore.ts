@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo } from 'react';
 import { useBedState } from './bedState';
 import { useFocusModeStore } from './focusModeStore';
@@ -16,8 +15,6 @@ export const useBedStore = () => {
   const plantPlacementState = usePlantPlacementStore();
   const patchState = usePatchStore();
 
-  const addToHistoryForEffect = useHistoryStore(state => state.addToHistory);
-
   const { activePatchId } = patchState;
 
   // Memoize filtered beds and placements for performance
@@ -28,35 +25,6 @@ export const useBedStore = () => {
   const placementsForActivePatch = useMemo(() => {
     return plantPlacementState.placements.filter(p => p.patchId === activePatchId);
   }, [plantPlacementState.placements, activePatchId]);
-
-
-  // Centralized history management for undo/redo for the active patch
-  useEffect(() => {
-    if (!activePatchId) return;
-    
-    const unsubscribe = useBedState.subscribe(
-      state => state.beds.filter(b => b.patchId === activePatchId),
-      (beds) => {
-        // This listener now only fires when beds for the active patch actually change,
-        // thanks to the custom equality function below.
-        addToHistoryForEffect(beds);
-      },
-      {
-        fireImmediately: false,
-        // This is crucial: it prevents the subscription from firing on every
-        // minor state change in useBedState, which was causing an infinite loop.
-        // We do a deep compare on the relevant slice of state (beds for the active patch).
-        equalityFn: (a, b) => JSON.stringify(a) === JSON.stringify(b),
-      }
-    );
-    
-    // TODO: The `resetHistory` action is missing from `historyStore`.
-    // This should be implemented to clear history when switching patches.
-    // historyStore.resetHistory();
-
-    return unsubscribe;
-  }, [addToHistoryForEffect, activePatchId]);
-
 
   // Enhanced actions that are now patch-aware
   const addBed = (bed: Bed) => {
