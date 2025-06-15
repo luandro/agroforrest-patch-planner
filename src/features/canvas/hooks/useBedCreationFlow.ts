@@ -14,14 +14,13 @@ export const useBedCreationFlow = ({
   gridSize, 
   onBedCreated 
 }: UseBedCreationFlowProps) => {
+  // No modification needed here, but ensure the orchestration passes live preview state.
   return useBedCreation({
     viewport,
     gridSize,
     onBedCreated: (bedId) => {
       setTimeout(() => {
-        // centerOnBed is a placeholder in useCanvasViewport and doesn't have access to beds.
-        // This functionality can be enhanced in a future step.
-        // centerOnBed(bedId, 2.0);
+        // See orchestration and wiring.
       }, 100);
       onBedCreated?.(bedId);
     },

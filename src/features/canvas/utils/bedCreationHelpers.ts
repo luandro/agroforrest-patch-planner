@@ -36,6 +36,8 @@ export const createPreviewManager = (
 
 /**
  * Enhanced placement management with creation mode handling
+ * 
+ * Accepts a getter for the previewBed to avoid stale closures.
  */
 export const createPlacementManager = (
   placeBedBase: (previewBed: Bed | null) => void,
@@ -43,32 +45,29 @@ export const createPlacementManager = (
   cancelPlacementBase: (cursorPosition: { x: number; y: number } | null) => any,
   clearPreview: () => void,
   clearPlacement: () => void,
-  previewBed: Bed | null,
-  cursorPosition: { x: number; y: number } | null
+  getPreviewBed: () => Bed | null,  // <-- instead of stale previewBed
+  getCursorPosition: () => { x: number; y: number } | null
 ) => {
+  /**
+   * On placeBed, fetches the latest preview bed and passes it to placement.
+   * (Moved from closure to runtime getter.)
+   */
   const placeBed = () => {
-    // Don't clear preview here - let confirmation panel handle the flow
-    placeBedBase(previewBed);
+    placeBedBase(getPreviewBed());
   };
 
   const confirmPlacement = () => {
     const shouldExitCreation = confirmPlacementBase();
-    
-    // Clear preview after successful confirmation
     clearPreview();
-    
-    // If not in multi-creation mode, exit creation
     if (shouldExitCreation) {
-      // This will be handled by the canvas component
+      // The canvas will exit creation mode.
     }
   };
 
   const cancelPlacement = () => {
-    const result = cancelPlacementBase(cursorPosition);
-    
+    const result = cancelPlacementBase(getCursorPosition());
+
     if (result.resumePreview && result.bed) {
-      // Resume preview at cursor position - this would need to be handled by parent
-      // For now, just clear everything to maintain existing behavior
       clearPreview();
     } else {
       clearPreview();

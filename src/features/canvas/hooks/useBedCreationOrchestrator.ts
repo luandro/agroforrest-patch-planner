@@ -75,6 +75,7 @@ export const useBedCreationOrchestrator = ({
     tool
   );
 
+  // Pass getters for latest previewBed and cursorPosition!!
   const {
     placeBed,
     confirmPlacement,
@@ -86,8 +87,8 @@ export const useBedCreationOrchestrator = ({
     cancelPlacementBase,
     clearPreview,
     clearPlacement,
-    previewBed,
-    cursorPosition
+    () => previewBed,           // getter for the latest preview bed
+    () => cursorPosition        // getter for latest cursor pos
   );
 
   // Enhanced cancel creation that clears all states
