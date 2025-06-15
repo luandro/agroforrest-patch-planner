@@ -1,13 +1,15 @@
 
-import { useRef, useState, useEffect } from 'react';
+import { useCallback } from 'react';
 import { PatchCanvasProps } from '../types/canvas.types';
 import { useCanvasViewport } from './useCanvasViewport';
 import { useBedCreation } from './useBedCreation';
 import { useBedSelection } from './useBedSelection';
-import { useBedFocus } from './useBedFocus';
 import { useAutoSave } from './useAutoSave';
 import { useBedStore } from '../stores/bedStore';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useCanvasState } from './useCanvasState';
+import { useCanvasFocusMode } from './useCanvasFocusMode';
+import { useCanvasTools } from './useCanvasTools';
+import { useCanvasEventHandlers } from './useCanvasEventHandlers';
 
 export const usePatchCanvasOrchestrator = ({
   initialViewport,
@@ -17,9 +19,7 @@ export const usePatchCanvasOrchestrator = ({
   minZoom = 0.5,
   maxZoom = 5,
 }: PatchCanvasProps) => {
-  const isMobile = useIsMobile();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isCollapsed, onToggleCollapse] = useState(false);
+  const { canvasRef, isCollapsed, onToggleCollapse } = useCanvasState();
 
   const { viewport, pan, zoomTo, updateViewport, centerOnBed, fitAllBeds } = useCanvasViewport({
     initialViewport,
@@ -28,36 +28,21 @@ export const usePatchCanvasOrchestrator = ({
     onViewportChange,
   });
 
-  const { tool, beds, selectedBedIds, undo, redo, canUndo, canRedo } = useBedStore();
+  const { beds, selectedBedIds, undo, redo, canUndo, canRedo } = useBedStore();
 
-  // Add focus mode integration
+  // Focus mode integration
   const { 
     focusMode, 
     isInFocusMode, 
     focusedBedId, 
-    enterFocusMode, 
-    exitFocusMode 
-  } = useBedFocus({
+    handleEnterFocus, 
+    handleExitFocus 
+  } = useCanvasFocusMode({
     viewport,
     updateViewport
   });
 
-  // Focus mode handlers
-  const handleEnterFocus = (bedId: string) => {
-    enterFocusMode(bedId);
-  };
-
-  const handleExitFocus = () => {
-    exitFocusMode();
-  };
-
-  // Exit focus mode when switching to creation tools
-  useEffect(() => {
-    if (isInFocusMode && (tool === 'create-rectangle' || tool === 'create-circle')) {
-      handleExitFocus();
-    }
-  }, [tool, isInFocusMode]);
-
+  // Bed creation management
   const {
     bedConfig,
     updateBedConfig,
@@ -89,6 +74,14 @@ export const usePatchCanvasOrchestrator = ({
     },
   });
 
+  // Tool management
+  const { tool, setTool } = useCanvasTools({
+    isInFocusMode,
+    handleExitFocus,
+    handleToolChange
+  });
+
+  // Bed selection management
   const { startSelection, updateSelection, finishSelection, deleteSelected } = useBedSelection({ 
     viewport, 
     canvasRef,
@@ -96,79 +89,52 @@ export const usePatchCanvasOrchestrator = ({
     onExitFocus: handleExitFocus
   });
 
+  // Event handlers
+  const {
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    handleDoubleClick
+  } = useCanvasEventHandlers({
+    tool,
+    isCreating,
+    multiCreationMode,
+    startPreview,
+    updatePreview,
+    placeBed,
+    startSelection,
+    updateSelection,
+    finishSelection,
+    handleToolChange
+  });
+
   const { isSaving } = useAutoSave();
 
   // Find the focused bed for rendering
   const focusedBed = focusedBedId ? beds.find(bed => bed.id === focusedBedId) : null;
 
-  const handlePointerDown = (e: React.PointerEvent) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    if (tool === 'create-rectangle' || tool === 'create-circle') {
-      startPreview(x, y);
-    } else if (tool === 'select') {
-      const isMultiSelect = e.shiftKey || e.ctrlKey;
-      startSelection(x, y, isMultiSelect);
-    }
-  };
-
-  const handlePointerMove = (e: React.PointerEvent) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    if (isCreating && (tool === 'create-rectangle' || tool === 'create-circle')) {
-      updatePreview(x, y);
-    } else {
-      updateSelection(x, y);
-    }
-  };
-
-  const handlePointerUp = () => {
-    if (isCreating && (tool === 'create-rectangle' || tool === 'create-circle')) {
-      placeBed();
-    } else {
-      finishSelection();
-    }
-  };
-
-  const handleDoubleClick = (e: React.MouseEvent) => {
-    if (isMobile && tool === 'pan') {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      startPreview(x, y);
-      setTimeout(() => {
-        placeBed();
-      }, 10);
-    }
-  };
-
-  const handleConfirmPlacement = () => {
+  const handleConfirmPlacement = useCallback(() => {
     confirmPlacement();
     if (!multiCreationMode) {
       handleToolChange('pan');
     }
-  };
+  }, [confirmPlacement, multiCreationMode, handleToolChange]);
 
-  const handleCancelPlacement = () => {
+  const handleCancelPlacement = useCallback(() => {
     cancelPlacement();
-  };
+  }, [cancelPlacement]);
 
-  const handleZoomIn = () => {
+  const handleZoomIn = useCallback(() => {
     zoomTo(Math.min(maxZoom, viewport.zoom * 1.2));
-  };
+  }, [zoomTo, maxZoom, viewport.zoom]);
 
-  const handleZoomOut = () => {
+  const handleZoomOut = useCallback(() => {
     zoomTo(Math.max(minZoom, viewport.zoom / 1.2));
-  };
+  }, [zoomTo, minZoom, viewport.zoom]);
 
-  const handleFitAll = () => {
+  const handleFitAll = useCallback(() => {
     fitAllBeds(beds);
-  };
+  }, [fitAllBeds, beds]);
 
   const layoutProps = {
     viewport,
