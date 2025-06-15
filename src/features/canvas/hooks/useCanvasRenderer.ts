@@ -1,4 +1,3 @@
-
 import { useCallback, useRef } from 'react';
 import { CanvasViewport } from '../types/canvas.types';
 import { Bed } from '../types/bed.types';
@@ -56,36 +55,31 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedB
     
     drawGrid(ctx, viewport, gridSize, snapHighlight, focusedBed);
 
-    // 4. Draw all placed beds (with reduced opacity for non-focused beds in focus mode)
+    // 4. Draw placed beds and their plants
     beds.forEach(bed => {
       const isSelected = selectedBedIds.includes(bed.id);
       const isFocused = focusedBed?.id === bed.id;
-      const shouldDimBed = focusedBed && !isFocused;
       
-      // In focus mode, dim non-focused beds and hide spacing
-      const bedSpacing = focusedBed ? 0 : spacing;
-      
-      if (shouldDimBed) {
-        ctx.save();
-        ctx.globalAlpha = 0.3; // Dim non-focused beds
+      // In focus mode, only draw the focused bed
+      if (focusedBed && !isFocused) {
+        return; 
       }
+      
+      // In focus mode, hide spacing
+      const bedSpacing = focusedBed ? 0 : spacing;
       
       drawBed(ctx, bed, viewport, isSelected, false, false, bedSpacing);
       
-      if (shouldDimBed) {
-        ctx.restore();
-      }
-
-      // 5. Draw plant placements for this bed (only in focus mode for the focused bed)
-      if (focusedBed && bed.id === focusedBed.id) {
-        const bedPlacements = getPlacementsForBed(bed.id);
+      // 5. Draw plant placements for this bed
+      const bedPlacements = getPlacementsForBed(bed.id);
+      if (bedPlacements.length > 0) {
         drawPlantPlacements(
           ctx, 
           bed, 
           bedPlacements, 
           viewport, 
-          selectedPlacementIds,
-          placementPreview
+          isFocused ? selectedPlacementIds : [],
+          isFocused ? placementPreview : null
         );
       }
     });

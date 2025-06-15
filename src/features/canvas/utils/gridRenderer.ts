@@ -113,8 +113,8 @@ export const drawGrid = (
     const finePixelSize = pixelsPerMeter * fineGridSize;
     
     // Set style for fine grid
-    ctx.strokeStyle = `rgba(34, 197, 94, ${Math.min(0.6, zoom * 0.1 + 0.2)})`;
-    ctx.lineWidth = 0.5;
+    ctx.strokeStyle = `rgba(22, 163, 74, ${Math.min(0.7, viewport.zoom * 0.2 + 0.2)})`; // Darker green, more opaque
+    ctx.lineWidth = 0.75;
     ctx.setLineDash([2, 2]);
     
     // Create clipping path for bed shape
@@ -122,7 +122,14 @@ export const drawGrid = (
     ctx.beginPath();
     
     if (focusedBed.shape === 'rectangle') {
-      ctx.rect(bedBounds.minX, bedBounds.minY, bedBounds.maxX - bedBounds.minX, bedBounds.maxY - bedBounds.minY);
+      const length = (focusedBed.dimensions.length || 1) * pixelsPerMeter;
+      const width = (focusedBed.dimensions.width || 1) * pixelsPerMeter;
+      ctx.rect(
+        bedScreenX - length / 2, 
+        bedScreenY - width / 2, 
+        length, 
+        width
+      );
     } else {
       const radius = (focusedBed.dimensions.radius || 0.5) * pixelsPerMeter;
       ctx.arc(bedScreenX, bedScreenY, radius, 0, 2 * Math.PI);
