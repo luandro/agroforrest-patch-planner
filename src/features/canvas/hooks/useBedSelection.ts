@@ -7,9 +7,11 @@ import { CanvasViewport } from '../types/canvas.types';
 interface UseBedSelectionProps {
   viewport: CanvasViewport;
   canvasRef?: React.RefObject<HTMLCanvasElement>;
+  onEnterFocus?: (bedId: string) => void;
+  onExitFocus?: () => void;
 }
 
-export const useBedSelection = ({ viewport, canvasRef }: UseBedSelectionProps) => {
+export const useBedSelection = ({ viewport, canvasRef, onEnterFocus, onExitFocus }: UseBedSelectionProps) => {
   const { 
     beds, 
     selectedBedIds, 
@@ -24,6 +26,24 @@ export const useBedSelection = ({ viewport, canvasRef }: UseBedSelectionProps) =
   const [selectionArea, setSelectionArea] = useState<SelectionArea | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
+
+  // Handle focus mode when selection changes
+  const handleSelectionChange = useCallback((newSelectedIds: string[]) => {
+    selectBeds(newSelectedIds);
+    
+    // Trigger focus mode for single selection, exit for multiple or no selection
+    if (newSelectedIds.length === 1) {
+      onEnterFocus?.(newSelectedIds[0]);
+    } else if (newSelectedIds.length !== 1) {
+      onExitFocus?.();
+    }
+  }, [selectBeds, onEnterFocus, onExitFocus]);
+
+  // Handle focus mode when clearing selection
+  const handleClearSelection = useCallback(() => {
+    clearSelection();
+    onExitFocus?.();
+  }, [clearSelection, onExitFocus]);
 
   // Convert canvas-relative coordinates to world coordinates
   const canvasToWorld = useCallback((canvasX: number, canvasY: number): { x: number; y: number } => {
@@ -82,20 +102,30 @@ export const useBedSelection = ({ viewport, canvasRef }: UseBedSelectionProps) =
       // Click on a bed
       if (isMultiSelect) {
         toggleBedSelection(bed.id);
+        // Handle focus mode based on resulting selection
+        const newSelection = selectedBedIds.includes(bed.id) 
+          ? selectedBedIds.filter(id => id !== bed.id)
+          : [...selectedBedIds, bed.id];
+        
+        if (newSelection.length === 1) {
+          onEnterFocus?.(newSelection[0]);
+        } else {
+          onExitFocus?.();
+        }
       } else {
         if (selectedBedIds.includes(bed.id)) {
           // Already selected, start dragging
           setIsDragging(true);
           setDragStart(canvasToWorld(canvasX, canvasY));
         } else {
-          // Select this bed
-          selectBeds([bed.id]);
+          // Select this bed and enter focus mode
+          handleSelectionChange([bed.id]);
         }
       }
     } else {
       // Click on empty space
       if (!isMultiSelect) {
-        clearSelection();
+        handleClearSelection();
       }
       
       // Start area selection
@@ -108,7 +138,7 @@ export const useBedSelection = ({ viewport, canvasRef }: UseBedSelectionProps) =
         endY: worldPos.y
       });
     }
-  }, [getBedAtPoint, selectedBedIds, toggleBedSelection, selectBeds, clearSelection, canvasToWorld]);
+  }, [getBedAtPoint, selectedBedIds, toggleBedSelection, handleSelectionChange, handleClearSelection, canvasToWorld, onEnterFocus, onExitFocus]);
 
   // Update selection area or drag selected beds - now takes canvas-relative coordinates
   const updateSelection = useCallback((canvasX: number, canvasY: number) => {
@@ -158,7 +188,7 @@ export const useBedSelection = ({ viewport, canvasRef }: UseBedSelectionProps) =
         )
         .map(bed => bed.id);
 
-      selectBeds(selectedIds);
+      handleSelectionChange(selectedIds);
     }
 
     // Reset state
@@ -166,14 +196,15 @@ export const useBedSelection = ({ viewport, canvasRef }: UseBedSelectionProps) =
     setSelectionArea(null);
     setIsDragging(false);
     setDragStart(null);
-  }, [isSelecting, selectionArea, beds, selectBeds]);
+  }, [isSelecting, selectionArea, beds, handleSelectionChange]);
 
   // Delete selected beds
   const deleteSelected = useCallback(() => {
     if (selectedBedIds.length > 0) {
       removeBeds(selectedBedIds);
+      onExitFocus?.(); // Exit focus mode when deleting
     }
-  }, [selectedBedIds, removeBeds]);
+  }, [selectedBedIds, removeBeds, onExitFocus]);
 
   return {
     selectedBedIds,

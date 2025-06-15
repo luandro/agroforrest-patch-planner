@@ -1,5 +1,5 @@
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { PatchCanvasProps } from '../types/canvas.types';
 import { useCanvasViewport } from './useCanvasViewport';
 import { useBedCreation } from './useBedCreation';
@@ -42,6 +42,22 @@ export const usePatchCanvasOrchestrator = ({
     updateViewport
   });
 
+  // Focus mode handlers
+  const handleEnterFocus = (bedId: string) => {
+    enterFocusMode(bedId);
+  };
+
+  const handleExitFocus = () => {
+    exitFocusMode();
+  };
+
+  // Exit focus mode when switching to creation tools
+  useEffect(() => {
+    if (isInFocusMode && (tool === 'create-rectangle' || tool === 'create-circle')) {
+      handleExitFocus();
+    }
+  }, [tool, isInFocusMode]);
+
   const {
     bedConfig,
     updateBedConfig,
@@ -73,18 +89,14 @@ export const usePatchCanvasOrchestrator = ({
     },
   });
 
-  const { startSelection, updateSelection, finishSelection, deleteSelected } = useBedSelection({ viewport, canvasRef });
+  const { startSelection, updateSelection, finishSelection, deleteSelected } = useBedSelection({ 
+    viewport, 
+    canvasRef,
+    onEnterFocus: handleEnterFocus,
+    onExitFocus: handleExitFocus
+  });
 
   const { isSaving } = useAutoSave();
-
-  // Focus mode handlers
-  const handleEnterFocus = (bedId: string) => {
-    enterFocusMode(bedId);
-  };
-
-  const handleExitFocus = () => {
-    exitFocusMode();
-  };
 
   // Find the focused bed for rendering
   const focusedBed = focusedBedId ? beds.find(bed => bed.id === focusedBedId) : null;
