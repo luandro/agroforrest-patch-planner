@@ -1,15 +1,5 @@
 import { create } from 'zustand';
-import { subscribeWithSelector } from 'zustand/middleware';
-import { PlantSpecies } from '../types/species.types';
-
-export interface PlantPlacement {
-  id: string;
-  bedId: string;
-  species: PlantSpecies;
-  position: { x: number; y: number }; // Position within the bed (in meters)
-  plantedAt: number;
-  notes?: string;
-}
+import { PlantPlacement, PlantSpecies } from '../types/species.types';
 
 interface PlantPlacementState {
   placements: PlantPlacement[];
@@ -17,111 +7,143 @@ interface PlantPlacementState {
   isPlacing: boolean;
   selectedSpecies: PlantSpecies | null;
   placementPreview: { x: number; y: number } | null;
-  isDirty: boolean;
+  history: PlantPlacement[][];
+  historyIndex: number;
 }
 
 interface PlantPlacementActions {
-  addPlacement: (placement: Omit<PlantPlacement, 'id' | 'plantedAt'>) => void;
+  addPlacement: (placement: Omit<PlantPlacement, 'id'>) => void;
   removePlacements: (ids: string[]) => void;
   updatePlacement: (id: string, updates: Partial<PlantPlacement>) => void;
-  getPlacementsForBed: (bedId: string) => PlantPlacement[];
   selectPlacements: (ids: string[]) => void;
   clearSelection: () => void;
+  setIsPlacing: (placing: boolean) => void;
   setSelectedSpecies: (species: PlantSpecies | null) => void;
-  setIsPlacing: (isPlacing: boolean) => void;
-  setPlacementPreview: (position: { x: number; y: number } | null) => void;
+  setPlacementPreview: (preview: { x: number; y: number } | null) => void;
+  getPlacementsForBed: (bedId: string) => PlantPlacement[];
   clearPlacementsForBed: (bedId: string) => void;
-  loadPlacements: (placements: PlantPlacement[]) => void;
-  markClean: () => void;
+  // History actions
+  undo: () => void;
+  redo: () => void;
+  canUndo: () => boolean;
+  canRedo: () => boolean;
+  addToHistory: () => void;
 }
 
-type PlantPlacementStore = PlantPlacementState & PlantPlacementActions;
+interface PlantPlacementStore extends PlantPlacementState, PlantPlacementActions {}
 
-export const usePlantPlacementStore = create<PlantPlacementStore>()(
-  subscribeWithSelector((set, get) => ({
-    // State
-    placements: [],
-    selectedPlacementIds: [],
-    isPlacing: false,
-    selectedSpecies: null,
-    placementPreview: null,
-    isDirty: false,
+export const usePlantPlacementStore = create<PlantPlacementStore>((set, get) => ({
+  // State
+  placements: [],
+  selectedPlacementIds: [],
+  isPlacing: false,
+  selectedSpecies: null,
+  placementPreview: null,
+  history: [[]],
+  historyIndex: 0,
 
-    // Actions
-    addPlacement: (placement) => {
-      const newPlacement: PlantPlacement = {
-        ...placement,
-        id: `plant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        plantedAt: Date.now()
-      };
-      
-      set(state => ({
-        placements: [...state.placements, newPlacement],
-        isDirty: true
-      }));
-    },
+  // Actions
+  addPlacement: (placement) => {
+    const newPlacement: PlantPlacement = {
+      ...placement,
+      id: `plant-${Date.now()}-${Math.random()}`
+    };
+    
+    set((state) => ({
+      placements: [...state.placements, newPlacement]
+    }));
+    
+    // Add to history
+    get().addToHistory();
+  },
 
-    removePlacements: (ids) => {
-      set(state => ({
-        placements: state.placements.filter(p => !ids.includes(p.id)),
-        selectedPlacementIds: state.selectedPlacementIds.filter(id => !ids.includes(id)),
-        isDirty: true
-      }));
-    },
+  removePlacements: (ids) => {
+    set((state) => ({
+      placements: state.placements.filter(p => !ids.includes(p.id)),
+      selectedPlacementIds: state.selectedPlacementIds.filter(id => !ids.includes(id))
+    }));
+    
+    // Add to history
+    get().addToHistory();
+  },
 
-    updatePlacement: (id, updates) => {
-      set(state => ({
-        placements: state.placements.map(p => 
-          p.id === id ? { ...p, ...updates } : p
-        ),
-        isDirty: true
-      }));
-    },
+  updatePlacement: (id, updates) => {
+    set((state) => ({
+      placements: state.placements.map(p => 
+        p.id === id ? { ...p, ...updates } : p
+      )
+    }));
+    
+    // Add to history
+    get().addToHistory();
+  },
 
-    getPlacementsForBed: (bedId) => {
-      return get().placements.filter(p => p.bedId === bedId);
-    },
+  selectPlacements: (ids) => set({ selectedPlacementIds: ids }),
+  clearSelection: () => set({ selectedPlacementIds: [] }),
+  setIsPlacing: (placing) => set({ isPlacing: placing }),
+  setSelectedSpecies: (species) => set({ selectedSpecies: species }),
+  setPlacementPreview: (preview) => set({ placementPreview: preview }),
 
-    selectPlacements: (ids) => {
-      set({ selectedPlacementIds: ids });
-    },
+  getPlacementsForBed: (bedId) => {
+    return get().placements.filter(p => p.bedId === bedId);
+  },
 
-    clearSelection: () => {
-      set({ selectedPlacementIds: [] });
-    },
+  clearPlacementsForBed: (bedId) => {
+    set((state) => ({
+      placements: state.placements.filter(p => p.bedId !== bedId),
+      selectedPlacementIds: state.selectedPlacementIds.filter(id => 
+        !state.placements.find(p => p.id === id && p.bedId === bedId)
+      )
+    }));
+    
+    // Add to history
+    get().addToHistory();
+  },
 
-    setSelectedSpecies: (species) => {
-      set({ 
-        selectedSpecies: species,
-        isPlacing: species !== null 
-      });
-    },
-
-    setIsPlacing: (isPlacing) => {
-      set({ isPlacing });
-    },
-
-    setPlacementPreview: (position) => {
-      set({ placementPreview: position });
-    },
-
-    clearPlacementsForBed: (bedId) => {
-      set(state => ({
-        placements: state.placements.filter(p => p.bedId !== bedId),
-        selectedPlacementIds: state.selectedPlacementIds.filter(id => {
-          const placement = state.placements.find(p => p.id === id);
-          return placement?.bedId !== bedId;
-        }),
-        isDirty: true
-      }));
-    },
-
-    loadPlacements: (placements) => {
-      set({ placements, isDirty: false });
-    },
-
-    markClean: () => {
-      set({ isDirty: false });
+  // History management
+  addToHistory: () => {
+    const state = get();
+    const newHistory = state.history.slice(0, state.historyIndex + 1);
+    newHistory.push([...state.placements]);
+    
+    // Keep only last 50 states
+    if (newHistory.length > 50) {
+      newHistory.shift();
+    } else {
+      set({ historyIndex: state.historyIndex + 1 });
     }
-  }))
-);
+    
+    set({ history: newHistory });
+  },
+
+  undo: () => {
+    const state = get();
+    if (state.historyIndex > 0) {
+      const newIndex = state.historyIndex - 1;
+      const placementsAtIndex = [...state.history[newIndex]];
+      
+      set({ 
+        placements: placementsAtIndex,
+        historyIndex: newIndex,
+        selectedPlacementIds: [] // Clear selection on undo
+      });
+    }
+  },
+
+  redo: () => {
+    const state = get();
+    if (state.historyIndex < state.history.length - 1) {
+      const newIndex = state.historyIndex + 1;
+      const placementsAtIndex = [...state.history[newIndex]];
+      
+      set({ 
+        placements: placementsAtIndex,
+        historyIndex: newIndex,
+        selectedPlacementIds: [] // Clear selection on redo
+      });
+    }
+  },
+
+  canUndo: () => get().historyIndex > 0,
+  canRedo: () => get().historyIndex < get().history.length - 1
+}));

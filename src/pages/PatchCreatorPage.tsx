@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import PatchCanvas from '../features/canvas/components/PatchCanvas';
 import MainLayout from '../components/layout/MainLayout';
@@ -7,12 +8,14 @@ import { PlantSpecies } from '../features/canvas/types/species.types';
 import { useBedStore } from '../features/canvas/stores/bedStore';
 import { usePlantPlacementStore } from '../features/canvas/stores/plantPlacementStore';
 import { GrowthTimelineProvider } from '../features/canvas/providers/GrowthTimelineProvider';
+import { ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const PatchCreatorPage: React.FC = () => {
   const [viewport, setViewport] = useState<CanvasViewport | null>(null);
   const [fps, setFps] = useState(0);
   const [isPlantSelectionOpen, setIsPlantSelectionOpen] = useState(false);
-  const { beds, selectedBedIds, tool, setTool, loadBeds, focusMode } = useBedStore();
+  const { beds, selectedBedIds, tool, setTool, loadBeds, focusMode, exitFocusMode } = useBedStore();
   const { setSelectedSpecies } = usePlantPlacementStore();
 
   // Ensure pan tool is default on page load
@@ -55,6 +58,12 @@ const PatchCreatorPage: React.FC = () => {
     // Panel will close automatically via the PlantSelectionPanel component
   };
 
+  // Handle exit focus mode with proper cleanup
+  const handleExitFocus = () => {
+    exitFocusMode();
+    console.log('Exited focus mode from header button');
+  };
+
   // FPS counter for development
   React.useEffect(() => {
     if (process.env.NODE_ENV !== 'development') return;
@@ -88,16 +97,31 @@ const PatchCreatorPage: React.FC = () => {
         {/* Page Header - Fixed at top */}
         <header className="fixed top-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200 h-16">
           <div className="px-4 h-full flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">
-                {focusMode.isActive ? 'Modo Plantio - Canteiro Focado' : 'Criador de Canteiros'}
-              </h1>
-              <p className="text-sm text-gray-600 hidden sm:block">
-                {focusMode.isActive 
-                  ? 'Plante espécies com precisão usando a grade de 10cm'
-                  : 'Crie e organize canteiros para seu sistema agroflorestal'
-                }
-              </p>
+            <div className="flex items-center gap-3">
+              {/* Back button for focus mode */}
+              {focusMode.isActive && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleExitFocus}
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Voltar
+                </Button>
+              )}
+              
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">
+                  {focusMode.isActive ? 'Modo Plantio - Canteiro Focado' : 'Criador de Canteiros'}
+                </h1>
+                <p className="text-sm text-gray-600 hidden sm:block">
+                  {focusMode.isActive 
+                    ? 'Plante espécies com precisão usando a grade de 10cm'
+                    : 'Crie e organize canteiros para seu sistema agroflorestal'
+                  }
+                </p>
+              </div>
             </div>
             
             {process.env.NODE_ENV === 'development' && (

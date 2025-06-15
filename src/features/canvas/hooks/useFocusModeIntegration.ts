@@ -1,7 +1,10 @@
 
 import { useCallback } from 'react';
 import { useCanvasFocusMode } from './useCanvasFocusMode';
-import { usePlantSelectionFlow } from './usePlantSelectionFlow';
+import { usePlantSelection } from './usePlantSelection';
+import { usePlantPlacement } from './usePlantPlacement';
+import { usePlantPlacementStore } from '../stores/plantPlacementStore';
+import { useTimelineStore } from '../stores/timelineStore';
 import { CanvasViewport } from '../types/canvas.types';
 
 interface UseFocusModeIntegrationProps {
@@ -19,53 +22,79 @@ export const useFocusModeIntegration = ({
   canvasRef,
   onOpenPlantSelection
 }: UseFocusModeIntegrationProps) => {
+  const { clearSelection: clearPlantSelection, selectedSpecies, setSelectedSpecies } = usePlantPlacementStore();
+  const { setTimelineActive, resetTimeline } = useTimelineStore();
+
   // Focus mode management
-  const { 
-    focusMode, 
-    isInFocusMode, 
-    focusedBedId, 
-    handleEnterFocus, 
-    handleExitFocus 
+  const {
+    focusMode,
+    isInFocusMode,
+    focusedBedId,
+    handleEnterFocus,
+    handleExitFocus: originalExitFocus
   } = useCanvasFocusMode({
     viewport,
     updateViewport
   });
 
-  // Get the focused bed directly from the beds array using the focused bed ID
-  const focusedBed = focusedBedId ? beds.find(bed => bed.id === focusedBedId) : null;
+  // Enhanced exit focus that cleans up all related state
+  const handleExitFocus = useCallback(() => {
+    // Clear plant-related state
+    clearPlantSelection();
+    setSelectedSpecies(null);
+    
+    // Close timeline if active
+    setTimelineActive(false);
+    resetTimeline();
+    
+    // Exit focus mode
+    originalExitFocus();
+    
+    console.log('Exited focus mode - all state cleared');
+  }, [clearPlantSelection, setSelectedSpecies, setTimelineActive, resetTimeline, originalExitFocus]);
 
-  // Plant selection flow
-  const {
-    handlePlantSelectionOpen,
-    handlePlantSpeciesSelect,
-    cancelPlantPlacement
-  } = usePlantSelectionFlow({
-    viewport,
+  // Get focused bed
+  const focusedBed = focusedBedId ? beds.find(b => b.id === focusedBedId) || null : null;
+
+  // Plant selection management
+  const plantSelection = usePlantSelection({
     focusedBed,
-    canvasRef,
-    onOpenPlantSelection
+    viewport,
+    canvasRef
   });
 
-  // Enhanced exit focus that also cancels plant placement
-  const handleExitFocusEnhanced = useCallback(() => {
-    handleExitFocus();
-    cancelPlantPlacement();
-  }, [handleExitFocus, cancelPlantPlacement]);
+  // Plant placement management
+  const plantPlacement = usePlantPlacement({
+    viewport,
+    focusedBed,
+    canvasRef
+  });
+
+  // Handle plant selection opening
+  const handlePlantSelectionOpen = useCallback(() => {
+    if (onOpenPlantSelection) {
+      onOpenPlantSelection();
+    }
+  }, [onOpenPlantSelection]);
+
+  // Handle species selection for placement
+  const handlePlantSpeciesSelect = useCallback((species: any) => {
+    plantPlacement.selectSpeciesForPlacement(species);
+  }, [plantPlacement]);
 
   return {
-    // Focus mode state
+    // Focus mode
     focusMode,
     isInFocusMode,
     focusedBedId,
     focusedBed,
-    
-    // Focus mode actions
     handleEnterFocus,
-    handleExitFocus: handleExitFocusEnhanced,
+    handleExitFocus,
     
-    // Plant selection
+    // Plant operations
+    ...plantSelection,
+    ...plantPlacement,
     handlePlantSelectionOpen,
-    handlePlantSpeciesSelect,
-    cancelPlantPlacement
+    handlePlantSpeciesSelect
   };
 };

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { CanvasTool } from '../../types/bed.types';
@@ -57,7 +56,16 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   onOpenPlantSelection,
   focusedBedId
 }) => {
-  const { selectedPlacementIds, clearSelection, selectedSpecies } = usePlantPlacementStore();
+  const { 
+    selectedPlacementIds, 
+    clearSelection, 
+    selectedSpecies,
+    undo: plantUndo,
+    redo: plantRedo,
+    canUndo: canUndoPlants,
+    canRedo: canRedoPlants
+  } = usePlantPlacementStore();
+  
   const [showPlantEditor, setShowPlantEditor] = React.useState(false);
   const [showTimeline, setShowTimeline] = React.useState(false);
 
@@ -82,6 +90,26 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   const handleCloseTimeline = () => {
     setShowTimeline(false);
   };
+
+  // In focus mode, use plant-specific undo/redo
+  const handleUndo = () => {
+    if (isInFocusMode) {
+      plantUndo();
+    } else {
+      onUndo();
+    }
+  };
+
+  const handleRedo = () => {
+    if (isInFocusMode) {
+      plantRedo();
+    } else {
+      onRedo();
+    }
+  };
+
+  const canUndoAction = isInFocusMode ? canUndoPlants() : canUndo;
+  const canRedoAction = isInFocusMode ? canRedoPlants() : canRedo;
 
   // Don't render standard mobile layout if plant editor is open
   if (showPlantEditor && isInFocusMode && focusedBedId) {
@@ -135,13 +163,13 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
               </button>
             )}
 
-            {/* Plant Placement Undo/Redo */}
+            {/* Plant Placement Undo/Redo - Now using correct functions */}
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={onUndo}
-                disabled={!canUndo}
+                onClick={handleUndo}
+                disabled={!canUndoAction}
                 className="h-10 w-10 p-0 bg-white/95 backdrop-blur-sm shadow-lg border-gray-200"
                 title="Desfazer Plantio"
               >
@@ -150,8 +178,8 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={onRedo}
-                disabled={!canRedo}
+                onClick={handleRedo}
+                disabled={!canRedoAction}
                 className="h-10 w-10 p-0 bg-white/95 backdrop-blur-sm shadow-lg border-gray-200"
                 title="Refazer Plantio"
               >
