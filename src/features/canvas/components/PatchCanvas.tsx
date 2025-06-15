@@ -90,7 +90,8 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
       startPreview(x, y);
     } else if (tool === 'select') {
       const isMultiSelect = e.shiftKey || e.ctrlKey;
-      startSelection(e.clientX, e.clientY, isMultiSelect);
+      // Pass canvas-relative coordinates instead of absolute screen coordinates
+      startSelection(x, y, isMultiSelect);
     }
   };
 
@@ -102,7 +103,8 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
     if (isCreating && (tool === 'create-rectangle' || tool === 'create-circle')) {
       updatePreview(x, y);
     } else {
-      updateSelection(e.clientX, e.clientY);
+      // Pass canvas-relative coordinates instead of absolute screen coordinates
+      updateSelection(x, y);
     }
   };
 

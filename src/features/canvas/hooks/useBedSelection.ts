@@ -25,27 +25,21 @@ export const useBedSelection = ({ viewport, canvasRef }: UseBedSelectionProps) =
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
 
-  // Convert screen coordinates to world coordinates using the same logic as rendering
-  const screenToWorld = useCallback((screenX: number, screenY: number): { x: number; y: number } => {
+  // Convert canvas-relative coordinates to world coordinates
+  const canvasToWorld = useCallback((canvasX: number, canvasY: number): { x: number; y: number } => {
     const canvas = canvasRef?.current;
     if (!canvas) return { x: 0, y: 0 };
 
-    const rect = canvas.getBoundingClientRect();
-    
-    // Convert to display coordinates (accounting for device pixel ratio)
-    const displayWidth = rect.width;
-    const displayHeight = rect.height;
+    // Get canvas display dimensions
+    const displayWidth = canvas.clientWidth;
+    const displayHeight = canvas.clientHeight;
     
     // Scale factor: pixels per meter in world space
     const pixelsPerMeter = 50 * viewport.zoom;
     
-    // Convert screen coordinates relative to canvas to world coordinates
-    const relativeX = screenX - rect.left;
-    const relativeY = screenY - rect.top;
-    
-    // Convert to world coordinates with proper centering (same as rendering)
-    const worldX = viewport.centerX + (relativeX - displayWidth / 2) / pixelsPerMeter;
-    const worldY = viewport.centerY - (relativeY - displayHeight / 2) / pixelsPerMeter;
+    // Convert canvas-relative coordinates to world coordinates with proper centering
+    const worldX = viewport.centerX + (canvasX - displayWidth / 2) / pixelsPerMeter;
+    const worldY = viewport.centerY - (canvasY - displayHeight / 2) / pixelsPerMeter;
     
     return { x: worldX, y: worldY };
   }, [viewport, canvasRef]);
@@ -65,9 +59,9 @@ export const useBedSelection = ({ viewport, canvasRef }: UseBedSelectionProps) =
     }
   }, []);
 
-  // Find bed at screen coordinates
-  const getBedAtPoint = useCallback((screenX: number, screenY: number): Bed | null => {
-    const worldPos = screenToWorld(screenX, screenY);
+  // Find bed at canvas coordinates
+  const getBedAtPoint = useCallback((canvasX: number, canvasY: number): Bed | null => {
+    const worldPos = canvasToWorld(canvasX, canvasY);
     
     // Check beds in reverse order (top to bottom in visual stack)
     for (let i = beds.length - 1; i >= 0; i--) {
@@ -78,11 +72,11 @@ export const useBedSelection = ({ viewport, canvasRef }: UseBedSelectionProps) =
     }
     
     return null;
-  }, [beds, screenToWorld, isPointInBed]);
+  }, [beds, canvasToWorld, isPointInBed]);
 
-  // Start selection (single click or area selection)
-  const startSelection = useCallback((screenX: number, screenY: number, isMultiSelect: boolean = false) => {
-    const bed = getBedAtPoint(screenX, screenY);
+  // Start selection (single click or area selection) - now takes canvas-relative coordinates
+  const startSelection = useCallback((canvasX: number, canvasY: number, isMultiSelect: boolean = false) => {
+    const bed = getBedAtPoint(canvasX, canvasY);
     
     if (bed) {
       // Click on a bed
@@ -92,7 +86,7 @@ export const useBedSelection = ({ viewport, canvasRef }: UseBedSelectionProps) =
         if (selectedBedIds.includes(bed.id)) {
           // Already selected, start dragging
           setIsDragging(true);
-          setDragStart(screenToWorld(screenX, screenY));
+          setDragStart(canvasToWorld(canvasX, canvasY));
         } else {
           // Select this bed
           selectBeds([bed.id]);
@@ -106,7 +100,7 @@ export const useBedSelection = ({ viewport, canvasRef }: UseBedSelectionProps) =
       
       // Start area selection
       setIsSelecting(true);
-      const worldPos = screenToWorld(screenX, screenY);
+      const worldPos = canvasToWorld(canvasX, canvasY);
       setSelectionArea({
         startX: worldPos.x,
         startY: worldPos.y,
@@ -114,11 +108,11 @@ export const useBedSelection = ({ viewport, canvasRef }: UseBedSelectionProps) =
         endY: worldPos.y
       });
     }
-  }, [getBedAtPoint, selectedBedIds, toggleBedSelection, selectBeds, clearSelection, screenToWorld]);
+  }, [getBedAtPoint, selectedBedIds, toggleBedSelection, selectBeds, clearSelection, canvasToWorld]);
 
-  // Update selection area or drag selected beds
-  const updateSelection = useCallback((screenX: number, screenY: number) => {
-    const worldPos = screenToWorld(screenX, screenY);
+  // Update selection area or drag selected beds - now takes canvas-relative coordinates
+  const updateSelection = useCallback((canvasX: number, canvasY: number) => {
+    const worldPos = canvasToWorld(canvasX, canvasY);
 
     if (isSelecting && selectionArea) {
       // Update selection area
@@ -146,7 +140,7 @@ export const useBedSelection = ({ viewport, canvasRef }: UseBedSelectionProps) =
 
       setDragStart(worldPos);
     }
-  }, [isSelecting, selectionArea, isDragging, dragStart, screenToWorld, selectedBedIds, beds, updateBed]);
+  }, [isSelecting, selectionArea, isDragging, dragStart, canvasToWorld, selectedBedIds, beds, updateBed]);
 
   // Finish selection
   const finishSelection = useCallback(() => {
