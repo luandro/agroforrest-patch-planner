@@ -1,6 +1,7 @@
+import { drawEnhancedPlant } from './enhancedPlantDrawing';
+import { getEnhancedPlantVisuals } from './enhancedPlantVisuals';
 
-import { getPlantVisuals } from './plantVisuals';
-
+// Manter a função original para compatibilidade, mas redirecionar para a versão aprimorada
 export const drawPlant = (
   ctx: CanvasRenderingContext2D,
   screenX: number,
@@ -9,121 +10,22 @@ export const drawPlant = (
   isSelected: boolean = false,
   isPreview: boolean = false,
   isHovered: boolean = false,
-  growthMonth?: number
+  growthMonth?: number,
+  environmentalStress: number = 0,
+  shadowIntensity: number = 0
 ) => {
-  ctx.save();
-
-  if (isPreview) {
-    ctx.globalAlpha = 0.7;
-  }
-
-  const { color, radius, symbol } = getPlantVisuals(species, growthMonth);
-
-  // Enhanced selection glow effect
-  if (isSelected) {
-    ctx.shadowColor = '#0EA5E9';
-    ctx.shadowBlur = 12;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-  } else if (isHovered) {
-    ctx.shadowColor = '#64748B';
-    ctx.shadowBlur = 6;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-  }
-
-  // Draw plant circle with enhanced states
-  if (isSelected) {
-    ctx.fillStyle = '#0EA5E9';
-    ctx.strokeStyle = '#0284C7';
-    ctx.lineWidth = 4;
-  } else if (isHovered) {
-    ctx.fillStyle = color;
-    ctx.strokeStyle = '#64748B';
-    ctx.lineWidth = 3;
-  } else {
-    ctx.fillStyle = color;
-    ctx.strokeStyle = '#065F46';
-    ctx.lineWidth = 2;
-  }
-  
-  if (isPreview) {
-    ctx.setLineDash([3, 3]);
-  }
-
-  ctx.beginPath();
-  ctx.arc(screenX, screenY, radius, 0, 2 * Math.PI);
-  ctx.fill();
-  ctx.stroke();
-
-  // Reset shadow for symbol
-  ctx.shadowColor = 'transparent';
-  ctx.shadowBlur = 0;
-
-  // Draw plant symbol/emoji
-  ctx.font = `${radius}px sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = isSelected ? 'white' : (color === '#FFF' ? '#000' : 'white');
-  
-  if (symbol.startsWith('🌳')) {
-    // For emoji, make them slightly smaller
-    ctx.font = `${radius * 0.8}px sans-serif`;
-    ctx.fillText(symbol, screenX, screenY);
-  } else {
-    // For text symbols
-    ctx.fillText(symbol, screenX, screenY);
-  }
-
-  // Draw enhanced selection handles for editing
-  if (isSelected) {
-    const handleSize = 5;
-    const handleOffset = radius + 8;
-    
-    ctx.fillStyle = '#0EA5E9';
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([]);
-
-    // Draw selection handles at cardinal points
-    const positions = [
-      { x: screenX - handleOffset, y: screenY }, // Left
-      { x: screenX + handleOffset, y: screenY }, // Right
-      { x: screenX, y: screenY - handleOffset }, // Top
-      { x: screenX, y: screenY + handleOffset }  // Bottom
-    ];
-
-    positions.forEach(pos => {
-      ctx.beginPath();
-      ctx.arc(pos.x, pos.y, handleSize, 0, 2 * Math.PI);
-      ctx.fill();
-      ctx.stroke();
-    });
-  }
-
-  // Enhanced hover highlight ring
-  if (isHovered && !isSelected) {
-    ctx.beginPath();
-    ctx.arc(screenX, screenY, radius + 4, 0, 2 * Math.PI);
-    ctx.strokeStyle = '#94A3B8';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([3, 3]);
-    ctx.stroke();
-  }
-
-  // Selection count badge for multi-select (if needed)
-  if (isSelected) {
-    // This could be enhanced to show selection count
-    ctx.beginPath();
-    ctx.arc(screenX + radius - 3, screenY - radius + 3, 6, 0, 2 * Math.PI);
-    ctx.fillStyle = '#0EA5E9';
-    ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-  }
-
-  ctx.restore();
+  drawEnhancedPlant(
+    ctx,
+    screenX,
+    screenY,
+    species,
+    isSelected,
+    isPreview,
+    isHovered,
+    growthMonth,
+    environmentalStress,
+    shadowIntensity
+  );
 };
 
 // Enhanced selection area rectangle with better visual feedback
