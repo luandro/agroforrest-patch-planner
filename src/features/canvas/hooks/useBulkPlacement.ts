@@ -4,19 +4,37 @@ import { useBulkPlacementStore } from '../stores/bulkPlacementStore';
 import { usePlantPlacementStore } from '../stores/plantPlacementStore';
 import { useBedStore } from '../stores/bedStore';
 import { PlantSpecies } from '../types/species.types';
-import { 
-  calculateBulkPlacement, 
-  getDefaultBulkConfig 
+import {
+  calculateBulkPlacement,
+  getDefaultBulkConfig
 } from '../utils/bulkPlacementCalculator';
 import { BulkPlacementConfig } from '../types/bulkPlacement.types';
 
 export const useBulkPlacement = () => {
-  const bulkStore = useBulkPlacementStore();
+  const {
+    isActive,
+    selectedSpecies,
+    selectedBed,
+    config,
+    preview,
+    showPreview,
+    isCalculating,
+    setActive,
+    setSelectedSpecies,
+    setSelectedBed,
+    setConfig,
+    updateConfig: storeUpdateConfig,
+    setPreview,
+    setShowPreview,
+    setIsCalculating,
+    reset,
+  } = useBulkPlacementStore();
+
   const { addPlacement, getPlacementsForBed } = usePlantPlacementStore();
   const { beds, focusMode } = useBedStore();
 
   // Get current focused bed
-  const focusedBed = focusMode.isActive && focusMode.bedId 
+  const focusedBed = focusMode.isActive && focusMode.bedId
     ? beds.find(b => b.id === focusMode.bedId) || null
     : null;
 
@@ -28,55 +46,50 @@ export const useBulkPlacement = () => {
     }
 
     const defaultConfig = getDefaultBulkConfig(species);
-    
-    bulkStore.setSelectedSpecies(species);
-    bulkStore.setSelectedBed(focusedBed);
-    bulkStore.setConfig(defaultConfig);
-    bulkStore.setActive(true);
-  }, [focusedBed, bulkStore]);
+
+    setSelectedSpecies(species);
+    setSelectedBed(focusedBed);
+    setConfig(defaultConfig);
+    setActive(true);
+  }, [focusedBed, setActive, setConfig, setSelectedBed, setSelectedSpecies]);
 
   // Calculate preview
   const calculatePreview = useCallback(async () => {
-    const { selectedSpecies, selectedBed, config } = bulkStore;
-    
     if (!selectedSpecies || !selectedBed || !config) {
-      bulkStore.setPreview(null);
+      setPreview(null);
       return;
     }
 
-    bulkStore.setIsCalculating(true);
-    
+    setIsCalculating(true);
+
     try {
       // Get existing placements for the bed
       const existingPlacements = getPlacementsForBed(selectedBed.id);
-      
+
       // Calculate bulk placement
-      const preview = calculateBulkPlacement(
+      const previewResult = calculateBulkPlacement(
         selectedBed,
         selectedSpecies,
         config,
         existingPlacements
       );
-      
-      bulkStore.setPreview(preview);
+
+      setPreview(previewResult);
     } catch (error) {
       console.error('Error calculating bulk placement:', error);
-      bulkStore.setPreview(null);
+      setPreview(null);
     } finally {
-      bulkStore.setIsCalculating(false);
+      setIsCalculating(false);
     }
-  }, [bulkStore, getPlacementsForBed]);
+  }, [selectedSpecies, selectedBed, config, getPlacementsForBed, setIsCalculating, setPreview]);
 
-  // Update config and recalculate
+  // Update config and let useEffect trigger recalculation
   const updateConfig = useCallback((updates: Partial<BulkPlacementConfig>) => {
-    bulkStore.updateConfig(updates);
-    calculatePreview();
-  }, [bulkStore, calculatePreview]);
+    storeUpdateConfig(updates);
+  }, [storeUpdateConfig]);
 
   // Execute bulk placement
   const executeBulkPlacement = useCallback(() => {
-    const { selectedSpecies, selectedBed, preview } = bulkStore;
-    
     if (!selectedSpecies || !selectedBed || !preview || preview.positions.length === 0) {
       console.warn('Cannot execute bulk placement: missing data');
       return false;
@@ -92,45 +105,45 @@ export const useBulkPlacement = () => {
     });
 
     // Reset bulk placement state
-    bulkStore.reset();
-    bulkStore.setActive(false);
-    
+    reset();
+    setActive(false);
+
     return true;
-  }, [bulkStore, addPlacement]);
+  }, [selectedSpecies, selectedBed, preview, addPlacement, reset, setActive]);
 
   // Cancel bulk placement
   const cancelBulkPlacement = useCallback(() => {
-    bulkStore.setShowPreview(false);
-    bulkStore.setActive(false);
-  }, [bulkStore]);
+    setShowPreview(false);
+    setActive(false);
+  }, [setActive, setShowPreview]);
 
   // Auto-calculate preview when config changes
   useEffect(() => {
-    if (bulkStore.isActive && bulkStore.config) {
+    if (isActive && config) {
       calculatePreview();
     }
-  }, [bulkStore.isActive, bulkStore.config, calculatePreview]);
+  }, [isActive, config, calculatePreview]);
 
   return {
     // State
-    isActive: bulkStore.isActive,
-    selectedSpecies: bulkStore.selectedSpecies,
-    selectedBed: bulkStore.selectedBed,
-    config: bulkStore.config,
-    preview: bulkStore.preview,
-    showPreview: bulkStore.showPreview,
-    isCalculating: bulkStore.isCalculating,
-    
+    isActive,
+    selectedSpecies,
+    selectedBed,
+    config,
+    preview,
+    showPreview,
+    isCalculating,
+
     // Actions
     initializeBulkPlacement,
     updateConfig,
     calculatePreview,
     executeBulkPlacement,
     cancelBulkPlacement,
-    setShowPreview: bulkStore.setShowPreview,
-    
+    setShowPreview,
+
     // Computed
-    canExecute: bulkStore.preview && bulkStore.preview.positions.length > 0,
-    hasConflicts: bulkStore.preview && bulkStore.preview.conflicts > 0
+    canExecute: preview && preview.positions.length > 0,
+    hasConflicts: preview && preview.conflicts > 0
   };
 };
