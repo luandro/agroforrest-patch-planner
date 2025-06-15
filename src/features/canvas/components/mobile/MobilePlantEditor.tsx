@@ -17,7 +17,7 @@ export const MobilePlantEditor: React.FC<MobilePlantEditorProps> = ({
   onClose,
   focusedBedId
 }) => {
-  const { placements, deletePlacements } = usePlantPlacementStore();
+  const { placements, removePlacements } = usePlantPlacementStore();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const selectedPlacements = placements.filter(p => selectedPlacementIds.includes(p.id));
@@ -54,7 +54,7 @@ export const MobilePlantEditor: React.FC<MobilePlantEditorProps> = ({
   };
 
   const handleConfirmDelete = () => {
-    deletePlacements(selectedPlacementIds);
+    removePlacements(selectedPlacementIds);
     setShowDeleteDialog(false);
     onClose();
   };
