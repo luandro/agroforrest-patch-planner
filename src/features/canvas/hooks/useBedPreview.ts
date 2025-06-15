@@ -1,9 +1,11 @@
 
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { Bed, BedConfig } from '../types/bed.types';
 import { CanvasViewport } from '../types/canvas.types';
-import { screenToWorld, calculateBedPosition, calculateBedFootprint, checkCollision } from '../utils/bedPositioning';
-import { useBedStore } from '../stores/bedStore';
+import { screenToWorld, calculateBedPosition } from '../utils/bedPositioning';
+import { useBedPreviewState } from './useBedPreviewState';
+import { useBedPreviewCollision } from './useBedPreviewCollision';
+import { useBedPreviewCreation } from './useBedPreviewCreation';
 
 interface UseBedPreviewProps {
   viewport: CanvasViewport;
@@ -12,66 +14,20 @@ interface UseBedPreviewProps {
 }
 
 export const useBedPreview = ({ viewport, bedConfig, gridSize }: UseBedPreviewProps) => {
-  const { beds } = useBedStore();
-  const [isCreating, setIsCreating] = useState(false);
-  const [previewBeds, setPreviewBeds] = useState<Bed[]>([]);
-  const [cursorPosition, setCursorPosition] = useState<{ x: number; y: number } | null>(null);
-  const [hasCollision, setHasCollision] = useState(false);
+  const {
+    isCreating,
+    setIsCreating,
+    previewBeds,
+    setPreviewBeds,
+    cursorPosition,
+    setCursorPosition,
+    hasCollision,
+    setHasCollision,
+    clearPreview
+  } = useBedPreviewState();
 
-  const createPreviewBedGroup = useCallback((baseBed: Bed): Bed[] => {
-    const beds: Bed[] = [];
-    
-    for (let i = 0; i < bedConfig.quantity; i++) {
-      // Calculate offset for parallel placement
-      const offsetY = i * (
-        (baseBed.shape === 'rectangle' ? baseBed.dimensions.width || bedConfig.width : (baseBed.dimensions.radius || bedConfig.length) * 2) + 
-        (bedConfig.spacing * 2)
-      );
-      
-      const bed: Bed = {
-        id: `preview-${Date.now()}-${i}`,
-        shape: baseBed.shape,
-        position: {
-          x: baseBed.position.x,
-          y: baseBed.position.y + offsetY
-        },
-        dimensions: baseBed.dimensions,
-        rotation: 0,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      };
-
-      beds.push(bed);
-    }
-
-    return beds;
-  }, [bedConfig]);
-
-  const checkPreviewCollision = useCallback((previewBeds: Bed[]): boolean => {
-    for (const previewBed of previewBeds) {
-      const footprint = calculateBedFootprint(previewBed, bedConfig.spacing);
-      
-      // Check against existing beds
-      for (const existingBed of beds) {
-        const existingFootprint = calculateBedFootprint(existingBed, bedConfig.spacing);
-        if (checkCollision(footprint, existingFootprint)) {
-          return true;
-        }
-      }
-      
-      // Check against other preview beds
-      for (const otherPreviewBed of previewBeds) {
-        if (previewBed.id !== otherPreviewBed.id) {
-          const otherFootprint = calculateBedFootprint(otherPreviewBed, bedConfig.spacing);
-          if (checkCollision(footprint, otherFootprint)) {
-            return true;
-          }
-        }
-      }
-    }
-    
-    return false;
-  }, [beds, bedConfig.spacing]);
+  const { checkPreviewCollision } = useBedPreviewCollision({ bedConfig });
+  const { createPreviewBedGroup, createBaseBed } = useBedPreviewCreation({ bedConfig });
 
   const startPreview = useCallback((screenX: number, screenY: number, tool: string) => {
     if (tool !== 'create-rectangle' && tool !== 'create-circle') return;
@@ -83,24 +39,13 @@ export const useBedPreview = ({ viewport, bedConfig, gridSize }: UseBedPreviewPr
     setIsCreating(true);
 
     // Create base preview bed
-    const baseBed: Bed = {
-      id: `preview-${Date.now()}`,
-      shape: bedConfig.shape,
-      position: bedPosition,
-      dimensions: bedConfig.shape === 'rectangle' 
-        ? { length: bedConfig.length, width: bedConfig.width }
-        : { radius: bedConfig.length },
-      rotation: 0,
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    };
-
+    const baseBed = createBaseBed(bedPosition, bedConfig.shape);
     const previewGroup = createPreviewBedGroup(baseBed);
     const collision = checkPreviewCollision(previewGroup);
     
     setPreviewBeds(previewGroup);
     setHasCollision(collision);
-  }, [viewport, bedConfig, gridSize, createPreviewBedGroup, checkPreviewCollision]);
+  }, [viewport, bedConfig, gridSize, createBaseBed, createPreviewBedGroup, checkPreviewCollision, setCursorPosition, setIsCreating, setPreviewBeds, setHasCollision]);
 
   const updatePreview = useCallback((screenX: number, screenY: number) => {
     if (!isCreating || previewBeds.length === 0) return;
@@ -130,7 +75,7 @@ export const useBedPreview = ({ viewport, bedConfig, gridSize }: UseBedPreviewPr
     
     setPreviewBeds(updatedPreviewBeds);
     setHasCollision(collision);
-  }, [isCreating, previewBeds, viewport, bedConfig, gridSize, checkPreviewCollision]);
+  }, [isCreating, previewBeds, viewport, bedConfig, gridSize, checkPreviewCollision, setCursorPosition, setPreviewBeds, setHasCollision]);
 
   const updatePreviewWithConfig = useCallback((updates: Partial<BedConfig>) => {
     if (previewBeds.length === 0 || !cursorPosition) return;
@@ -140,19 +85,21 @@ export const useBedPreview = ({ viewport, bedConfig, gridSize }: UseBedPreviewPr
     const snappedPos = calculateBedPosition(worldPos, updates.shape || previewBeds[0].shape, newConfig, gridSize);
     
     // Create new preview beds with updated config
-    const baseBed: Bed = {
-      id: `preview-${Date.now()}`,
-      shape: updates.shape || previewBeds[0].shape,
-      position: snappedPos,
-      dimensions: updates.shape === 'rectangle' 
-        ? { length: updates.length || bedConfig.length, width: updates.width || bedConfig.width }
-        : { radius: updates.length || bedConfig.length },
-      rotation: 0,
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    };
+    const baseBed = createBaseBed(snappedPos, updates.shape || previewBeds[0].shape);
     
-    // Temporarily update bedConfig for preview generation
+    // Update baseBed dimensions based on new config
+    if (updates.shape === 'rectangle' || (!updates.shape && baseBed.shape === 'rectangle')) {
+      baseBed.dimensions = { 
+        length: updates.length || bedConfig.length, 
+        width: updates.width || bedConfig.width 
+      };
+    } else {
+      baseBed.dimensions = { 
+        radius: updates.length || bedConfig.length 
+      };
+    }
+    
+    // Create preview group with updated config
     const tempBedConfig = { ...bedConfig, ...updates };
     const previewGroup: Bed[] = [];
     
@@ -178,14 +125,7 @@ export const useBedPreview = ({ viewport, bedConfig, gridSize }: UseBedPreviewPr
     
     setPreviewBeds(previewGroup);
     setHasCollision(collision);
-  }, [previewBeds, cursorPosition, bedConfig, viewport, gridSize, checkPreviewCollision]);
-
-  const clearPreview = useCallback(() => {
-    setIsCreating(false);
-    setPreviewBeds([]);
-    setCursorPosition(null);
-    setHasCollision(false);
-  }, []);
+  }, [previewBeds, cursorPosition, bedConfig, viewport, gridSize, checkPreviewCollision, createBaseBed, setPreviewBeds, setHasCollision]);
 
   return {
     isCreating,
