@@ -1,11 +1,9 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { PlantSpecies } from '../types/species.types';
-import { usePatchStore } from './patchStore';
 
 export interface PlantPlacement {
   id: string;
-  patchId: string;
   bedId: string;
   species: PlantSpecies;
   position: { x: number; y: number }; // Position within the bed (in meters)
@@ -23,7 +21,7 @@ interface PlantPlacementState {
 }
 
 interface PlantPlacementActions {
-  addPlacement: (placement: Omit<PlantPlacement, 'patchId' | 'id' | 'plantedAt'>) => void;
+  addPlacement: (placement: Omit<PlantPlacement, 'id' | 'plantedAt'>) => void;
   removePlacements: (ids: string[]) => void;
   updatePlacement: (id: string, updates: Partial<PlantPlacement>) => void;
   getPlacementsForBed: (bedId: string) => PlantPlacement[];
@@ -33,7 +31,6 @@ interface PlantPlacementActions {
   setIsPlacing: (isPlacing: boolean) => void;
   setPlacementPreview: (position: { x: number; y: number } | null) => void;
   clearPlacementsForBed: (bedId: string) => void;
-  clearPlacementsForPatch: (patchId: string) => void;
   loadPlacements: (placements: PlantPlacement[]) => void;
   markClean: () => void;
 }
@@ -42,6 +39,7 @@ type PlantPlacementStore = PlantPlacementState & PlantPlacementActions;
 
 export const usePlantPlacementStore = create<PlantPlacementStore>()(
   subscribeWithSelector((set, get) => ({
+    // State
     placements: [],
     selectedPlacementIds: [],
     isPlacing: false,
@@ -49,16 +47,10 @@ export const usePlantPlacementStore = create<PlantPlacementStore>()(
     placementPreview: null,
     isDirty: false,
 
+    // Actions
     addPlacement: (placement) => {
-      const { activePatchId } = usePatchStore.getState();
-      if (!activePatchId) {
-        console.warn('Cannot add placement without an active patch.');
-        return;
-      }
-
       const newPlacement: PlantPlacement = {
-        ...(placement as Omit<PlantPlacement, 'id' | 'plantedAt'>),
-        patchId: activePatchId,
+        ...placement,
         id: `plant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         plantedAt: Date.now()
       };
@@ -122,18 +114,6 @@ export const usePlantPlacementStore = create<PlantPlacementStore>()(
         }),
         isDirty: true
       }));
-    },
-    
-    clearPlacementsForPatch: (patchId) => {
-        set(state => {
-            const placementsToKeep = state.placements.filter(p => p.patchId !== patchId);
-            const placementsToKeepIds = new Set(placementsToKeep.map(p => p.id));
-            return {
-                placements: placementsToKeep,
-                selectedPlacementIds: state.selectedPlacementIds.filter(id => placementsToKeepIds.has(id)),
-                isDirty: true,
-            };
-        });
     },
 
     loadPlacements: (placements) => {

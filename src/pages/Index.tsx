@@ -6,8 +6,8 @@ const Index = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect to the patch creator page
-    navigate('/patch-creator', { replace: true });
+    // Redirect to landing page immediately
+    navigate('/', { replace: true });
   }, [navigate]);
 
   return null;

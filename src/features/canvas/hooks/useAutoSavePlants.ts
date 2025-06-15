@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from 'react';
 import { usePlantPlacementStore, PlantPlacement } from '../stores/plantPlacementStore';
 
@@ -20,13 +21,7 @@ const openDB = () => {
         db.createObjectStore('beds', { keyPath: 'id' });
       }
       if (!db.objectStoreNames.contains(STORE_NAME)) {
-        const store = db.createObjectStore(STORE_NAME, { keyPath: KEY_PATH });
-        store.createIndex('patchId', 'patchId', { unique: false });
-      } else {
-        const store = request.transaction?.objectStore(STORE_NAME);
-        if (store && !store.indexNames.contains('patchId')) {
-          store.createIndex('patchId', 'patchId', { unique: false });
-        }
+        db.createObjectStore(STORE_NAME, { keyPath: KEY_PATH });
       }
     };
 
@@ -38,7 +33,7 @@ const openDB = () => {
   });
 };
 
-export const useAutoSavePlants = ({ debounceMs = 2000 }: UseAutoSavePlantsProps = {}) => {
+export const useAutoSavePlants = ({ debounceMs = 5000 }: UseAutoSavePlantsProps = {}) => {
   const { placements, isDirty, markClean, loadPlacements } = usePlantPlacementStore();
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);

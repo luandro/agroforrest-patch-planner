@@ -1,5 +1,5 @@
 
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 
 interface UseCanvasLayoutPropsParams {
   viewport: any;
@@ -94,33 +94,20 @@ export const useCanvasLayoutProps = (params: UseCanvasLayoutPropsParams) => {
     handleExitFocus
   } = params;
 
-  // Use refs to maintain stable references to functions
-  const zoomToRef = useRef(zoomTo);
-  const fitAllBedsRef = useRef(fitAllBeds);
-  const viewportRef = useRef(viewport);
-  
-  // Update refs on each render
-  zoomToRef.current = zoomTo;
-  fitAllBedsRef.current = fitAllBeds;
-  viewportRef.current = viewport;
-
-  // Stable zoom handlers that don't depend on changing values
+  // Enhanced zoom handlers
   const handleZoomIn = useCallback(() => {
-    const currentZoom = viewportRef.current.zoom;
-    const newZoom = Math.min(maxZoom, currentZoom * 1.2);
-    zoomToRef.current(newZoom);
-  }, [maxZoom]);
+    const newZoom = Math.min(maxZoom, viewport.zoom * 1.2);
+    zoomTo(newZoom);
+  }, [viewport.zoom, maxZoom, zoomTo]);
 
   const handleZoomOut = useCallback(() => {
-    const currentZoom = viewportRef.current.zoom;
-    const newZoom = Math.max(minZoom, currentZoom / 1.2);
-    zoomToRef.current(newZoom);
-  }, [minZoom]);
+    const newZoom = Math.max(minZoom, viewport.zoom / 1.2);
+    zoomTo(newZoom);
+  }, [viewport.zoom, minZoom, zoomTo]);
 
-  // Stable fit all handler
   const handleFitAll = useCallback(() => {
-    fitAllBedsRef.current();
-  }, []);
+    fitAllBeds();
+  }, [fitAllBeds]);
 
   return {
     viewport,
@@ -144,7 +131,7 @@ export const useCanvasLayoutProps = (params: UseCanvasLayoutPropsParams) => {
     handlePointerMove,
     handlePointerUp,
     handleDoubleClick,
-    handleConfirmPlacement: confirmPlacement,
+    handleConfirmPlacement: confirmPlacement, // Use the corrected handler
     handleCancelPlacement: cancelPlacement,
     pan,
     zoomTo,

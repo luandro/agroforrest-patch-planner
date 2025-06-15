@@ -34,6 +34,7 @@ type BulkPlacementStore = BulkPlacementState & BulkPlacementActions;
 
 export const useBulkPlacementStore = create<BulkPlacementStore>()(
   subscribeWithSelector((set, get) => ({
+    // State
     isActive: false,
     selectedSpecies: null,
     selectedBed: null,

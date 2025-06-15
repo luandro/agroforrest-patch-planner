@@ -1,7 +1,7 @@
 
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 import { useBedStore } from '../stores/bedStore';
-import { useAutoSaveBeds } from './useAutoSaveBeds';
+import { useAutoSave } from './useAutoSave';
 import { useAutoSavePlants } from './useAutoSavePlants';
 import { useCanvasViewport } from './useCanvasViewport';
 import { PatchCanvasProps } from '../types/canvas.types';
@@ -32,17 +32,13 @@ export const useCanvasStateOrchestrator = ({
   const { beds, selectedBedIds, undo, redo, canUndo, canRedo } = bedStore;
 
   // Auto-save state
-  const { isSaving: isSavingBeds } = useAutoSaveBeds();
+  const { isSaving: isSavingBeds } = useAutoSave();
   const { isSaving: isSavingPlacements } = useAutoSavePlants();
 
-  // Use ref to maintain stable reference to beds for fitAllBeds
-  const bedsRef = useRef(beds);
-  bedsRef.current = beds;
-
-  // Create stable wrapper for fitAllBeds that uses ref to get current beds
+  // Create wrapper for fitAllBeds that doesn't require parameters
   const handleFitAllBeds = useCallback(() => {
-    fitAllBeds(bedsRef.current);
-  }, [fitAllBeds]);
+    fitAllBeds(beds);
+  }, [fitAllBeds, beds]);
 
   return {
     // Viewport
