@@ -47,6 +47,12 @@ interface CanvasLayoutProps {
   canvasRef?: React.RefObject<HTMLCanvasElement>;
   isCollapsed?: boolean;
   onToggleCollapse?: (collapsed: boolean) => void;
+  // Focus mode props
+  isInFocusMode?: boolean;
+  focusedBedId?: string | null;
+  focusedBed?: any;
+  onEnterFocus?: (bedId: string) => void;
+  onExitFocus?: () => void;
 }
 
 export const CanvasLayout: React.FC<CanvasLayoutProps> = (props) => {

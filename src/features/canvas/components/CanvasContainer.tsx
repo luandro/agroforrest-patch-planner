@@ -20,6 +20,7 @@ interface CanvasContainerProps {
   gridSize?: number;
   bedConfig?: any;
   canvasRef?: React.RefObject<HTMLCanvasElement>;
+  focusedBed?: any;
 }
 
 export const CanvasContainer: React.FC<CanvasContainerProps> = ({
@@ -38,7 +39,8 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
   placementBed,
   gridSize = 1,
   bedConfig,
-  canvasRef: externalCanvasRef
+  canvasRef: externalCanvasRef,
+  focusedBed
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const internalCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -49,7 +51,8 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
   const { scheduleRender } = useCanvasRenderer({
     canvasRef,
     gridSize,
-    spacing: bedConfig?.spacing || 0.4
+    spacing: bedConfig?.spacing || 0.4,
+    focusedBed
   });
 
   // Enable gestures when in pan mode OR when not actively creating

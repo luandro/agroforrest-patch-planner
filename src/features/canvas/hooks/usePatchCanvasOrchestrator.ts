@@ -4,6 +4,7 @@ import { PatchCanvasProps } from '../types/canvas.types';
 import { useCanvasViewport } from './useCanvasViewport';
 import { useBedCreation } from './useBedCreation';
 import { useBedSelection } from './useBedSelection';
+import { useBedFocus } from './useBedFocus';
 import { useAutoSave } from './useAutoSave';
 import { useBedStore } from '../stores/bedStore';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -28,6 +29,18 @@ export const usePatchCanvasOrchestrator = ({
   });
 
   const { tool, beds, selectedBedIds, undo, redo, canUndo, canRedo } = useBedStore();
+
+  // Add focus mode integration
+  const { 
+    focusMode, 
+    isInFocusMode, 
+    focusedBedId, 
+    enterFocusMode, 
+    exitFocusMode 
+  } = useBedFocus({
+    viewport,
+    updateViewport
+  });
 
   const {
     bedConfig,
@@ -63,6 +76,18 @@ export const usePatchCanvasOrchestrator = ({
   const { startSelection, updateSelection, finishSelection, deleteSelected } = useBedSelection({ viewport, canvasRef });
 
   const { isSaving } = useAutoSave();
+
+  // Focus mode handlers
+  const handleEnterFocus = (bedId: string) => {
+    enterFocusMode(bedId);
+  };
+
+  const handleExitFocus = () => {
+    exitFocusMode();
+  };
+
+  // Find the focused bed for rendering
+  const focusedBed = focusedBedId ? beds.find(bed => bed.id === focusedBedId) : null;
 
   const handlePointerDown = (e: React.PointerEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -169,8 +194,14 @@ export const usePatchCanvasOrchestrator = ({
     deleteSelected,
     isSaving,
     cancelCreation,
-    gridSize,
+    gridSize: isInFocusMode ? 0.1 : gridSize, // Use fine grid in focus mode
     onOpenPlantSelection,
+    // Focus mode props
+    isInFocusMode,
+    focusedBedId,
+    focusedBed,
+    onEnterFocus: handleEnterFocus,
+    onExitFocus: handleExitFocus,
   };
 
   return {

@@ -29,6 +29,7 @@ interface CanvasViewportProps {
   showDesktopSidebar?: boolean;
   bedConfig?: any;
   canvasRef?: React.RefObject<HTMLCanvasElement>;
+  focusedBed?: any;
 }
 
 export const CanvasViewport: React.FC<CanvasViewportProps> = ({
@@ -55,7 +56,8 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
   isMobile = false,
   showDesktopSidebar = true,
   bedConfig,
-  canvasRef
+  canvasRef,
+  focusedBed
 }) => {
   // Use relative positioning for better scrolling behavior
   const canvasStyle = {
@@ -89,6 +91,7 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
           gridSize={gridSize}
           bedConfig={bedConfig}
           canvasRef={canvasRef}
+          focusedBed={focusedBed}
         />
       </div>
 
