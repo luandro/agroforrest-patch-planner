@@ -1,3 +1,4 @@
+
 import { CanvasViewport } from '../types/canvas.types';
 import { Bed } from '../types/bed.types';
 
@@ -27,7 +28,7 @@ export const drawGrid = (
   const offsetX = (displayWidth / 2) - (centerX * pixelsPerMeter);
   const offsetY = (displayHeight / 2) + (centerY * pixelsPerMeter); // Invert Y
   
-  // Draw main grid lines (only if not in focus mode or outside focused bed)
+  // Draw main grid lines (only if not in focus mode)
   if (!focusedBed) {
     ctx.strokeStyle = `rgba(229, 231, 235, ${opacity})`;
     ctx.lineWidth = 1;
@@ -80,7 +81,7 @@ export const drawGrid = (
     }
   }
 
-  // Draw fine planting grid inside focused bed
+  // Always draw fine planting grid when focused bed exists
   if (focusedBed) {
     const bedScreenX = offsetX + (focusedBed.position.x * pixelsPerMeter);
     const bedScreenY = offsetY - (focusedBed.position.y * pixelsPerMeter);
@@ -108,14 +109,17 @@ export const drawGrid = (
       };
     }
     
-    // Fine grid: 10cm squares
+    // Fine grid: 10cm squares - always visible in focus mode
     const fineGridSize = 0.1; // 10cm
     const finePixelSize = pixelsPerMeter * fineGridSize;
     
+    // Enhanced visibility for fine grid
+    const fineOpacity = Math.max(0.4, Math.min(0.8, viewport.zoom * 0.25 + 0.3));
+    
     // Set style for fine grid
-    ctx.strokeStyle = `rgba(22, 163, 74, ${Math.min(0.7, viewport.zoom * 0.2 + 0.2)})`; // Darker green, more opaque
-    ctx.lineWidth = 0.75;
-    ctx.setLineDash([2, 2]);
+    ctx.strokeStyle = `rgba(34, 197, 94, ${fineOpacity})`; // Green grid
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
     
     // Create clipping path for bed shape
     ctx.save();
@@ -161,6 +165,24 @@ export const drawGrid = (
         ctx.moveTo(bedBounds.minX, screenY);
         ctx.lineTo(bedBounds.maxX, screenY);
         ctx.stroke();
+      }
+    }
+    
+    // Draw grid intersection dots for better visibility
+    if (viewport.zoom > 2) {
+      ctx.fillStyle = `rgba(34, 197, 94, ${fineOpacity * 0.8})`;
+      const dotSize = 2;
+      
+      for (let meterX = startFineMeterX; meterX <= endFineMeterX; meterX += fineGridSize) {
+        for (let meterY = startFineMeterY; meterY <= endFineMeterY; meterY += fineGridSize) {
+          const screenX = offsetX + (meterX * pixelsPerMeter);
+          const screenY = offsetY - (meterY * pixelsPerMeter);
+          
+          if (screenX >= bedBounds.minX && screenX <= bedBounds.maxX &&
+              screenY >= bedBounds.minY && screenY <= bedBounds.maxY) {
+            ctx.fillRect(screenX - dotSize / 2, screenY - dotSize / 2, dotSize, dotSize);
+          }
+        }
       }
     }
     

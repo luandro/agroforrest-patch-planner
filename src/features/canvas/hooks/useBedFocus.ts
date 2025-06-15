@@ -20,13 +20,16 @@ export const useBedFocus = ({
   const { focusMode, enterFocusMode, exitFocusMode } = useFocusModeStore();
   const { beds } = useBedStore();
 
-  // Handle entering focus mode with immediate viewport animation
+  // Handle entering focus mode with smooth viewport animation
   const handleEnterFocus = useCallback((bedId: string) => {
     const bed = beds.find(b => b.id === bedId);
     if (!bed) return;
 
-    // Calculate target viewport to show bed filling 80% of view
-    const padding = 0.2; // 20% total padding (10% each side)
+    // Enter focus mode first for immediate state change
+    enterFocusMode(bedId);
+    
+    // Calculate optimal target viewport
+    const padding = 0.15; // 15% padding around bed
     let bedWidth, bedHeight;
     
     if (bed.shape === 'rectangle') {
@@ -37,23 +40,22 @@ export const useBedFocus = ({
       bedWidth = bedHeight = radius * 2;
     }
     
-    // Add some extra padding for the fine grid visibility
-    const targetWidth = bedWidth / (1 - padding);
-    const targetHeight = bedHeight / (1 - padding);
+    // Add padding to ensure fine grid is visible
+    const targetWidth = bedWidth / (1 - padding * 2);
+    const targetHeight = bedHeight / (1 - padding * 2);
     
-    // Calculate zoom to fit bed in viewport (assuming 20m base viewport)
-    const zoomX = 20 / targetWidth;
-    const zoomY = 20 / targetHeight;
-    const targetZoom = Math.min(zoomX, zoomY) * 0.9; // 90% to ensure some padding
+    // Calculate zoom to fit bed in viewport with 10m base viewport
+    const baseViewportSize = 10;
+    const zoomX = baseViewportSize / targetWidth;
+    const zoomY = baseViewportSize / targetHeight;
+    const targetZoom = Math.min(zoomX, zoomY);
     
-    const finalZoom = Math.max(2, Math.min(8, targetZoom)); // Clamp between 2x and 8x
+    // Clamp zoom for usability (minimum 3x for fine grid visibility)
+    const finalZoom = Math.max(3, Math.min(8, targetZoom));
 
-    // Enter focus mode first
-    enterFocusMode(bedId);
-    
-    // Then animate to target viewport
+    // Smooth animation to target position
     const startTime = performance.now();
-    const duration = 500; // 500ms animation
+    const duration = 600; // Slightly longer for smoothness
     
     const startViewport = {
       zoom: viewport.zoom,
@@ -71,12 +73,12 @@ export const useBedFocus = ({
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
       
-      // Easing function for smooth animation
-      const easeInOutCubic = (t: number) => {
-        return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+      // Smooth easing function
+      const easeInOutQuart = (t: number) => {
+        return t < 0.5 ? 8 * t * t * t * t : 1 - 8 * (--t) * t * t * t;
       };
       
-      const easedProgress = easeInOutCubic(progress);
+      const easedProgress = easeInOutQuart(progress);
       
       // Interpolate viewport values
       const newZoom = startViewport.zoom + (targetViewport.zoom - startViewport.zoom) * easedProgress;
@@ -91,11 +93,13 @@ export const useBedFocus = ({
       
       if (progress < 1) {
         requestAnimationFrame(animate);
+      } else {
+        // Animation complete, trigger callback
+        onFocusEnter?.(bedId);
       }
     };
     
     requestAnimationFrame(animate);
-    onFocusEnter?.(bedId);
   }, [beds, enterFocusMode, viewport, updateViewport, onFocusEnter]);
 
   // Handle exiting focus mode

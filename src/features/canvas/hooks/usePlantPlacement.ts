@@ -132,14 +132,15 @@ export const usePlantPlacement = ({
     // To switch species, they can click another species card
   }, [isPlacing, selectedSpecies, focusedBed, canvasToBedCoordinates, isWithinBedBounds, snapToGrid, getPlacementsForBed, addPlacement, setPlacementPreview]);
 
-  // Select plant species for placement - DIRECT SELECTION MODEL
+  // Direct species selection - eliminates need for separate selection step
   const selectSpeciesForPlacement = useCallback((species: PlantSpecies) => {
-    // Direct selection - no need to deselect first
     setSelectedSpecies(species);
+    setIsPlacing(true); // Immediately enter placement mode
     clearSelection(); // Clear any selected placements
-  }, [setSelectedSpecies, clearSelection]);
+    setPlacementPreview(null); // Clear any existing preview
+  }, [setSelectedSpecies, setIsPlacing, clearSelection, setPlacementPreview]);
 
-  // Cancel placement mode - can be triggered by ESC key or clicking empty area
+  // Cancel placement mode - triggered by ESC key or clicking empty area
   const cancelPlacement = useCallback(() => {
     setSelectedSpecies(null);
     setIsPlacing(false);
