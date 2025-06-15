@@ -43,7 +43,8 @@ export const useCanvasEventHandlers = ({
   // Plant placement hook
   const {
     handlePlacementPreview,
-    handlePlantPlacement
+    handlePlantPlacement,
+    handleEmptyAreaClick
   } = usePlantPlacement({
     viewport,
     focusedBed,
@@ -67,7 +68,12 @@ export const useCanvasEventHandlers = ({
       const isMultiSelect = e.shiftKey || e.ctrlKey;
       startSelection(x, y, isMultiSelect);
     }
-  }, [tool, startPreview, startSelection, focusedBed, isPlacing, handlePlantPlacement]);
+    
+    // Handle empty area clicks to cancel placement
+    if (tool === 'pan' && isPlacing) {
+      handleEmptyAreaClick();
+    }
+  }, [tool, startPreview, startSelection, focusedBed, isPlacing, handlePlantPlacement, handleEmptyAreaClick]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();

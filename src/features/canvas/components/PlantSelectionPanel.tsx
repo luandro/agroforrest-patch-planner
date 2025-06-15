@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { X, Search, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,7 +29,7 @@ export const PlantSelectionPanel: React.FC<PlantSelectionPanelProps> = ({
   const [selectedCompatibility, setSelectedCompatibility] = useState<CompatibilityLevel | 'all'>('all');
   const [showFilters, setShowFilters] = useState(false);
 
-  const { setSelectedSpecies } = usePlantPlacementStore();
+  const { selectedSpecies, isPlacing } = usePlantPlacementStore();
 
   const filteredSpecies = useMemo(() => {
     return mockPlantSpecies.filter(species => {
@@ -73,11 +72,9 @@ export const PlantSelectionPanel: React.FC<PlantSelectionPanelProps> = ({
   };
 
   const handleSpeciesSelect = (species: PlantSpecies) => {
-    // Set the species for placement mode
-    setSelectedSpecies(species);
+    // Direct selection - immediately enters placement mode
     onSelectSpecies(species);
-    // Close panel when selecting for placement
-    onClose();
+    // Keep panel open for easy species switching
   };
 
   const clearFilters = () => {
@@ -105,9 +102,16 @@ export const PlantSelectionPanel: React.FC<PlantSelectionPanelProps> = ({
         {/* Header */}
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Selecionar Plantas
-            </h2>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Selecionar Plantas
+              </h2>
+              {isPlacing && selectedSpecies && (
+                <p className="text-sm text-green-600 mt-1 font-medium">
+                  ✓ {selectedSpecies.commonName} selecionada
+                </p>
+              )}
+            </div>
             <Button
               variant="ghost"
               size="sm"
@@ -119,8 +123,11 @@ export const PlantSelectionPanel: React.FC<PlantSelectionPanelProps> = ({
           </div>
           
           {selectedBedId && (
-            <p className="text-sm text-gray-600 mt-1">
-              Selecione uma espécie para plantar no canteiro
+            <p className="text-sm text-gray-600 mt-2">
+              {isPlacing 
+                ? "Clique no canteiro para plantar ou selecione outra espécie"
+                : "Clique em uma espécie para começar a plantar"
+              }
             </p>
           )}
         </div>
@@ -201,6 +208,8 @@ export const PlantSelectionPanel: React.FC<PlantSelectionPanelProps> = ({
                           key={speciesItem.id}
                           species={speciesItem}
                           onSelect={() => handleSpeciesSelect(speciesItem)}
+                          isSelected={selectedSpecies?.id === speciesItem.id}
+                          isPlacing={isPlacing && selectedSpecies?.id === speciesItem.id}
                         />
                       ))}
                     </div>
@@ -215,6 +224,8 @@ export const PlantSelectionPanel: React.FC<PlantSelectionPanelProps> = ({
                     key={species.id}
                     species={species}
                     onSelect={() => handleSpeciesSelect(species)}
+                    isSelected={selectedSpecies?.id === species.id}
+                    isPlacing={isPlacing && selectedSpecies?.id === species.id}
                   />
                 ))}
               </div>
@@ -230,6 +241,14 @@ export const PlantSelectionPanel: React.FC<PlantSelectionPanelProps> = ({
             )}
           </div>
         </ScrollArea>
+
+        {/* Help Text */}
+        <div className="p-4 border-t border-gray-200 bg-gray-50">
+          <p className="text-xs text-gray-600">
+            💡 <strong>Dica:</strong> Clique em qualquer espécie para começar a plantar. 
+            Pressione ESC ou clique em área vazia para cancelar.
+          </p>
+        </div>
       </div>
     </>
   );

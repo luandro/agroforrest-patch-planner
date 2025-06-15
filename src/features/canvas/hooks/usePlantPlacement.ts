@@ -127,20 +127,31 @@ export const usePlantPlacement = ({
     });
 
     setPlacementPreview(null);
+    
+    // Continue placing mode - user can place another of the same species
+    // To switch species, they can click another species card
   }, [isPlacing, selectedSpecies, focusedBed, canvasToBedCoordinates, isWithinBedBounds, snapToGrid, getPlacementsForBed, addPlacement, setPlacementPreview]);
 
-  // Select plant species for placement
+  // Select plant species for placement - DIRECT SELECTION MODEL
   const selectSpeciesForPlacement = useCallback((species: PlantSpecies) => {
+    // Direct selection - no need to deselect first
     setSelectedSpecies(species);
     clearSelection(); // Clear any selected placements
   }, [setSelectedSpecies, clearSelection]);
 
-  // Cancel placement mode
+  // Cancel placement mode - can be triggered by ESC key or clicking empty area
   const cancelPlacement = useCallback(() => {
     setSelectedSpecies(null);
     setIsPlacing(false);
     setPlacementPreview(null);
   }, [setSelectedSpecies, setIsPlacing, setPlacementPreview]);
+
+  // Handle clicks on empty canvas areas to cancel placement
+  const handleEmptyAreaClick = useCallback(() => {
+    if (isPlacing) {
+      cancelPlacement();
+    }
+  }, [isPlacing, cancelPlacement]);
 
   // Get placements for the currently focused bed
   const currentBedPlacements = focusedBed ? getPlacementsForBed(focusedBed.id) : [];
@@ -158,6 +169,7 @@ export const usePlantPlacement = ({
     handlePlantPlacement,
     selectSpeciesForPlacement,
     cancelPlacement,
+    handleEmptyAreaClick,
     selectPlacements,
     removePlacements,
     
