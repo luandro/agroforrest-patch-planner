@@ -68,8 +68,8 @@ export const usePatchStore = create<PatchStore>()(
 
     setCurrentPatch: (patchId) => {
       set({ currentPatchId: patchId });
-      // Store current patch in localStorage
-      localStorage.setItem('currentPatchId', patchId);
+      // Store current patch in localStorage with consistent key
+      localStorage.setItem('agroforest_current_patch_id', patchId);
       console.log('🎯 Current patch set:', patchId);
     },
 

@@ -3,41 +3,18 @@ import { useEffect, useRef, useState } from 'react';
 import { usePlantPlacementStore, PlantPlacement } from '../stores/plantPlacementStore';
 import { usePatchStore } from '../stores/patchStore';
 import { useBedStore } from '../stores/bedStore';
-
-const DB_NAME = 'AgroForestDB';
-const DB_VERSION = 3; // Updated to match patch version
-const STORE_NAME = 'placements';
-const KEY_PATH = 'id';
+import {
+  openDB,
+  saveToLocalStorageFallback,
+  loadFromLocalStorageFallback,
+  upsertPlacementsForPatch,
+  loadPatchData,
+  PLACEMENTS_STORE_NAME
+} from '../utils/storageManager';
 
 interface UseAutoSavePlantsProps {
   debounceMs?: number;
 }
-
-const openDB = () => {
-  return new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains('beds')) {
-        db.createObjectStore('beds', { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: KEY_PATH });
-      }
-      if (!db.objectStoreNames.contains('patches')) {
-        const patchStore = db.createObjectStore('patches', { keyPath: 'id' });
-        patchStore.createIndex('createdAt', 'createdAt', { unique: false });
-      }
-    };
-
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => {
-      console.error('Database error:', request.error);
-      reject(new Error('Failed to open database'));
-    };
-  });
-};
 
 export const useAutoSavePlants = ({ debounceMs = 5000 }: UseAutoSavePlantsProps = {}) => {
   const { placements, isDirty, markClean, loadPlacements } = usePlantPlacementStore();
@@ -58,47 +35,10 @@ export const useAutoSavePlants = ({ debounceMs = 5000 }: UseAutoSavePlantsProps 
     try {
       setIsSaving(true);
       setSaveError(null);
-      console.log('💾 Saving plant placements to IndexedDB for patch:', currentPatchId, 'placements count:', placements.length);
-      
-      const db = await openDB();
-      const transaction = db.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      
-      // Get current bed IDs for this patch
-      const currentPatchBedIds = beds.map(bed => bed.id);
-      
-      // Get all existing placements
-      const getAllRequest = store.getAll();
-      const allPlacements = await new Promise<PlantPlacement[]>((resolve, reject) => {
-        getAllRequest.onsuccess = () => resolve(getAllRequest.result || []);
-        getAllRequest.onerror = () => reject(new Error('Failed to get existing placements'));
-      });
-      
-      // Filter out old placements for current patch beds
-      const otherPatchPlacements = allPlacements.filter(
-        placement => !currentPatchBedIds.includes(placement.bedId)
-      );
-      
-      // Clear store and add all placements
-      store.clear();
-      
-      // Add placements from other patches
-      otherPatchPlacements.forEach(placement => {
-        store.add(placement);
-      });
-      
-      // Add current patch placements
-      placements.forEach(placement => {
-        store.add(placement);
-      });
+      console.log('💾 Saving plant placements to storage for patch:', currentPatchId, 'placements count:', placements.length);
 
-      await new Promise<void>((resolve, reject) => {
-        transaction.oncomplete = () => resolve();
-        transaction.onerror = () => {
-          console.error('Transaction error:', transaction.error);
-          reject(new Error('Failed to save placements'));
-        };
-      });
+      // Use optimized upsert operation for current patch
+      await upsertPlacementsForPatch(currentPatchId, placements);
 
       markClean();
       console.log('✅ Plant placements saved successfully for patch:', currentPatchId);
@@ -112,36 +52,12 @@ export const useAutoSavePlants = ({ debounceMs = 5000 }: UseAutoSavePlantsProps 
 
   const loadPlacementsFromStorage = async () => {
     if (!currentPatchId) return;
-    
-    try {
-      console.log('📂 Loading plant placements from IndexedDB for patch:', currentPatchId);
-      const db = await openDB();
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        console.log('🆕 Placements store does not exist yet. It will be created.');
-        loadPlacements([]);
-        return;
-      }
-      
-      const transaction = db.transaction([STORE_NAME], 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
-      const getAllRequest = store.getAll();
 
-      const allPlacements = await new Promise<PlantPlacement[]>((resolve, reject) => {
-        getAllRequest.onsuccess = () => resolve(getAllRequest.result || []);
-        getAllRequest.onerror = () => {
-           console.error('Get all request error:', getAllRequest.error);
-           reject(new Error('Failed to load placements'));
-        }
-      });
-      
-      // Get current patch bed IDs
-      const currentPatchBedIds = beds.map(bed => bed.id);
-      
-      // Filter placements for current patch
-      const patchPlacements = allPlacements.filter(
-        placement => currentPatchBedIds.includes(placement.bedId)
-      );
-      
+    try {
+      console.log('📂 Loading plant placements from storage for patch:', currentPatchId);
+
+      // Use optimized patch data loading
+      const { placements: patchPlacements } = await loadPatchData(currentPatchId);
       loadPlacements(patchPlacements);
       console.log('✅ Plant placements loaded successfully for patch:', currentPatchId, 'count:', patchPlacements.length);
     } catch (error) {
@@ -178,12 +94,12 @@ export const useAutoSavePlants = ({ debounceMs = 5000 }: UseAutoSavePlantsProps 
     }
   }, [currentPatchId, beds]);
 
-  const manualSave = () => {
+  const manualSave = async (): Promise<void> => {
     console.log('🔧 Manual plant placements save triggered for patch:', currentPatchId);
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    savePlacements();
+    return await savePlacements();
   };
 
   return {

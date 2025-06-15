@@ -1,8 +1,7 @@
 
 import { useCallback, useEffect } from 'react';
 import { useBedStore } from '../stores/bedStore';
-import { useAutoSave } from './useAutoSave';
-import { useAutoSavePlants } from './useAutoSavePlants';
+import { useOfflineStorage } from './useOfflineStorage';
 import { useCanvasViewport } from './useCanvasViewport';
 import { useCanvasInitialization } from './useCanvasInitialization';
 import { usePatchStore } from '../stores/patchStore';
@@ -34,19 +33,20 @@ export const useCanvasStateOrchestrator = ({
   const { beds, selectedBedIds, undo, redo, canUndo, canRedo } = bedStore;
   const { currentPatchId } = usePatchStore();
 
-  // Auto-save state (beds and plants - patches are handled at app level)
-  const { isSaving: isSavingBeds, saveError: bedSaveError } = useAutoSave();
-  const { isSaving: isSavingPlacements, saveError: plantSaveError } = useAutoSavePlants();
+  // Unified offline storage
+  const storage = useOfflineStorage();
 
-  // Debug logging for auto-save initialization
+  // Debug logging for storage initialization
   useEffect(() => {
     console.log('🔧 Canvas state orchestrator initialized');
-    console.log('📦 Auto-save status:', {
+    console.log('📦 Storage status:', {
       currentPatch: currentPatchId,
-      beds: { saving: isSavingBeds, error: bedSaveError },
-      plants: { saving: isSavingPlacements, error: plantSaveError }
+      isInitialized: storage.isInitialized,
+      isSaving: storage.isSaving,
+      isDirty: storage.isDirty,
+      errors: storage.saveErrors
     });
-  }, [currentPatchId, isSavingBeds, bedSaveError, isSavingPlacements, plantSaveError]);
+  }, [currentPatchId, storage.isInitialized, storage.isSaving, storage.isDirty]);
 
   // Initialize canvas to home position
   useCanvasInitialization({
@@ -77,8 +77,9 @@ export const useCanvasStateOrchestrator = ({
     canUndo,
     canRedo,
     
-    // Auto-save (beds and plants only)
-    isSaving: isSavingBeds || isSavingPlacements,
+    // Storage state
+    isSaving: storage.isSaving,
+    isStorageInitialized: storage.isInitialized,
     
     // Store reference for other hooks
     bedStore

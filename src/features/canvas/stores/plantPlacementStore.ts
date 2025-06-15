@@ -1,10 +1,12 @@
 
 import { create } from 'zustand';
 import { PlantSpecies } from '../types/species.types';
+import { usePatchStore } from './patchStore';
 
 export interface PlantPlacement {
   id: string;
   bedId: string;
+  patchId?: string; // Added for direct patch association
   species: PlantSpecies;
   position: { x: number; y: number };
   notes?: string;
@@ -58,16 +60,19 @@ export const usePlantPlacementStore = create<PlantPlacementStore>((set, get) => 
 
   // Actions
   addPlacement: (placement) => {
+    const { currentPatchId } = usePatchStore.getState();
+
     const newPlacement: PlantPlacement = {
       ...placement,
-      id: `plant-${Date.now()}-${Math.random()}`
+      id: `plant-${Date.now()}-${Math.random()}`,
+      patchId: currentPatchId || undefined
     };
-    
+
     set((state) => ({
       placements: [...state.placements, newPlacement],
       isDirty: true
     }));
-    
+
     // Add to history
     get().addToHistory();
   },

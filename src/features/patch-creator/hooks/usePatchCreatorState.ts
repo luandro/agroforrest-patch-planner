@@ -5,7 +5,7 @@ import { PlantSpecies } from '@/features/canvas/types/species.types';
 import { useBedStore } from '@/features/canvas/stores/bedStore';
 import { usePlantPlacementStore } from '@/features/canvas/stores/plantPlacementStore';
 import { useTimelineStore } from '@/features/canvas/stores/timelineStore';
-import { useAutoSavePatches } from '@/features/canvas/hooks/useAutoSavePatches';
+import { useOfflineStorage } from '@/features/canvas/hooks/useOfflineStorage';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 export const usePatchCreatorState = () => {
@@ -17,14 +17,19 @@ export const usePatchCreatorState = () => {
   const { isTimelineActive, setTimelineActive } = useTimelineStore();
   const isMobile = useIsMobile();
 
-  // Initialize auto-save for patches at application level
-  const { isSaving: isSavingPatches, saveError: patchSaveError, manualSave: manualSavePatches } = useAutoSavePatches();
+  // Initialize unified offline storage
+  const storage = useOfflineStorage();
 
   // Debug logging for initialization
   useEffect(() => {
-    console.log('🔧 PatchCreatorState initialized - auto-save hooks active');
-    console.log('📦 Patches auto-save status:', { isSaving: isSavingPatches, error: patchSaveError });
-  }, []);
+    console.log('🔧 PatchCreatorState initialized - offline storage active');
+    console.log('📦 Storage status:', {
+      isInitialized: storage.isInitialized,
+      isSaving: storage.isSaving,
+      isDirty: storage.isDirty,
+      errors: storage.saveErrors
+    });
+  }, [storage.isInitialized]);
 
   // Ensure pan tool is default on page load
   useEffect(() => {
@@ -76,7 +81,7 @@ export const usePatchCreatorState = () => {
 
   const handleManualSave = () => {
     console.log('🔧 Manual save triggered from UI');
-    manualSavePatches();
+    storage.saveAll();
   };
 
   // FPS counter for development
@@ -127,8 +132,10 @@ export const usePatchCreatorState = () => {
     handleExitFocus,
     setTimelineActive,
     handleManualSave,
-    // Expose auto-save status for debugging
-    isSavingPatches,
-    patchSaveError
+    // Expose storage status for debugging
+    isStorageInitialized: storage.isInitialized,
+    isSaving: storage.isSaving,
+    isDirty: storage.isDirty,
+    saveErrors: storage.saveErrors
   };
 };

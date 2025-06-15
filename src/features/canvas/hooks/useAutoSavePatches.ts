@@ -2,44 +2,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { usePatchStore } from '../stores/patchStore';
 import { Patch } from '../types/patch.types';
-
-const DB_NAME = 'AgroForestDB';
-const DB_VERSION = 3;
-const PATCHES_STORE_NAME = 'patches';
+import {
+  openDB,
+  saveToLocalStorageFallback,
+  loadFromLocalStorageFallback,
+  upsertPatches,
+  PATCHES_STORE_NAME
+} from '../utils/storageManager';
 
 interface UseAutoSavePatchesProps {
   debounceMs?: number;
 }
-
-const openDB = () => {
-  return new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      
-      // Create existing stores if they don't exist
-      if (!db.objectStoreNames.contains('beds')) {
-        db.createObjectStore('beds', { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains('placements')) {
-        db.createObjectStore('placements', { keyPath: 'id' });
-      }
-      
-      // Create patches store
-      if (!db.objectStoreNames.contains(PATCHES_STORE_NAME)) {
-        const patchStore = db.createObjectStore(PATCHES_STORE_NAME, { keyPath: 'id' });
-        patchStore.createIndex('createdAt', 'createdAt', { unique: false });
-      }
-    };
-
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => {
-      console.error('Database error:', request.error);
-      reject(new Error('Failed to open database'));
-    };
-  });
-};
 
 export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProps = {}) => {
   const { patches, isDirty, markClean, loadPatches, setCurrentPatch, createPatch } = usePatchStore();
@@ -60,25 +33,10 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
     try {
       setIsSaving(true);
       setSaveError(null);
-      console.log('💾 Saving patches to IndexedDB...', patches.length);
-      
-      const db = await openDB();
-      const transaction = db.transaction([PATCHES_STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(PATCHES_STORE_NAME);
-      
-      // Clear and save all patches
-      store.clear();
-      patches.forEach(patch => {
-        store.add(patch);
-      });
+      console.log('💾 Saving patches to storage...', patches.length);
 
-      await new Promise<void>((resolve, reject) => {
-        transaction.oncomplete = () => resolve();
-        transaction.onerror = () => {
-          console.error('Transaction error:', transaction.error);
-          reject(new Error('Failed to save patches'));
-        };
-      });
+      // Use optimized upsert operation
+      await upsertPatches(patches);
 
       markClean();
       console.log('✅ Patches saved successfully:', patches.length);
@@ -92,26 +50,37 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
 
   const loadPatchesFromStorage = async () => {
     try {
-      console.log('📂 Loading patches from IndexedDB...');
-      const db = await openDB();
-      
-      if (!db.objectStoreNames.contains(PATCHES_STORE_NAME)) {
-        console.log('🆕 Patches store does not exist yet. Creating default patch.');
-        await createDefaultPatch();
-        return;
+      console.log('📂 Loading patches from storage...');
+
+      let loadedPatches: Patch[] = [];
+
+      // Try IndexedDB first, fallback to localStorage
+      try {
+        const db = await openDB();
+
+        if (!db.objectStoreNames.contains(PATCHES_STORE_NAME)) {
+          console.log('🆕 Patches store does not exist yet. Trying localStorage fallback.');
+          loadedPatches = loadFromLocalStorageFallback('patches', []);
+          db.close();
+        } else {
+          const transaction = db.transaction([PATCHES_STORE_NAME], 'readonly');
+          const store = transaction.objectStore(PATCHES_STORE_NAME);
+          const getAllRequest = store.getAll();
+
+          loadedPatches = await new Promise<Patch[]>((resolve, reject) => {
+            getAllRequest.onsuccess = () => resolve(getAllRequest.result || []);
+            getAllRequest.onerror = () => {
+              console.error('Get all request error:', getAllRequest.error);
+              reject(new Error('Failed to load patches'));
+            };
+          });
+
+          db.close();
+        }
+      } catch (indexedDBError) {
+        console.warn('⚠️ IndexedDB failed, using localStorage fallback:', indexedDBError);
+        loadedPatches = loadFromLocalStorageFallback('patches', []);
       }
-
-      const transaction = db.transaction([PATCHES_STORE_NAME], 'readonly');
-      const store = transaction.objectStore(PATCHES_STORE_NAME);
-      const getAllRequest = store.getAll();
-
-      const loadedPatches = await new Promise<Patch[]>((resolve, reject) => {
-        getAllRequest.onsuccess = () => resolve(getAllRequest.result || []);
-        getAllRequest.onerror = () => {
-          console.error('Get all request error:', getAllRequest.error);
-          reject(new Error('Failed to load patches'));
-        };
-      });
 
       if (loadedPatches.length === 0) {
         console.log('🆕 No patches found. Creating default patch.');
@@ -119,9 +88,9 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
       } else {
         // Load patches without marking dirty
         loadPatches(loadedPatches, false);
-        
+
         // Restore last active patch
-        const savedCurrentPatchId = localStorage.getItem('currentPatchId');
+        const savedCurrentPatchId = localStorage.getItem('agroforest_current_patch_id');
         if (savedCurrentPatchId && loadedPatches.find(p => p.id === savedCurrentPatchId)) {
           setCurrentPatch(savedCurrentPatchId);
           console.log('✅ Restored current patch:', savedCurrentPatchId);
@@ -130,7 +99,7 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
           console.log('✅ Set first patch as current:', loadedPatches[0].id);
         }
       }
-      
+
       console.log('✅ Patches loaded successfully:', loadedPatches.length);
     } catch (error) {
       console.error('❌ Failed to load patches:', error);
@@ -194,12 +163,12 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
     }
   }, []);
 
-  const manualSave = () => {
+  const manualSave = async (): Promise<void> => {
     console.log('🔧 Manual patch save triggered');
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    savePatches();
+    return await savePatches();
   };
 
   return {
