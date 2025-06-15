@@ -4,6 +4,7 @@ import { MobileControls } from '../MobileControls';
 import { DesktopSidebar } from '../DesktopSidebar';
 import { ViewControls } from '../ViewControls';
 import { CanvasTool } from '../../types/bed.types';
+import { cn } from '@/lib/utils';
 
 interface ControlsOverlayProps {
   viewport: any;
@@ -110,7 +111,10 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
           activeTool={tool}
           onToolChange={setTool}
           onOpenPlantSelection={onOpenPlantSelection}
-          className="fixed bottom-4 right-4 z-30 md:bottom-[240px] md:right-4"
+          className={cn(
+            "fixed bottom-4 right-4 z-50 transition-all duration-300 ease-in-out",
+            !isMobile && (isCollapsed ? "md:right-20" : "md:right-[21rem]")
+          )}
         />
       )}
     </>
