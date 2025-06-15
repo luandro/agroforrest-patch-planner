@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { PlantSpecies, PlantCategory, CompatibilityLevel } from '../types/species.types';
@@ -74,7 +75,7 @@ export const PlantSelectionPanel: React.FC<PlantSelectionPanelProps> = ({
     setSelectedCompatibility('all');
   };
 
-  const hasActiveFilters = selectedCategory !== 'all' || selectedCompatibility !== 'all' || searchTerm;
+  const hasActiveFilters = selectedCategory !== 'all' || selectedCompatibility !== 'all' || searchTerm !== '';
 
   return (
     <>
