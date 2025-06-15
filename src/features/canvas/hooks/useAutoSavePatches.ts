@@ -49,6 +49,12 @@ export const useAutoSavePatches = ({ debounceMs = 1000 }: UseAutoSavePatchesProp
     setIsSaving(true);
     try {
       const db = await openDB();
+      if (!db.objectStoreNames.contains(PATCH_STORE_NAME) || !db.objectStoreNames.contains(META_STORE_NAME)) {
+        console.error("Cannot save state: required object stores not found in DB.");
+        setIsSaving(false);
+        return;
+      }
+
       const transaction = db.transaction([PATCH_STORE_NAME, META_STORE_NAME], 'readwrite');
       const patchStore = transaction.objectStore(PATCH_STORE_NAME);
       const metaStore = transaction.objectStore(META_STORE_NAME);
@@ -78,6 +84,13 @@ export const useAutoSavePatches = ({ debounceMs = 1000 }: UseAutoSavePatchesProp
   const loadState = async () => {
     try {
       const db = await openDB();
+      if (!db.objectStoreNames.contains(PATCH_STORE_NAME) || !db.objectStoreNames.contains(META_STORE_NAME)) {
+        console.warn('Patch stores not found, loading empty state.');
+        setPatches([]);
+        setActivePatchId(null);
+        setLoaded();
+        return;
+      }
       const transaction = db.transaction([PATCH_STORE_NAME, META_STORE_NAME], 'readonly');
       const patchStore = transaction.objectStore(PATCH_STORE_NAME);
       const metaStore = transaction.objectStore(META_STORE_NAME);
@@ -100,6 +113,7 @@ export const useAutoSavePatches = ({ debounceMs = 1000 }: UseAutoSavePatchesProp
       
     } catch (error) {
       console.error('Failed to load patch state:', error);
+      // Still set loaded to true to unblock the UI, even if loading failed.
       setLoaded();
     }
   };

@@ -12,16 +12,20 @@ export const useHistoryStore = create<HistoryStore>((set, get) => ({
   addToHistory: (beds: Bed[]) => {
     const state = get();
     const newHistory = state.history.slice(0, state.historyIndex + 1);
+
+    const lastBeds = newHistory[newHistory.length - 1];
+    if (lastBeds && JSON.stringify(lastBeds) === JSON.stringify(beds)) {
+      return; // Do not add duplicate state
+    }
+    
     newHistory.push([...beds]);
     
     // Keep only last 50 states
     if (newHistory.length > 50) {
       newHistory.shift();
-    } else {
-      set({ historyIndex: state.historyIndex + 1 });
     }
     
-    set({ history: newHistory });
+    set({ history: newHistory, historyIndex: newHistory.length - 1 });
   },
 
   undo: () => {
