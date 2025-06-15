@@ -1,5 +1,6 @@
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useTimelineStore } from '../stores/timelineStore';
 import { PlantSpecies } from '../types/species.types';
 
 export interface GrowthStage {
@@ -20,11 +21,28 @@ export const GROWTH_STAGES: GrowthStage[] = [
 ];
 
 export const useGrowthTimeline = () => {
-  const [currentMonth, setCurrentMonth] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  // Use store state directly
+  const { 
+    currentMonth, 
+    isPlaying, 
+    playbackSpeed,
+    setCurrentMonth,
+    setIsPlaying,
+    setPlaybackSpeed
+  } = useTimelineStore();
 
-  // Calculate plant size based on species and time
+  // Enhanced debug logging
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Growth Timeline] State:', {
+        currentMonth,
+        isPlaying,
+        playbackSpeed
+      });
+    }
+  }, [currentMonth, isPlaying, playbackSpeed]);
+
+  // Enhanced plant size calculation with better growth curves
   const calculatePlantSize = useCallback((species: PlantSpecies, months: number): number => {
     if (!species) return 8; // Default size
     
@@ -35,11 +53,26 @@ export const useGrowthTimeline = () => {
     const growthMultiplier = getGrowthMultiplier(species.growthRate);
     const maturityMonths = getMaturityMonths(species.category, species.growthRate);
     
-    // Sigmoid growth curve for more realistic growth pattern
+    // Enhanced sigmoid growth curve with earlier visible growth
     const progress = Math.min(months / maturityMonths, 1);
-    const sigmoidProgress = 1 / (1 + Math.exp(-6 * (progress - 0.5)));
+    const sigmoidProgress = 1 / (1 + Math.exp(-8 * (progress - 0.3))); // Start growth earlier
     
-    return baseSize + (maxSize - baseSize) * sigmoidProgress * growthMultiplier;
+    const calculatedSize = baseSize + (maxSize - baseSize) * sigmoidProgress * growthMultiplier;
+    
+    // Debug logging for plant growth
+    if (process.env.NODE_ENV === 'development' && months > 0) {
+      console.debug('[Plant Growth]', {
+        species: species.commonName,
+        months,
+        progress,
+        sigmoidProgress,
+        baseSize,
+        maxSize,
+        calculatedSize
+      });
+    }
+    
+    return Math.max(baseSize, calculatedSize);
   }, []);
 
   // Get current growth stage
@@ -49,19 +82,22 @@ export const useGrowthTimeline = () => {
     );
   }, [currentMonth]);
 
-  // Auto-play functionality
+  // Auto-play functionality with store integration
   const startPlayback = useCallback(() => {
+    console.log('[Timeline] Starting playback');
     setIsPlaying(true);
-  }, []);
+  }, [setIsPlaying]);
 
   const stopPlayback = useCallback(() => {
+    console.log('[Timeline] Stopping playback');
     setIsPlaying(false);
-  }, []);
+  }, [setIsPlaying]);
 
   const resetTimeline = useCallback(() => {
+    console.log('[Timeline] Resetting timeline');
     setCurrentMonth(0);
     setIsPlaying(false);
-  }, []);
+  }, [setCurrentMonth, setIsPlaying]);
 
   return {
     currentMonth,
@@ -79,48 +115,48 @@ export const useGrowthTimeline = () => {
   };
 };
 
-// Helper functions
+// Enhanced helper functions with more realistic growth patterns
 const getBaseSize = (category: string): number => {
   switch (category) {
-    case 'trees': return 8;
-    case 'shrubs': return 6;
-    case 'ground-cover': return 4;
-    case 'herbs': return 5;
-    default: return 6;
+    case 'trees': return 6;
+    case 'shrubs': return 4;
+    case 'ground-cover': return 3;
+    case 'herbs': return 3.5;
+    default: return 4;
   }
 };
 
 const getMaxSize = (category: string): number => {
   switch (category) {
-    case 'trees': return 24;
-    case 'shrubs': return 16;
-    case 'ground-cover': return 8;
-    case 'herbs': return 12;
-    default: return 12;
+    case 'trees': return 40; // Much larger for dramatic growth
+    case 'shrubs': return 25;
+    case 'ground-cover': return 12;
+    case 'herbs': return 18;
+    default: return 20;
   }
 };
 
 const getGrowthMultiplier = (growthRate: string): number => {
   switch (growthRate) {
-    case 'fast': return 1.2;
+    case 'fast': return 1.3;
     case 'medium': return 1.0;
-    case 'slow': return 0.8;
+    case 'slow': return 0.7;
     default: return 1.0;
   }
 };
 
 const getMaturityMonths = (category: string, growthRate: string): number => {
   const baseMonths = {
-    'trees': 120,
-    'shrubs': 60,
-    'ground-cover': 24,
-    'herbs': 36
-  }[category] || 60;
+    'trees': 180, // 15 years for full maturity
+    'shrubs': 96,  // 8 years
+    'ground-cover': 24, // 2 years
+    'herbs': 36    // 3 years
+  }[category] || 96;
 
   const rateMultiplier = {
-    'fast': 0.7,
+    'fast': 0.6,    // Faster growth
     'medium': 1.0,
-    'slow': 1.4
+    'slow': 1.5     // Slower growth
   }[growthRate] || 1.0;
 
   return baseMonths * rateMultiplier;

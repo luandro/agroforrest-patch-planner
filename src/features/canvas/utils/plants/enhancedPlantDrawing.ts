@@ -1,6 +1,5 @@
 
 import { PlantSpecies } from '../../types/species.types';
-import { useTimelineStore } from '../../stores/timelineStore';
 
 export const drawEnhancedPlant = (
   ctx: CanvasRenderingContext2D,
@@ -16,9 +15,8 @@ export const drawEnhancedPlant = (
 ) => {
   ctx.save();
 
-  // Get current timeline month if not provided
-  const timelineMonth = useTimelineStore.getState().currentMonth;
-  const currentMonth = growthMonth !== undefined ? growthMonth : timelineMonth;
+  // Use provided growth month (don't access store directly in renderer)
+  const currentMonth = growthMonth || 0;
 
   // Calculate dynamic plant size based on species and time
   const baseRadius = species ? getSpeciesBaseRadius(species) : 6;
@@ -28,7 +26,19 @@ export const drawEnhancedPlant = (
 
   // Apply environmental stress
   const stressMultiplier = 1 - (environmentalStress * 0.3);
-  const finalRadius = Math.max(3, currentRadius * stressMultiplier); // Minimum 3px radius
+  const finalRadius = Math.max(3, currentRadius * stressMultiplier);
+
+  // Debug logging for plant rendering
+  if (process.env.NODE_ENV === 'development' && currentMonth > 0 && species) {
+    console.debug('[Plant Render]', {
+      species: species.commonName,
+      month: currentMonth,
+      baseRadius,
+      maxRadius,
+      growthProgress,
+      finalRadius
+    });
+  }
 
   // Plant colors based on species and health
   const healthColor = environmentalStress > 0.5 ? '#8B4513' : '#228B22';
@@ -69,86 +79,85 @@ export const drawEnhancedPlant = (
     }
 
     // Add growth rings for older trees
-    if (currentMonth > 24 && species?.category === 'trees' && finalRadius > 8) {
+    if (currentMonth > 24 && species?.category === 'trees' && finalRadius > 12) {
       const ringCount = Math.floor(currentMonth / 12);
-      for (let i = 1; i <= Math.min(ringCount, 3); i++) {
+      for (let i = 1; i <= Math.min(ringCount, 4); i++) {
         ctx.beginPath();
-        ctx.arc(screenX, screenY, finalRadius * (0.3 + i * 0.2), 0, 2 * Math.PI);
-        ctx.strokeStyle = `rgba(139, 69, 19, ${0.3 - i * 0.1})`;
+        ctx.arc(screenX, screenY, finalRadius * (0.2 + i * 0.15), 0, 2 * Math.PI);
+        ctx.strokeStyle = `rgba(139, 69, 19, ${0.4 - i * 0.08})`;
         ctx.lineWidth = 1;
         ctx.stroke();
       }
     }
   }
 
-  // Add growth stage indicator for mature plants
-  if (currentMonth > 60 && species?.category === 'trees' && finalRadius > 12) {
+  // Add trunk for mature trees
+  if (currentMonth > 36 && species?.category === 'trees' && finalRadius > 15) {
     ctx.beginPath();
-    ctx.arc(screenX, screenY, finalRadius * 0.25, 0, 2 * Math.PI);
+    ctx.arc(screenX, screenY, finalRadius * 0.2, 0, 2 * Math.PI);
     ctx.fillStyle = '#8B4513'; // Tree trunk color
     ctx.fill();
   }
 
-  // Species label for development
-  if (process.env.NODE_ENV === 'development' && species && finalRadius > 8) {
+  // Development label with timeline info
+  if (process.env.NODE_ENV === 'development' && species && finalRadius > 10) {
     ctx.fillStyle = '#000';
-    ctx.font = '8px Arial';
+    ctx.font = '10px Arial';
     ctx.textAlign = 'center';
-    const label = `${species.commonName.substring(0, 3)} ${currentMonth}m`;
+    const label = `${species.commonName.substring(0, 4)} ${currentMonth}m`;
     ctx.fillText(label, screenX, screenY + 2);
   }
 
   ctx.restore();
 };
 
-// Helper functions for species-specific growth
+// Enhanced helper functions for species-specific growth
 const getSpeciesBaseRadius = (species: PlantSpecies): number => {
   switch (species.category) {
-    case 'trees': return 4;
-    case 'shrubs': return 3;
-    case 'ground-cover': return 2;
-    case 'herbs': return 2.5;
-    default: return 3;
+    case 'trees': return 6;
+    case 'shrubs': return 4;
+    case 'ground-cover': return 3;
+    case 'herbs': return 3.5;
+    default: return 4;
   }
 };
 
 const getSpeciesMaxRadius = (species: PlantSpecies): number => {
-  // Larger maximum sizes for better visual growth
   switch (species.category) {
-    case 'trees': return 35; // Increased from 20
-    case 'shrubs': return 20; // Increased from 12
-    case 'ground-cover': return 8; // Increased from 6
-    case 'herbs': return 12; // Increased from 8
-    default: return 15;
+    case 'trees': return 45; // Much larger for dramatic timeline effect
+    case 'shrubs': return 28;
+    case 'ground-cover': return 12;
+    case 'herbs': return 16;
+    default: return 20;
   }
 };
 
 const calculateGrowthProgress = (species: PlantSpecies | null, currentMonth: number): number => {
   if (!species || currentMonth <= 0) return 0;
 
-  // Species-specific maturity times (in months) - more realistic
+  // Enhanced maturity times for better timeline visualization
   const maturityMonths = {
-    'trees': 240, // 20 years for full maturity
-    'shrubs': 120,  // 10 years
-    'ground-cover': 36, // 3 years
-    'herbs': 48    // 4 years
-  }[species.category] || 120;
+    'trees': 180, // 15 years for full size
+    'shrubs': 96,  // 8 years
+    'ground-cover': 24, // 2 years
+    'herbs': 36    // 3 years
+  }[species.category] || 96;
 
   // Growth rate modifier
   const rateMultiplier = {
     'fast': 0.6,    // Faster growth
     'medium': 1.0,
-    'slow': 1.5     // Slower growth
+    'slow': 1.4     // Slower growth
   }[species.growthRate || 'medium'] || 1.0;
 
   const adjustedMaturity = maturityMonths * rateMultiplier;
   const progress = Math.min(currentMonth / adjustedMaturity, 1);
 
-  // Use sigmoid curve for realistic growth with earlier visible changes
-  const sigmoidProgress = 1 / (1 + Math.exp(-8 * (progress - 0.4)));
+  // Enhanced sigmoid curve with earlier visible changes
+  const sigmoidProgress = 1 / (1 + Math.exp(-10 * (progress - 0.2)));
   
   // Ensure some visible growth even in early months
-  return Math.max(progress * 0.3, sigmoidProgress);
+  return Math.max(progress * 0.2, sigmoidProgress);
 };
 
 // Helper function to adjust color brightness

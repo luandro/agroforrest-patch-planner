@@ -18,21 +18,43 @@ interface TimelineActions {
 
 interface TimelineStore extends TimelineState, TimelineActions {}
 
-export const useTimelineStore = create<TimelineStore>((set) => ({
+export const useTimelineStore = create<TimelineStore>((set, get) => ({
   // State
   isTimelineActive: false,
   currentMonth: 0,
   isPlaying: false,
   playbackSpeed: 1,
 
-  // Actions
-  setTimelineActive: (active) => set({ isTimelineActive: active }),
-  setCurrentMonth: (month) => set({ currentMonth: month }),
-  setIsPlaying: (playing) => set({ isPlaying: playing }),
-  setPlaybackSpeed: (speed) => set({ playbackSpeed: speed }),
-  resetTimeline: () => set({ 
-    currentMonth: 0, 
-    isPlaying: false,
-    playbackSpeed: 1 
-  })
+  // Actions with debugging
+  setTimelineActive: (active) => {
+    console.log('[Timeline Store] setTimelineActive:', active);
+    set({ isTimelineActive: active });
+  },
+  
+  setCurrentMonth: (month) => {
+    const state = get();
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Timeline Store] setCurrentMonth:', state.currentMonth, '->', month);
+    }
+    set({ currentMonth: month });
+  },
+  
+  setIsPlaying: (playing) => {
+    console.log('[Timeline Store] setIsPlaying:', playing);
+    set({ isPlaying: playing });
+  },
+  
+  setPlaybackSpeed: (speed) => {
+    console.log('[Timeline Store] setPlaybackSpeed:', speed);
+    set({ playbackSpeed: speed });
+  },
+  
+  resetTimeline: () => {
+    console.log('[Timeline Store] resetTimeline');
+    set({ 
+      currentMonth: 0, 
+      isPlaying: false,
+      playbackSpeed: 1 
+    });
+  }
 }));

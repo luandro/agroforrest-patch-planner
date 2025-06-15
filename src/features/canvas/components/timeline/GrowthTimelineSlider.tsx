@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { useGrowthTimeline } from '../../hooks/useGrowthTimeline';
 import { useTimelineAutoHide } from '../../hooks/useTimelineAutoHide';
+import { useTimelineStore } from '../../stores/timelineStore';
 import { MinimalTimelineSlider } from './MinimalTimelineSlider';
 import { FullTimelineSlider } from './FullTimelineSlider';
 
@@ -31,22 +32,42 @@ export const GrowthTimelineSlider: React.FC<GrowthTimelineSliderProps> = ({
     maxMonths
   } = useGrowthTimeline();
 
+  const { setTimelineActive } = useTimelineStore();
+
   const { isInactive, handleActivity } = useTimelineAutoHide({
     isMinimal,
     isPlaying
   });
 
-  // Auto-play effect
+  // Ensure timeline is active when component is visible
+  useEffect(() => {
+    if (isVisible) {
+      setTimelineActive(true);
+      console.log('[Timeline Slider] Activated timeline');
+    } else {
+      setTimelineActive(false);
+      console.log('[Timeline Slider] Deactivated timeline');
+    }
+  }, [isVisible, setTimelineActive]);
+
+  // Enhanced auto-play effect with debugging
   useEffect(() => {
     if (!isPlaying) return;
 
+    console.log('[Timeline] Auto-play active, speed:', playbackSpeed);
+
     const interval = setInterval(() => {
       setCurrentMonth(prev => {
-        const next = prev + (playbackSpeed * 2);
+        const increment = playbackSpeed * 2;
+        const next = prev + increment;
+        
         if (next >= maxMonths) {
+          console.log('[Timeline] Reached end, stopping playback');
           stopPlayback();
           return maxMonths;
         }
+        
+        console.log('[Timeline] Auto-increment:', prev, '->', next);
         return next;
       });
     }, 200);

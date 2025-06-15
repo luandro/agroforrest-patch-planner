@@ -1,4 +1,5 @@
-import { useCallback, useRef } from 'react';
+
+import { useCallback, useRef, useEffect } from 'react';
 import { CanvasViewport } from '../types/canvas.types';
 import { Bed } from '../types/bed.types';
 import { usePlantPlacementStore } from '../stores/plantPlacementStore';
@@ -27,7 +28,35 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedB
 
   const { isTimelineActive, currentMonth } = useTimelineStore();
 
-  // DEBUG: Log whenever render fires
+  // Track timeline changes and force re-render
+  const lastTimelineState = useRef({ isTimelineActive, currentMonth });
+  
+  useEffect(() => {
+    const hasTimelineChanged = 
+      lastTimelineState.current.isTimelineActive !== isTimelineActive ||
+      lastTimelineState.current.currentMonth !== currentMonth;
+    
+    if (hasTimelineChanged) {
+      console.log('[Timeline] State changed:', { 
+        wasActive: lastTimelineState.current.isTimelineActive, 
+        nowActive: isTimelineActive,
+        wasMonth: lastTimelineState.current.currentMonth,
+        nowMonth: currentMonth
+      });
+      
+      lastTimelineState.current = { isTimelineActive, currentMonth };
+      
+      // Force a re-render when timeline state changes
+      const canvas = activeCanvasRef.current;
+      if (canvas) {
+        // Trigger a re-render with current state
+        const event = new CustomEvent('timelineStateChanged');
+        canvas.dispatchEvent(event);
+      }
+    }
+  }, [isTimelineActive, currentMonth, activeCanvasRef]);
+
+  // Enhanced render function with timeline debugging
   const render = useCallback((
     viewport: CanvasViewport, 
     beds: Bed[] = [], 
@@ -38,9 +67,15 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedB
     placementBeds?: any[],
     hasCollision?: boolean
   ) => {
+    const timelineMonth = isTimelineActive ? currentMonth : undefined;
+    
     if (process.env.NODE_ENV === "development") {
-      // eslint-disable-next-line no-console
-      console.debug("[useCanvasRenderer:render] focusedBed:", focusedBed, "timeline:", isTimelineActive ? currentMonth : 'off');
+      console.debug("[Canvas Render]", {
+        focusedBed: focusedBed?.id,
+        timelineActive: isTimelineActive,
+        currentMonth: timelineMonth,
+        plantsCount: focusedBed ? getPlacementsForBed(focusedBed.id).length : 0
+      });
     }
 
     const canvas = activeCanvasRef.current;
@@ -66,7 +101,7 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedB
       getPlacementsForBed,
       selectedPlacementIds,
       placementPreview,
-      growthMonth: isTimelineActive ? currentMonth : undefined
+      growthMonth: timelineMonth
     });
   }, [activeCanvasRef, gridSize, spacing, focusedBed, getPlacementsForBed, selectedPlacementIds, placementPreview, isTimelineActive, currentMonth]);
 
