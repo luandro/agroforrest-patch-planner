@@ -1,26 +1,24 @@
 
 import { useCallback } from 'react';
-import { CanvasViewport } from '../types/canvas.types';
-import { CanvasTool } from '../types/bed.types';
 
 interface UseCanvasLayoutPropsParams {
-  viewport: CanvasViewport;
-  updateViewport: (updates: Partial<CanvasViewport>) => void;
+  viewport: any;
+  updateViewport: any;
   beds: any[];
   selectedBedIds: string[];
-  tool: CanvasTool;
-  handleToolChange: (tool: CanvasTool) => void;
+  tool: any;
+  handleToolChange: any;
   bedConfig: any;
   updateBedConfig: any;
   isCreating: boolean;
   previewBed: any;
-  previewBeds: any[];
+  previewBeds?: any[];
   placementBed: any;
-  placementBeds: any[];
+  placementBeds?: any[];
   showConfirmation: boolean;
   multiCreationMode: boolean;
   setMultiCreationMode: (enabled: boolean) => void;
-  hasCollision: boolean;
+  hasCollision?: boolean;
   handlePointerDown: (e: React.PointerEvent) => void;
   handlePointerMove: (e: React.PointerEvent) => void;
   handlePointerUp: () => void;
@@ -36,17 +34,17 @@ interface UseCanvasLayoutPropsParams {
   deleteSelected: () => void;
   isSaving: boolean;
   cancelCreation: () => void;
-  fitAllBeds: (beds: any[]) => void;
+  fitAllBeds: () => void;
   gridSize: number;
   minZoom: number;
   maxZoom: number;
-  handlePlantSelectionOpen: () => void;
-  handlePlantSpeciesSelect: (species: any) => void;
-  isInFocusMode: boolean;
-  focusedBedId: string | null;
-  focusedBed: any;
-  handleEnterFocus: (bedId: string) => void;
-  handleExitFocus: () => void;
+  handlePlantSelectionOpen?: () => void;
+  handlePlantSpeciesSelect?: (species: any) => void;
+  isInFocusMode?: boolean;
+  focusedBedId?: string | null;
+  focusedBed?: any;
+  handleEnterFocus?: (bedId: string) => void;
+  handleExitFocus?: () => void;
 }
 
 export const useCanvasLayoutProps = (params: UseCanvasLayoutPropsParams) => {
@@ -96,28 +94,20 @@ export const useCanvasLayoutProps = (params: UseCanvasLayoutPropsParams) => {
     handleExitFocus
   } = params;
 
-  const handleConfirmPlacement = useCallback(() => {
-    confirmPlacement();
-    if (!multiCreationMode) {
-      handleToolChange('pan');
-    }
-  }, [confirmPlacement, multiCreationMode, handleToolChange]);
-
-  const handleCancelPlacement = useCallback(() => {
-    cancelPlacement();
-  }, [cancelPlacement]);
-
+  // Enhanced zoom handlers
   const handleZoomIn = useCallback(() => {
-    zoomTo(Math.min(maxZoom, viewport.zoom * 1.2));
-  }, [zoomTo, maxZoom, viewport.zoom]);
+    const newZoom = Math.min(maxZoom, viewport.zoom * 1.2);
+    zoomTo(newZoom);
+  }, [viewport.zoom, maxZoom, zoomTo]);
 
   const handleZoomOut = useCallback(() => {
-    zoomTo(Math.max(minZoom, viewport.zoom / 1.2));
-  }, [zoomTo, minZoom, viewport.zoom]);
+    const newZoom = Math.max(minZoom, viewport.zoom / 1.2);
+    zoomTo(newZoom);
+  }, [viewport.zoom, minZoom, zoomTo]);
 
   const handleFitAll = useCallback(() => {
-    fitAllBeds(beds);
-  }, [fitAllBeds, beds]);
+    fitAllBeds();
+  }, [fitAllBeds]);
 
   return {
     viewport,
@@ -141,8 +131,8 @@ export const useCanvasLayoutProps = (params: UseCanvasLayoutPropsParams) => {
     handlePointerMove,
     handlePointerUp,
     handleDoubleClick,
-    handleConfirmPlacement,
-    handleCancelPlacement,
+    handleConfirmPlacement: confirmPlacement, // Use the corrected handler
+    handleCancelPlacement: cancelPlacement,
     pan,
     zoomTo,
     handleZoomIn,
@@ -155,13 +145,15 @@ export const useCanvasLayoutProps = (params: UseCanvasLayoutPropsParams) => {
     deleteSelected,
     isSaving,
     cancelCreation,
-    gridSize: isInFocusMode ? 0.1 : gridSize,
+    gridSize,
+    minZoom,
+    maxZoom,
     onOpenPlantSelection: handlePlantSelectionOpen,
+    onSelectPlantSpecies: handlePlantSpeciesSelect,
     isInFocusMode,
     focusedBedId,
     focusedBed,
     onEnterFocus: handleEnterFocus,
-    onExitFocus: handleExitFocus,
-    onSelectPlantSpecies: handlePlantSpeciesSelect,
+    onExitFocus: handleExitFocus
   };
 };

@@ -47,12 +47,15 @@ export const createPlacementManager = (
   cursorPosition: { x: number; y: number } | null
 ) => {
   const placeBed = () => {
+    // Don't clear preview here - let confirmation panel handle the flow
     placeBedBase(previewBed);
-    clearPreview();
   };
 
   const confirmPlacement = () => {
     const shouldExitCreation = confirmPlacementBase();
+    
+    // Clear preview after successful confirmation
+    clearPreview();
     
     // If not in multi-creation mode, exit creation
     if (shouldExitCreation) {
