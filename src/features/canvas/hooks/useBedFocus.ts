@@ -1,6 +1,6 @@
 
 import { useCallback, useEffect } from 'react';
-import { useBedStore } from '../stores/bedStore';
+import { useFocusModeStore } from '../stores/focusModeStore';
 import { CanvasViewport } from '../types/canvas.types';
 
 interface UseBedFocusProps {
@@ -16,7 +16,7 @@ export const useBedFocus = ({
   onFocusEnter,
   onFocusExit
 }: UseBedFocusProps) => {
-  const { focusMode, enterFocusMode, exitFocusMode } = useBedStore();
+  const { focusMode, enterFocusMode, exitFocusMode } = useFocusModeStore();
 
   // Handle entering focus mode
   const handleEnterFocus = useCallback((bedId: string) => {
