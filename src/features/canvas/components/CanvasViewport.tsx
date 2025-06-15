@@ -2,6 +2,7 @@
 import React from 'react';
 import { CanvasContainer } from './CanvasContainer';
 import { DevelopmentInfo } from './DevelopmentInfo';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CanvasViewportProps {
   viewport: any;
@@ -48,6 +49,8 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
   canvasRef,
   focusedBed
 }) => {
+  const isMobile = useIsMobile();
+
   return (
     <div className="relative w-full h-screen pt-16">
       {/* Main Canvas */}
@@ -81,9 +84,7 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
           selectedBedIds={selectedBedIds}
           viewport={viewport}
           tool={tool}
-          isCreating={isCreating}
-          previewBed={previewBed}
-          placementBed={placementBed}
+          isMobile={isMobile}
         />
       )}
     </div>

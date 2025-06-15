@@ -86,7 +86,8 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
   onExitFocus,
   onSelectPlantSpecies,
   onCancelPlantPlacement,
-  isMobile = false
+  isMobile = false,
+  placementBed
 }) => {
   // Navigation handler for mini-map
   const handleMiniMapNavigate = (x: number, y: number) => {
@@ -139,11 +140,11 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
           canRedo={canRedo()}
           onDeleteSelected={deleteSelected}
           selectedCount={selectedBedIds.length}
-          isCreating={isCreating}
-          multiCreationMode={multiCreationMode}
-          onMultiCreationModeChange={setMultiCreationMode}
-          onCancelCreation={cancelCreation}
+          isVisible={true}
+          onToggle={() => {}}
           isSaving={isSaving}
+          showConfirmation={showConfirmation}
+          isInFocusMode={isInFocusMode}
         />
       )}
 
@@ -172,10 +173,14 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
       {/* View Controls - Bottom Right */}
       {!isInFocusMode && (
         <ViewControls
+          zoom={viewport.zoom}
           onZoomIn={handleZoomIn}
           onZoomOut={handleZoomOut}
           onFitAll={handleFitAll}
-          currentZoom={viewport.zoom}
+          bedsCount={beds.length}
+          activeTool={tool}
+          onToolChange={setTool}
+          onOpenPlantSelection={onOpenPlantSelection}
           className="fixed bottom-4 right-4 z-30"
         />
       )}
@@ -183,7 +188,7 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
       {/* Bed Configuration Panel - Mobile Bottom Sheet / Desktop Modal */}
       {isCreating && tool === 'create-rectangle' && !showConfirmation && (
         <BedConfigPanel
-          bedConfig={bedConfig}
+          config={bedConfig}
           onConfigChange={updateBedConfig}
           multiCreationMode={multiCreationMode}
           onMultiCreationModeChange={setMultiCreationMode}
@@ -193,13 +198,15 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
       )}
 
       {/* Bed Confirmation Panel */}
-      {showConfirmation && (
+      {showConfirmation && placementBed && (
         <BedConfirmationPanel
+          bed={placementBed}
+          beds={beds}
           bedConfig={bedConfig}
+          multiCreationMode={multiCreationMode}
+          onMultiCreationToggle={setMultiCreationMode}
           onConfirm={handleConfirmPlacement}
           onCancel={handleCancelPlacement}
-          multiCreationMode={multiCreationMode}
-          onMultiCreationModeChange={setMultiCreationMode}
           hasCollision={hasCollision}
         />
       )}
