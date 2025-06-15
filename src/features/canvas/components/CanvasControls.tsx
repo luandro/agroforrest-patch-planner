@@ -5,6 +5,7 @@ import { MobileControls } from './MobileControls';
 import { DesktopSidebar } from './DesktopSidebar';
 import { ViewControls } from './ViewControls';
 import { DevelopmentInfo } from './DevelopmentInfo';
+import { FocusModeControls } from './FocusModeControls';
 import { CanvasTool } from '../types/bed.types';
 
 interface CanvasControlsProps {
@@ -28,6 +29,11 @@ interface CanvasControlsProps {
   deleteSelected: () => void;
   isSaving: boolean;
   isMobile?: boolean;
+  // Focus mode props
+  isInFocusMode?: boolean;
+  focusedBedId?: string | null;
+  onExitFocus?: () => void;
+  onEnterFocus?: (bedId: string) => void;
 }
 
 export const CanvasControls: React.FC<CanvasControlsProps> = ({
@@ -50,17 +56,31 @@ export const CanvasControls: React.FC<CanvasControlsProps> = ({
   canRedo,
   deleteSelected,
   isSaving,
-  isMobile = false
+  isMobile = false,
+  isInFocusMode = false,
+  focusedBedId = null,
+  onExitFocus,
+  onEnterFocus
 }) => {
   const [showMobileControls, setShowMobileControls] = useState(false);
   const [showDesktopSidebar, setShowDesktopSidebar] = useState(true);
 
-  // Hide minimap when in creation mode or showing controls
-  const shouldHideMiniMap = isCreating || showMobileControls || showConfirmation;
+  // Hide minimap when in creation mode, showing controls, or in focus mode
+  const shouldHideMiniMap = isCreating || showMobileControls || showConfirmation || isInFocusMode;
+
+  // Hide zoom controls in focus mode
+  const shouldHideZoomControls = isInFocusMode;
 
   return (
     <>
-      {/* Enhanced MiniMap - hide during creation */}
+      {/* Focus Mode Controls */}
+      <FocusModeControls
+        isActive={isInFocusMode}
+        focusedBedId={focusedBedId}
+        onExitFocus={onExitFocus || (() => {})}
+      />
+
+      {/* Enhanced MiniMap - hide during creation or focus mode */}
       {!shouldHideMiniMap && (
         <EnhancedMiniMap 
           viewport={viewport} 
@@ -70,7 +90,7 @@ export const CanvasControls: React.FC<CanvasControlsProps> = ({
         />
       )}
 
-      {/* View Controls with Tool Selection - always visible in top-right */}
+      {/* View Controls with Tool Selection - hide zoom controls in focus mode */}
       <ViewControls
         zoom={viewport.zoom}
         onZoomIn={handleZoomIn}
@@ -80,9 +100,10 @@ export const CanvasControls: React.FC<CanvasControlsProps> = ({
         activeTool={tool}
         onToolChange={setTool}
         className="fixed top-20 right-4 z-50"
+        hideZoomControls={shouldHideZoomControls}
       />
 
-      {/* Mobile Controls - Updated for context-sensitive FAB */}
+      {/* Mobile Controls */}
       {isMobile && (
         <MobileControls
           activeTool={tool}
@@ -99,6 +120,8 @@ export const CanvasControls: React.FC<CanvasControlsProps> = ({
           onToggle={setShowMobileControls}
           isSaving={isSaving}
           showConfirmation={showConfirmation}
+          onEnterFocus={onEnterFocus}
+          isInFocusMode={isInFocusMode}
         />
       )}
 
@@ -120,6 +143,8 @@ export const CanvasControls: React.FC<CanvasControlsProps> = ({
           isSaving={isSaving}
           beds={beds}
           viewport={viewport}
+          onEnterFocus={onEnterFocus}
+          isInFocusMode={isInFocusMode}
         />
       )}
 

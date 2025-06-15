@@ -1,11 +1,12 @@
-
 import { CanvasViewport } from '../types/canvas.types';
+import { Bed } from '../types/bed.types';
 
 export const drawGrid = (
   ctx: CanvasRenderingContext2D, 
   viewport: CanvasViewport, 
   gridSize: number,
-  highlightIntersection?: { x: number; y: number }
+  highlightIntersection?: { x: number; y: number },
+  focusedBed?: Bed | null
 ) => {
   const canvas = ctx.canvas;
   const { width, height } = canvas;
@@ -26,55 +27,137 @@ export const drawGrid = (
   const offsetX = (displayWidth / 2) - (centerX * pixelsPerMeter);
   const offsetY = (displayHeight / 2) + (centerY * pixelsPerMeter); // Invert Y
   
-  // Draw main grid lines
-  ctx.strokeStyle = `rgba(229, 231, 235, ${opacity})`;
-  ctx.lineWidth = 1;
-  ctx.setLineDash([]);
+  // Draw main grid lines (only if not in focus mode or outside focused bed)
+  if (!focusedBed) {
+    ctx.strokeStyle = `rgba(229, 231, 235, ${opacity})`;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
 
-  // Draw vertical lines (at meter marks)
-  const startXMeter = Math.floor(((-offsetX) / pixelsPerMeter) - 1);
-  const endXMeter = Math.ceil(((displayWidth - offsetX) / pixelsPerMeter) + 1);
-  
-  for (let meterX = startXMeter; meterX <= endXMeter; meterX += gridSize) {
-    const screenX = offsetX + (meterX * pixelsPerMeter);
-    if (screenX >= -1 && screenX <= displayWidth + 1) {
-      ctx.beginPath();
-      ctx.moveTo(screenX, 0);
-      ctx.lineTo(screenX, displayHeight);
-      ctx.stroke();
-    }
-  }
-
-  // Draw horizontal lines (at meter marks)
-  const startYMeter = Math.floor(((offsetY - displayHeight) / pixelsPerMeter) - 1);
-  const endYMeter = Math.ceil((offsetY / pixelsPerMeter) + 1);
-  
-  for (let meterY = startYMeter; meterY <= endYMeter; meterY += gridSize) {
-    const screenY = offsetY - (meterY * pixelsPerMeter);
-    if (screenY >= -1 && screenY <= displayHeight + 1) {
-      ctx.beginPath();
-      ctx.moveTo(0, screenY);
-      ctx.lineTo(displayWidth, screenY);
-      ctx.stroke();
-    }
-  }
-
-  // Draw grid intersection markers for better visibility
-  if (zoom > 1.5) {
-    ctx.fillStyle = `rgba(156, 163, 175, ${opacity * 0.6})`;
-    const markerSize = 2;
+    // Draw vertical lines (at meter marks)
+    const startXMeter = Math.floor(((-offsetX) / pixelsPerMeter) - 1);
+    const endXMeter = Math.ceil(((displayWidth - offsetX) / pixelsPerMeter) + 1);
     
     for (let meterX = startXMeter; meterX <= endXMeter; meterX += gridSize) {
-      for (let meterY = startYMeter; meterY <= endYMeter; meterY += gridSize) {
-        const screenX = offsetX + (meterX * pixelsPerMeter);
-        const screenY = offsetY - (meterY * pixelsPerMeter);
-        
-        if (screenX >= -markerSize && screenX <= displayWidth + markerSize &&
-            screenY >= -markerSize && screenY <= displayHeight + markerSize) {
-          ctx.fillRect(screenX - markerSize / 2, screenY - markerSize / 2, markerSize, markerSize);
+      const screenX = offsetX + (meterX * pixelsPerMeter);
+      if (screenX >= -1 && screenX <= displayWidth + 1) {
+        ctx.beginPath();
+        ctx.moveTo(screenX, 0);
+        ctx.lineTo(screenX, displayHeight);
+        ctx.stroke();
+      }
+    }
+
+    // Draw horizontal lines (at meter marks)
+    const startYMeter = Math.floor(((offsetY - displayHeight) / pixelsPerMeter) - 1);
+    const endYMeter = Math.ceil((offsetY / pixelsPerMeter) + 1);
+    
+    for (let meterY = startYMeter; meterY <= endYMeter; meterY += gridSize) {
+      const screenY = offsetY - (meterY * pixelsPerMeter);
+      if (screenY >= -1 && screenY <= displayHeight + 1) {
+        ctx.beginPath();
+        ctx.moveTo(0, screenY);
+        ctx.lineTo(displayWidth, screenY);
+        ctx.stroke();
+      }
+    }
+
+    // Draw grid intersection markers for better visibility
+    if (zoom > 1.5) {
+      ctx.fillStyle = `rgba(156, 163, 175, ${opacity * 0.6})`;
+      const markerSize = 2;
+      
+      for (let meterX = startXMeter; meterX <= endXMeter; meterX += gridSize) {
+        for (let meterY = startYMeter; meterY <= endYMeter; meterY += gridSize) {
+          const screenX = offsetX + (meterX * pixelsPerMeter);
+          const screenY = offsetY - (meterY * pixelsPerMeter);
+          
+          if (screenX >= -markerSize && screenX <= displayWidth + markerSize &&
+              screenY >= -markerSize && screenY <= displayHeight + markerSize) {
+            ctx.fillRect(screenX - markerSize / 2, screenY - markerSize / 2, markerSize, markerSize);
+          }
         }
       }
     }
+  }
+
+  // Draw fine planting grid inside focused bed
+  if (focusedBed) {
+    const bedScreenX = offsetX + (focusedBed.position.x * pixelsPerMeter);
+    const bedScreenY = offsetY - (focusedBed.position.y * pixelsPerMeter);
+    
+    let bedBounds: { minX: number; maxX: number; minY: number; maxY: number };
+    
+    if (focusedBed.shape === 'rectangle') {
+      const length = (focusedBed.dimensions.length || 1) * pixelsPerMeter;
+      const width = (focusedBed.dimensions.width || 1) * pixelsPerMeter;
+      
+      bedBounds = {
+        minX: bedScreenX - length / 2,
+        maxX: bedScreenX + length / 2,
+        minY: bedScreenY - width / 2,
+        maxY: bedScreenY + width / 2
+      };
+    } else {
+      const radius = (focusedBed.dimensions.radius || 0.5) * pixelsPerMeter;
+      
+      bedBounds = {
+        minX: bedScreenX - radius,
+        maxX: bedScreenX + radius,
+        minY: bedScreenY - radius,
+        maxY: bedScreenY + radius
+      };
+    }
+    
+    // Fine grid: 10cm squares
+    const fineGridSize = 0.1; // 10cm
+    const finePixelSize = pixelsPerMeter * fineGridSize;
+    
+    // Set style for fine grid
+    ctx.strokeStyle = `rgba(34, 197, 94, ${Math.min(0.6, zoom * 0.1 + 0.2)})`;
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 2]);
+    
+    // Create clipping path for bed shape
+    ctx.save();
+    ctx.beginPath();
+    
+    if (focusedBed.shape === 'rectangle') {
+      ctx.rect(bedBounds.minX, bedBounds.minY, bedBounds.maxX - bedBounds.minX, bedBounds.maxY - bedBounds.minY);
+    } else {
+      const radius = (focusedBed.dimensions.radius || 0.5) * pixelsPerMeter;
+      ctx.arc(bedScreenX, bedScreenY, radius, 0, 2 * Math.PI);
+    }
+    
+    ctx.clip();
+    
+    // Draw fine grid lines
+    const startFineMeterX = Math.floor((bedBounds.minX - offsetX) / pixelsPerMeter / fineGridSize) * fineGridSize;
+    const endFineMeterX = Math.ceil((bedBounds.maxX - offsetX) / pixelsPerMeter / fineGridSize) * fineGridSize;
+    
+    for (let meterX = startFineMeterX; meterX <= endFineMeterX; meterX += fineGridSize) {
+      const screenX = offsetX + (meterX * pixelsPerMeter);
+      if (screenX >= bedBounds.minX - 1 && screenX <= bedBounds.maxX + 1) {
+        ctx.beginPath();
+        ctx.moveTo(screenX, bedBounds.minY);
+        ctx.lineTo(screenX, bedBounds.maxY);
+        ctx.stroke();
+      }
+    }
+    
+    const startFineMeterY = Math.floor(((-bedBounds.maxY + offsetY) / pixelsPerMeter) / fineGridSize) * fineGridSize;
+    const endFineMeterY = Math.ceil(((-bedBounds.minY + offsetY) / pixelsPerMeter) / fineGridSize) * fineGridSize;
+    
+    for (let meterY = startFineMeterY; meterY <= endFineMeterY; meterY += fineGridSize) {
+      const screenY = offsetY - (meterY * pixelsPerMeter);
+      if (screenY >= bedBounds.minY - 1 && screenY <= bedBounds.maxY + 1) {
+        ctx.beginPath();
+        ctx.moveTo(bedBounds.minX, screenY);
+        ctx.lineTo(bedBounds.maxX, screenY);
+        ctx.stroke();
+      }
+    }
+    
+    ctx.restore();
   }
 
   // Highlight specific intersection if provided
