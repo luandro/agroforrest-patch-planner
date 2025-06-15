@@ -1,4 +1,3 @@
-
 import { CanvasViewport } from '../types/canvas.types';
 import { BedConfig, Bed } from '../types/bed.types';
 
@@ -88,15 +87,19 @@ export const calculateBedPosition = (
 
 // Calculate the full footprint of a bed including spacing
 export const calculateBedFootprint = (bed: Bed, spacing: number): BedFootprint => {
+  // This footprint represents the bed plus *half* the required spacing on each side.
+  // When two such footprints are checked for collision, it enforces the total `spacing` gap between the beds.
+  const halfSpacing = spacing / 2.0;
+
   if (bed.shape === 'rectangle') {
     const length = bed.dimensions.length || 0;
     const width = bed.dimensions.width || 0;
     
     return {
-      x: bed.position.x - (length / 2) - spacing,
-      y: bed.position.y - (width / 2) - spacing,
-      width: length + (spacing * 2),
-      height: width + (spacing * 2),
+      x: bed.position.x - (length / 2) - halfSpacing,
+      y: bed.position.y - (width / 2) - halfSpacing,
+      width: length + spacing, // length + halfSpacing on left/right
+      height: width + spacing, // width + halfSpacing on top/bottom
       shape: 'rectangle'
     };
   } else {
@@ -105,10 +108,10 @@ export const calculateBedFootprint = (bed: Bed, spacing: number): BedFootprint =
     return {
       x: bed.position.x,
       y: bed.position.y,
-      width: (radius + spacing) * 2,
-      height: (radius + spacing) * 2,
+      width: (radius + halfSpacing) * 2,
+      height: (radius + halfSpacing) * 2,
       shape: 'circle',
-      radius: radius + spacing
+      radius: radius + halfSpacing
     };
   }
 };

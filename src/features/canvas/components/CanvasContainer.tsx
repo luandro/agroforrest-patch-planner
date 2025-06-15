@@ -57,7 +57,9 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
   const { scheduleRender } = useCanvasRenderer({
     canvasRef,
     gridSize,
-    spacing: bedConfig?.spacing || 0.4,
+    // Pass half the spacing to the renderer. This ensures the visual gap between beds
+    // (created by each bed having a spacing halo) matches the logical `spacing` value.
+    spacing: (bedConfig?.spacing || 0.4) / 2,
     focusedBed
   });
 
