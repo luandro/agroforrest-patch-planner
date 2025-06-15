@@ -43,6 +43,7 @@ interface CanvasLayoutProps {
   isSaving: boolean;
   cancelCreation: () => void;
   gridSize?: number;
+  onOpenPlantSelection?: () => void;
 }
 
 export const CanvasLayout: React.FC<CanvasLayoutProps> = (props) => {
