@@ -86,7 +86,7 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
       )}
 
       {/* Desktop Sidebar */}
-      {!isMobile && !isInFocusMode && (
+      {!isMobile && (
         <DesktopSidebar
           activeTool={tool}
           onToolChange={setTool}
@@ -104,11 +104,12 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
           beds={beds}
           viewport={viewport}
           isInFocusMode={isInFocusMode}
+          focusedBedId={focusedBedId || undefined}
         />
       )}
 
-      {/* Desktop View Controls */}
-      {!isMobile && !isInFocusMode && (
+      {/* Desktop View Controls - Only show when not in focus mode or when no plants are selected */}
+      {!isMobile && (!isInFocusMode || !focusedBedId) && (
         <ViewControls
           zoom={viewport.zoom}
           onZoomIn={handleZoomIn}

@@ -11,6 +11,8 @@ import {
 import { BedConfigurationPanel } from './desktop/BedConfigurationPanel';
 import { StatisticsPanel } from './desktop/StatisticsPanel';
 import { ActionsPanel } from './desktop/ActionsPanel';
+import { DesktopPlantEditor } from './desktop/DesktopPlantEditor';
+import { usePlantPlacementStore } from '../stores/plantPlacementStore';
 
 interface DesktopSidebarProps {
   activeTool: CanvasTool;
@@ -30,6 +32,7 @@ interface DesktopSidebarProps {
   viewport: CanvasViewport;
   onEnterFocus?: (bedId: string) => void;
   isInFocusMode?: boolean;
+  focusedBedId?: string;
 }
 
 export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
@@ -49,8 +52,22 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   beds,
   viewport,
   onEnterFocus,
-  isInFocusMode = false
+  isInFocusMode = false,
+  focusedBedId
 }) => {
+  const { selectedPlacementIds, clearSelection } = usePlantPlacementStore();
+
+  // Show plant editor when plants are selected in focus mode
+  if (isInFocusMode && focusedBedId && selectedPlacementIds.length > 0) {
+    return (
+      <DesktopPlantEditor
+        selectedPlacementIds={selectedPlacementIds}
+        onClose={clearSelection}
+        focusedBedId={focusedBedId}
+      />
+    );
+  }
+
   return (
     <div className={cn(
       "fixed top-16 right-0 h-[calc(100vh-4rem)] bg-white/95 backdrop-blur-sm border-l border-gray-200 shadow-xl z-40",
