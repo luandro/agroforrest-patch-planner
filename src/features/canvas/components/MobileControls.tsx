@@ -23,6 +23,7 @@ interface MobileControlsProps {
   isVisible: boolean;
   onToggle: (visible: boolean) => void;
   isSaving?: boolean;
+  showConfirmation?: boolean;
 }
 
 export const MobileControls: React.FC<MobileControlsProps> = ({
@@ -38,7 +39,8 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
   selectedCount,
   isVisible,
   onToggle,
-  isSaving = false
+  isSaving = false,
+  showConfirmation = false
 }) => {
   const getFABContent = () => {
     if (activeTool === 'pan') {
@@ -74,18 +76,21 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
   };
 
   const shouldShowFAB = activeTool !== 'pan' || canUndo || canRedo;
+  const isFABHidden = showConfirmation;
 
   return (
     <>
-      {/* Context-sensitive FAB */}
+      {/* Context-sensitive FAB - Hide during confirmation */}
       {shouldShowFAB && (
         <div className={cn(
-          "fixed bottom-6 right-6 z-50 transition-all duration-300",
-          isVisible && "translate-y-0 opacity-100",
-          !isVisible && "translate-y-2 opacity-90"
+          "fixed bottom-6 right-6 z-50 transition-all duration-200",
+          isVisible && !isFABHidden && "translate-y-0 opacity-100",
+          isVisible && isFABHidden && "translate-y-0 opacity-0 pointer-events-none",
+          !isVisible && !isFABHidden && "translate-y-2 opacity-90",
+          !isVisible && isFABHidden && "translate-y-2 opacity-0 pointer-events-none"
         )}>
           {/* FAB Content Panel */}
-          {isVisible && (
+          {isVisible && !isFABHidden && (
             <div className="mb-4 bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-xl border border-gray-200 min-w-[280px] max-w-[320px]">
               {getFABContent()}
             </div>
@@ -99,9 +104,11 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
               activeTool === 'select' && selectedCount > 0 && "bg-orange-600 hover:bg-orange-700",
               activeTool === 'select' && selectedCount === 0 && "bg-gray-500 hover:bg-gray-600",
               activeTool === 'pan' && "bg-blue-600 hover:bg-blue-700",
-              isVisible && "scale-110"
+              isVisible && !isFABHidden && "scale-110",
+              isFABHidden && "pointer-events-none"
             )}
-            onClick={() => onToggle(!isVisible)}
+            onClick={() => !isFABHidden && onToggle(!isVisible)}
+            disabled={isFABHidden}
             aria-label="Abrir controles contextuais"
           >
             <FABIcon activeTool={activeTool} selectedCount={selectedCount} />
@@ -112,8 +119,8 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
       {/* Save Status */}
       <SaveStatus isSaving={isSaving} />
 
-      {/* Backdrop */}
-      {isVisible && (
+      {/* Backdrop - Only show when FAB panel is visible and not during confirmation */}
+      {isVisible && !isFABHidden && (
         <div 
           className="fixed inset-0 bg-black/20 z-30"
           onClick={() => onToggle(false)}

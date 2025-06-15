@@ -98,6 +98,7 @@ export const CanvasControls: React.FC<CanvasControlsProps> = ({
           isVisible={showMobileControls}
           onToggle={setShowMobileControls}
           isSaving={isSaving}
+          showConfirmation={showConfirmation}
         />
       )}
 
