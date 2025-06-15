@@ -1,11 +1,11 @@
 
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useBedStore } from '../stores/bedStore';
 import { useAutoSave } from './useAutoSave';
 import { useAutoSavePlants } from './useAutoSavePlants';
-import { useAutoSavePatches } from './useAutoSavePatches';
 import { useCanvasViewport } from './useCanvasViewport';
 import { useCanvasInitialization } from './useCanvasInitialization';
+import { usePatchStore } from '../stores/patchStore';
 import { PatchCanvasProps } from '../types/canvas.types';
 
 interface UseCanvasStateOrchestratorProps {
@@ -32,11 +32,21 @@ export const useCanvasStateOrchestrator = ({
   // Store state
   const bedStore = useBedStore();
   const { beds, selectedBedIds, undo, redo, canUndo, canRedo } = bedStore;
+  const { currentPatchId } = usePatchStore();
 
-  // Auto-save state (now includes patches)
-  const { isSaving: isSavingBeds } = useAutoSave();
-  const { isSaving: isSavingPlacements } = useAutoSavePlants();
-  const { isSaving: isSavingPatches } = useAutoSavePatches();
+  // Auto-save state (beds and plants - patches are handled at app level)
+  const { isSaving: isSavingBeds, saveError: bedSaveError } = useAutoSave();
+  const { isSaving: isSavingPlacements, saveError: plantSaveError } = useAutoSavePlants();
+
+  // Debug logging for auto-save initialization
+  useEffect(() => {
+    console.log('🔧 Canvas state orchestrator initialized');
+    console.log('📦 Auto-save status:', {
+      currentPatch: currentPatchId,
+      beds: { saving: isSavingBeds, error: bedSaveError },
+      plants: { saving: isSavingPlacements, error: plantSaveError }
+    });
+  }, [currentPatchId, isSavingBeds, bedSaveError, isSavingPlacements, plantSaveError]);
 
   // Initialize canvas to home position
   useCanvasInitialization({
@@ -67,8 +77,8 @@ export const useCanvasStateOrchestrator = ({
     canUndo,
     canRedo,
     
-    // Auto-save (includes patches now)
-    isSaving: isSavingBeds || isSavingPlacements || isSavingPatches,
+    // Auto-save (beds and plants only)
+    isSaving: isSavingBeds || isSavingPlacements,
     
     // Store reference for other hooks
     bedStore

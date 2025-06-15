@@ -5,6 +5,7 @@ import { PlantSpecies } from '@/features/canvas/types/species.types';
 import { useBedStore } from '@/features/canvas/stores/bedStore';
 import { usePlantPlacementStore } from '@/features/canvas/stores/plantPlacementStore';
 import { useTimelineStore } from '@/features/canvas/stores/timelineStore';
+import { useAutoSavePatches } from '@/features/canvas/hooks/useAutoSavePatches';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 export const usePatchCreatorState = () => {
@@ -15,6 +16,15 @@ export const usePatchCreatorState = () => {
   const { setSelectedSpecies, setIsPlacing, placements } = usePlantPlacementStore();
   const { isTimelineActive, setTimelineActive } = useTimelineStore();
   const isMobile = useIsMobile();
+
+  // Initialize auto-save for patches at application level
+  const { isSaving: isSavingPatches, saveError: patchSaveError } = useAutoSavePatches();
+
+  // Debug logging for initialization
+  useEffect(() => {
+    console.log('🔧 PatchCreatorState initialized - auto-save hooks active');
+    console.log('📦 Patches auto-save status:', { isSaving: isSavingPatches, error: patchSaveError });
+  }, []);
 
   // Ensure pan tool is default on page load
   useEffect(() => {
@@ -111,6 +121,8 @@ export const usePatchCreatorState = () => {
     handleSelectSpecies,
     handleExitFocus,
     setTimelineActive,
+    // Expose auto-save status for debugging
+    isSavingPatches,
+    patchSaveError
   };
 };
-

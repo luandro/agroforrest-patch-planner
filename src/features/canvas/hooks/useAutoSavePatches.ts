@@ -47,12 +47,19 @@ export const useAutoSavePatches = ({ debounceMs = 5000 }: UseAutoSavePatchesProp
   const [saveError, setSaveError] = useState<string | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout>();
 
+  // Debug logging for hook initialization
+  useEffect(() => {
+    console.log('🔧 useAutoSavePatches hook initialized');
+    console.log('📦 Initial state:', { patchesCount: patches.length, isDirty });
+  }, []);
+
   const savePatches = async () => {
     if (!isDirty) return;
 
     try {
       setIsSaving(true);
       setSaveError(null);
+      console.log('💾 Saving patches to IndexedDB...', patches.length);
       
       const db = await openDB();
       const transaction = db.transaction([PATCHES_STORE_NAME], 'readwrite');
@@ -73,9 +80,9 @@ export const useAutoSavePatches = ({ debounceMs = 5000 }: UseAutoSavePatchesProp
       });
 
       markClean();
-      console.log('Patches saved successfully:', patches.length);
+      console.log('✅ Patches saved successfully:', patches.length);
     } catch (error) {
-      console.error('Failed to save patches:', error);
+      console.error('❌ Failed to save patches:', error);
       setSaveError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setIsSaving(false);
@@ -84,10 +91,11 @@ export const useAutoSavePatches = ({ debounceMs = 5000 }: UseAutoSavePatchesProp
 
   const loadPatchesFromStorage = async () => {
     try {
+      console.log('📂 Loading patches from IndexedDB...');
       const db = await openDB();
       
       if (!db.objectStoreNames.contains(PATCHES_STORE_NAME)) {
-        console.log('Patches store does not exist yet. Creating default patch.');
+        console.log('🆕 Patches store does not exist yet. Creating default patch.');
         
         // Create a default patch
         const defaultPatch: Patch = {
@@ -102,6 +110,7 @@ export const useAutoSavePatches = ({ debounceMs = 5000 }: UseAutoSavePatchesProp
         
         loadPatches([defaultPatch]);
         setCurrentPatch(defaultPatch.id);
+        console.log('✅ Default patch created:', defaultPatch.id);
         return;
       }
 
@@ -118,6 +127,7 @@ export const useAutoSavePatches = ({ debounceMs = 5000 }: UseAutoSavePatchesProp
       });
 
       if (loadedPatches.length === 0) {
+        console.log('🆕 No patches found. Creating default patch.');
         // Create default patch if none exist
         const defaultPatch: Patch = {
           id: `patch-${Date.now()}`,
@@ -131,6 +141,7 @@ export const useAutoSavePatches = ({ debounceMs = 5000 }: UseAutoSavePatchesProp
         
         loadPatches([defaultPatch]);
         setCurrentPatch(defaultPatch.id);
+        console.log('✅ Default patch created:', defaultPatch.id);
       } else {
         loadPatches(loadedPatches);
         
@@ -138,14 +149,16 @@ export const useAutoSavePatches = ({ debounceMs = 5000 }: UseAutoSavePatchesProp
         const savedCurrentPatchId = localStorage.getItem('currentPatchId');
         if (savedCurrentPatchId && loadedPatches.find(p => p.id === savedCurrentPatchId)) {
           setCurrentPatch(savedCurrentPatchId);
+          console.log('✅ Restored current patch:', savedCurrentPatchId);
         } else {
           setCurrentPatch(loadedPatches[0].id);
+          console.log('✅ Set first patch as current:', loadedPatches[0].id);
         }
       }
       
-      console.log('Patches loaded successfully:', loadedPatches.length);
+      console.log('✅ Patches loaded successfully:', loadedPatches.length);
     } catch (error) {
-      console.error('Failed to load patches:', error);
+      console.error('❌ Failed to load patches:', error);
       
       // Create default patch on error
       const defaultPatch: Patch = {
@@ -160,6 +173,7 @@ export const useAutoSavePatches = ({ debounceMs = 5000 }: UseAutoSavePatchesProp
       
       loadPatches([defaultPatch]);
       setCurrentPatch(defaultPatch.id);
+      console.log('🆘 Created recovery patch after error:', defaultPatch.id);
     }
   };
 
@@ -167,6 +181,7 @@ export const useAutoSavePatches = ({ debounceMs = 5000 }: UseAutoSavePatchesProp
   useEffect(() => {
     if (!isDirty) return;
 
+    console.log('⏰ Scheduling patch auto-save in', debounceMs, 'ms');
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
@@ -188,6 +203,7 @@ export const useAutoSavePatches = ({ debounceMs = 5000 }: UseAutoSavePatchesProp
   }, []);
 
   const manualSave = () => {
+    console.log('🔧 Manual save triggered');
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }

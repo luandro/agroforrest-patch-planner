@@ -47,12 +47,18 @@ export const useAutoSavePlants = ({ debounceMs = 5000 }: UseAutoSavePlantsProps 
   const [saveError, setSaveError] = useState<string | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout>();
 
+  // Debug logging for hook initialization
+  useEffect(() => {
+    console.log('🔧 useAutoSavePlants hook initialized for patch:', currentPatchId);
+  }, [currentPatchId]);
+
   const savePlacements = async () => {
     if (!isDirty || !currentPatchId) return;
 
     try {
       setIsSaving(true);
       setSaveError(null);
+      console.log('💾 Saving plant placements to IndexedDB for patch:', currentPatchId, 'placements count:', placements.length);
       
       const db = await openDB();
       const transaction = db.transaction([STORE_NAME], 'readwrite');
@@ -95,9 +101,9 @@ export const useAutoSavePlants = ({ debounceMs = 5000 }: UseAutoSavePlantsProps 
       });
 
       markClean();
-      console.log('Plant placements saved successfully for patch:', currentPatchId);
+      console.log('✅ Plant placements saved successfully for patch:', currentPatchId);
     } catch (error) {
-      console.error('Failed to save plant placements:', error);
+      console.error('❌ Failed to save plant placements:', error);
       setSaveError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setIsSaving(false);
@@ -108,9 +114,10 @@ export const useAutoSavePlants = ({ debounceMs = 5000 }: UseAutoSavePlantsProps 
     if (!currentPatchId) return;
     
     try {
+      console.log('📂 Loading plant placements from IndexedDB for patch:', currentPatchId);
       const db = await openDB();
       if (!db.objectStoreNames.contains(STORE_NAME)) {
-        console.log('Placements store does not exist yet. It will be created.');
+        console.log('🆕 Placements store does not exist yet. It will be created.');
         loadPlacements([]);
         return;
       }
@@ -136,9 +143,9 @@ export const useAutoSavePlants = ({ debounceMs = 5000 }: UseAutoSavePlantsProps 
       );
       
       loadPlacements(patchPlacements);
-      console.log('Plant placements loaded successfully for patch:', currentPatchId, patchPlacements.length);
+      console.log('✅ Plant placements loaded successfully for patch:', currentPatchId, 'count:', patchPlacements.length);
     } catch (error) {
-      console.error('Failed to load plant placements:', error);
+      console.error('❌ Failed to load plant placements:', error);
       loadPlacements([]);
     }
   };
@@ -146,6 +153,7 @@ export const useAutoSavePlants = ({ debounceMs = 5000 }: UseAutoSavePlantsProps 
   useEffect(() => {
     if (!isDirty) return;
 
+    console.log('⏰ Scheduling plant placements auto-save in', debounceMs, 'ms for patch:', currentPatchId);
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
@@ -171,6 +179,7 @@ export const useAutoSavePlants = ({ debounceMs = 5000 }: UseAutoSavePlantsProps 
   }, [currentPatchId, beds]);
 
   const manualSave = () => {
+    console.log('🔧 Manual plant placements save triggered for patch:', currentPatchId);
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }

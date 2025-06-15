@@ -46,6 +46,11 @@ export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
   const [saveError, setSaveError] = useState<string | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout>();
 
+  // Debug logging for hook initialization
+  useEffect(() => {
+    console.log('🔧 useAutoSave (beds) hook initialized for patch:', currentPatchId);
+  }, [currentPatchId]);
+
   // Save beds with patch ID
   const saveBeds = async () => {
     if (!isDirty || !currentPatchId) return;
@@ -53,6 +58,7 @@ export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
     try {
       setIsSaving(true);
       setSaveError(null);
+      console.log('💾 Saving beds to IndexedDB for patch:', currentPatchId, 'beds count:', beds.length);
 
       const db = await openDB();
       const transaction = db.transaction([BEDS_STORE_NAME], 'readwrite');
@@ -80,9 +86,9 @@ export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
       });
 
       markClean();
-      console.log('Beds saved successfully for patch:', currentPatchId);
+      console.log('✅ Beds saved successfully for patch:', currentPatchId);
     } catch (error) {
-      console.error('Failed to save beds:', error);
+      console.error('❌ Failed to save beds:', error);
       setSaveError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setIsSaving(false);
@@ -94,9 +100,10 @@ export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
     if (!currentPatchId) return;
     
     try {
+      console.log('📂 Loading beds from IndexedDB for patch:', currentPatchId);
       const db = await openDB();
       if (!db.objectStoreNames.contains(BEDS_STORE_NAME)) {
-        console.log('Beds store does not exist yet. It will be created.');
+        console.log('🆕 Beds store does not exist yet. It will be created.');
         loadBeds([]);
         return;
       }
@@ -116,9 +123,9 @@ export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
       // Filter beds for current patch
       const patchBeds = allBeds.filter(bed => bed.patchId === currentPatchId);
       loadBeds(patchBeds);
-      console.log('Beds loaded successfully for patch:', currentPatchId, patchBeds.length);
+      console.log('✅ Beds loaded successfully for patch:', currentPatchId, 'count:', patchBeds.length);
     } catch (error) {
-      console.error('Failed to load beds:', error);
+      console.error('❌ Failed to load beds:', error);
       loadBeds([]);
     }
   };
@@ -127,6 +134,7 @@ export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
   useEffect(() => {
     if (!isDirty) return;
 
+    console.log('⏰ Scheduling beds auto-save in', debounceMs, 'ms for patch:', currentPatchId);
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
@@ -152,6 +160,7 @@ export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
   }, [currentPatchId]);
 
   const manualSave = () => {
+    console.log('🔧 Manual beds save triggered for patch:', currentPatchId);
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
