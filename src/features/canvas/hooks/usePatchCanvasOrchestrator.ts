@@ -2,15 +2,16 @@
 import { useCallback } from 'react';
 import { PatchCanvasProps } from '../types/canvas.types';
 import { useCanvasViewport } from './useCanvasViewport';
-import { useBedCreation } from './useBedCreation';
-import { useBedSelection } from './useBedSelection';
 import { useAutoSave } from './useAutoSave';
 import { useBedStore } from '../stores/bedStore';
 import { useCanvasState } from './useCanvasState';
 import { useCanvasFocusMode } from './useCanvasFocusMode';
 import { useCanvasTools } from './useCanvasTools';
 import { useCanvasEventHandlers } from './useCanvasEventHandlers';
-import { usePlantPlacement } from './usePlantPlacement';
+import { useBedCreationFlow } from './useBedCreationFlow';
+import { usePlantSelectionFlow } from './usePlantSelectionFlow';
+import { useBedSelectionFlow } from './useBedSelectionFlow';
+import { useCanvasLayoutProps } from './useCanvasLayoutProps';
 
 export const usePatchCanvasOrchestrator = ({
   initialViewport,
@@ -22,7 +23,7 @@ export const usePatchCanvasOrchestrator = ({
 }: PatchCanvasProps) => {
   const { canvasRef, isCollapsed, onToggleCollapse } = useCanvasState();
 
-  const { viewport, pan, zoomTo, updateViewport, centerOnBed, fitAllBeds } = useCanvasViewport({
+  const { viewport, pan, zoomTo, updateViewport, fitAllBeds } = useCanvasViewport({
     initialViewport,
     minZoom,
     maxZoom,
@@ -46,14 +47,16 @@ export const usePatchCanvasOrchestrator = ({
   // Get the focused bed directly from the beds array using the focused bed ID
   const focusedBed = focusedBedId ? beds.find(bed => bed.id === focusedBedId) : null;
 
-  // Plant placement integration
+  // Plant selection flow
   const {
-    selectSpeciesForPlacement,
-    cancelPlacement: cancelPlantPlacement
-  } = usePlantPlacement({
+    handlePlantSelectionOpen,
+    handlePlantSpeciesSelect,
+    cancelPlantPlacement
+  } = usePlantSelectionFlow({
     viewport,
     focusedBed,
-    canvasRef
+    canvasRef,
+    onOpenPlantSelection
   });
 
   // Bed creation management
@@ -76,7 +79,7 @@ export const usePatchCanvasOrchestrator = ({
     cancelPlacement,
     cancelCreation,
     handleToolChange,
-  } = useBedCreation({
+  } = useBedCreationFlow({
     viewport,
     gridSize,
     onBedCreated: (bedId) => {
@@ -98,25 +101,11 @@ export const usePatchCanvasOrchestrator = ({
     handleToolChange
   });
 
-  // Bed selection management - Updated to remove automatic focus mode
-  const { startSelection, updateSelection, finishSelection, deleteSelected } = useBedSelection({ 
+  // Bed selection management
+  const { startSelection, updateSelection, finishSelection, deleteSelected } = useBedSelectionFlow({ 
     viewport, 
-    canvasRef,
-    // Remove automatic focus mode triggers
-    onEnterFocus: undefined,
-    onExitFocus: undefined
+    canvasRef
   });
-
-  // Enhanced plant selection handler that integrates with both systems
-  const handlePlantSelectionOpen = useCallback(() => {
-    if (onOpenPlantSelection) {
-      onOpenPlantSelection();
-    }
-  }, [onOpenPlantSelection]);
-
-  const handlePlantSpeciesSelect = useCallback((species: any) => {
-    selectSpeciesForPlacement(species);
-  }, [selectSpeciesForPlacement]);
 
   // Event handlers
   const {
@@ -138,43 +127,19 @@ export const usePatchCanvasOrchestrator = ({
     // Plant placement props
     viewport,
     focusedBed,
-    canvasRef,
-    // Add focus mode trigger to double-click
-    onEnterFocus: handleEnterFocus
+    canvasRef
   });
 
   const { isSaving } = useAutoSave();
 
-  const handleConfirmPlacement = useCallback(() => {
-    confirmPlacement();
-    if (!multiCreationMode) {
-      handleToolChange('pan');
-    }
-  }, [confirmPlacement, multiCreationMode, handleToolChange]);
-
-  const handleCancelPlacement = useCallback(() => {
-    cancelPlacement();
-  }, [cancelPlacement]);
-
-  const handleZoomIn = useCallback(() => {
-    zoomTo(Math.min(maxZoom, viewport.zoom * 1.2));
-  }, [zoomTo, maxZoom, viewport.zoom]);
-
-  const handleZoomOut = useCallback(() => {
-    zoomTo(Math.max(minZoom, viewport.zoom / 1.2));
-  }, [zoomTo, minZoom, viewport.zoom]);
-
-  const handleFitAll = useCallback(() => {
-    fitAllBeds(beds);
-  }, [fitAllBeds, beds]);
-
-  const layoutProps = {
+  // Create layout props using the new hook
+  const layoutProps = useCanvasLayoutProps({
     viewport,
     updateViewport,
     beds,
     selectedBedIds,
     tool,
-    setTool: handleToolChange,
+    handleToolChange,
     bedConfig,
     updateBedConfig,
     isCreating,
@@ -190,13 +155,10 @@ export const usePatchCanvasOrchestrator = ({
     handlePointerMove,
     handlePointerUp,
     handleDoubleClick,
-    handleConfirmPlacement,
-    handleCancelPlacement,
+    confirmPlacement,
+    cancelPlacement,
     pan,
     zoomTo,
-    handleZoomIn,
-    handleZoomOut,
-    handleFitAll,
     undo,
     redo,
     canUndo,
@@ -204,17 +166,18 @@ export const usePatchCanvasOrchestrator = ({
     deleteSelected,
     isSaving,
     cancelCreation,
-    gridSize: isInFocusMode ? 0.1 : gridSize, // Use fine grid in focus mode
-    onOpenPlantSelection: handlePlantSelectionOpen,
-    // Focus mode props
+    fitAllBeds,
+    gridSize,
+    minZoom,
+    maxZoom,
+    handlePlantSelectionOpen,
+    handlePlantSpeciesSelect,
     isInFocusMode,
     focusedBedId,
-    focusedBed, // Now properly derived from the store state
-    onEnterFocus: handleEnterFocus,
-    onExitFocus: handleExitFocus,
-    // Plant placement integration
-    onSelectPlantSpecies: handlePlantSpeciesSelect,
-  };
+    focusedBed,
+    handleEnterFocus,
+    handleExitFocus
+  });
 
   return {
     canvasRef,

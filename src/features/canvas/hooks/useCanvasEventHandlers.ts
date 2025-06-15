@@ -118,20 +118,10 @@ export const useCanvasEventHandlers = ({
     }
   }, [isMobile, tool, startPreview, placeBed, focusedBed, isPlacing]);
 
-  const handleConfirmPlacement = useCallback(() => {
-    // This will be passed from the orchestrator
-  }, []);
-
-  const handleCancelPlacement = useCallback(() => {
-    // This will be passed from the orchestrator
-  }, []);
-
   return {
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
-    handleDoubleClick,
-    handleConfirmPlacement,
-    handleCancelPlacement
+    handleDoubleClick
   };
 };

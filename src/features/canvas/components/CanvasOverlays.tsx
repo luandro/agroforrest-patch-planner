@@ -118,8 +118,6 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
           bedsCount={beds.length}
           activeTool={tool}
           onToolChange={setTool}
-          // Add focus mode action for selected beds
-          onEnterFocus={selectedBedIds.length === 1 ? () => onEnterFocus?.(selectedBedIds[0]) : undefined}
         />
       )}
 
