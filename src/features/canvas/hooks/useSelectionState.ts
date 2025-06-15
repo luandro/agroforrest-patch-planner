@@ -1,5 +1,5 @@
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useBedStore } from '../stores/bedStore';
 
 interface UseSelectionStateProps {
@@ -15,16 +15,23 @@ export const useSelectionState = ({ onEnterFocus, onExitFocus }: UseSelectionSta
     toggleBedSelection 
   } = useBedStore();
 
-  // Handle selection changes without automatic focus mode
+  // Automatically trigger focus mode on single selection
+  useEffect(() => {
+    if (selectedBedIds.length === 1 && onEnterFocus) {
+      onEnterFocus(selectedBedIds[0]);
+    } else if ((selectedBedIds.length === 0 || selectedBedIds.length > 1) && onExitFocus) {
+      onExitFocus();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBedIds, onEnterFocus, onExitFocus]);
+
+  // These handlers just update selection, auto-focus is now done in useEffect
   const handleSelectionChange = useCallback((newSelectedIds: string[]) => {
     selectBeds(newSelectedIds);
-    // Remove automatic focus mode trigger - let user explicitly enter focus mode
   }, [selectBeds]);
 
-  // Handle clearing selection without automatic focus exit
   const handleClearSelection = useCallback(() => {
     clearSelection();
-    // Remove automatic focus mode exit - let user explicitly exit focus mode
   }, [clearSelection]);
 
   return {

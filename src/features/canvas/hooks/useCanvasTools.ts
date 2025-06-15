@@ -23,6 +23,7 @@ export const useCanvasTools = ({
     }
   }, [tool, isInFocusMode, handleExitFocus]);
 
+  // Only expose tool and an always store-updating setter
   return {
     tool,
     setTool: handleToolChange

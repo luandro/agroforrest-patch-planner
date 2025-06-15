@@ -30,7 +30,9 @@ export const usePatchCanvasOrchestrator = ({
     onViewportChange,
   });
 
-  const { beds, selectedBedIds, undo, redo, canUndo, canRedo } = useBedStore();
+  // Always get tool from the bedStore
+  const bedStore = useBedStore();
+  const { beds, selectedBedIds, undo, redo, canUndo, canRedo, tool, setTool } = bedStore;
 
   // Focus mode integration
   const { 
@@ -59,7 +61,7 @@ export const usePatchCanvasOrchestrator = ({
     onOpenPlantSelection
   });
 
-  // Bed creation management
+  // Bed creation management (delegates tool completely to store)
   const {
     bedConfig,
     updateBedConfig,
@@ -78,33 +80,37 @@ export const usePatchCanvasOrchestrator = ({
     confirmPlacement,
     cancelPlacement,
     cancelCreation,
-    handleToolChange,
+    handleToolChange: bedCreationHandleToolChange,
   } = useBedCreationFlow({
     viewport,
     gridSize,
     onBedCreated: (bedId) => {
       setTimeout(() => {
         // centerOnBed is a placeholder in useCanvasViewport and doesn't have access to beds.
-        // This functionality can be enhanced in a future step.
-        // centerOnBed(bedId, 2.0);
       }, 100);
     },
   });
 
-  // Tool management
-  const { tool, setTool } = useCanvasTools({
+  // Tool management - gets/set the store tool only, updates bed creation flow as needed
+  const { tool: activeTool } = useCanvasTools({
     isInFocusMode,
     handleExitFocus: () => {
       handleExitFocus();
       cancelPlantPlacement(); // Cancel plant placement when exiting focus
     },
-    handleToolChange
+    handleToolChange: (newTool) => {
+      // synchronize tool between orchestrator/store and bed creation hook
+      setTool(newTool);
+      bedCreationHandleToolChange(newTool);
+    }
   });
 
-  // Bed selection management
+  // Bed selection management: pass in the focus handlers
   const { startSelection, updateSelection, finishSelection, deleteSelected } = useBedSelectionFlow({ 
     viewport, 
-    canvasRef
+    canvasRef,
+    onEnterFocus: handleEnterFocus,
+    onExitFocus: handleExitFocus
   });
 
   // Event handlers
@@ -114,7 +120,7 @@ export const usePatchCanvasOrchestrator = ({
     handlePointerUp,
     handleDoubleClick
   } = useCanvasEventHandlers({
-    tool,
+    tool: activeTool,
     isCreating,
     multiCreationMode,
     startPreview,
@@ -123,8 +129,10 @@ export const usePatchCanvasOrchestrator = ({
     startSelection,
     updateSelection,
     finishSelection,
-    handleToolChange,
-    // Plant placement props
+    handleToolChange: (newTool) => {
+      setTool(newTool);
+      bedCreationHandleToolChange(newTool);
+    },
     viewport,
     focusedBed,
     canvasRef
@@ -138,8 +146,11 @@ export const usePatchCanvasOrchestrator = ({
     updateViewport,
     beds,
     selectedBedIds,
-    tool,
-    handleToolChange,
+    tool: activeTool,
+    handleToolChange: (newTool) => {
+      setTool(newTool);
+      bedCreationHandleToolChange(newTool);
+    },
     bedConfig,
     updateBedConfig,
     isCreating,
