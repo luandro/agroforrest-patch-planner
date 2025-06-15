@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { EnhancedMiniMap } from './EnhancedMiniMap';
 import { MobileControls } from './MobileControls';
@@ -90,18 +89,36 @@ export const CanvasControls: React.FC<CanvasControlsProps> = ({
         />
       )}
 
-      {/* View Controls with Tool Selection - hide zoom controls in focus mode */}
-      <ViewControls
-        zoom={viewport.zoom}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onFitAll={handleFitAll}
-        bedsCount={beds.length}
-        activeTool={tool}
-        onToolChange={setTool}
-        className="fixed top-20 right-4 z-50"
-        hideZoomControls={shouldHideZoomControls}
-      />
+      {/* View Controls with Tool Selection */}
+      {isMobile ? (
+        // Mobile: Keep on the right as before
+        <ViewControls
+          zoom={viewport.zoom}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onFitAll={handleFitAll}
+          bedsCount={beds.length}
+          activeTool={tool}
+          onToolChange={setTool}
+          className="fixed top-20 right-4 z-50"
+          hideZoomControls={shouldHideZoomControls}
+        />
+      ) : (
+        // Desktop: Position below minimap on the left
+        !shouldHideMiniMap && (
+          <ViewControls
+            zoom={viewport.zoom}
+            onZoomIn={handleZoomIn}
+            onZoomOut={handleZoomOut}
+            onFitAll={handleFitAll}
+            bedsCount={beds.length}
+            activeTool={tool}
+            onToolChange={setTool}
+            className="fixed top-80 left-4 z-50"
+            hideZoomControls={shouldHideZoomControls}
+          />
+        )
+      )}
 
       {/* Mobile Controls */}
       {isMobile && (
