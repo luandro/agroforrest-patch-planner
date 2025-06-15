@@ -21,6 +21,7 @@ const App = () => (
           <Route path="/" element={<LandingPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/patch-creator" element={<PatchCreatorPage />} />
+          <Route path="/patch-creator/:patchId" element={<PatchCreatorPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>

@@ -1,10 +1,10 @@
-
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { BedState, BedActions } from './types';
 import { Bed, CanvasTool } from '../types/bed.types';
 
 interface BedStateStore extends BedState, BedActions {
+  removeBedsForPatch: (patchId: string) => void;
   // Internal method for other stores to update beds
   _setBeds: (beds: Bed[]) => void;
   _setDirty: (dirty: boolean) => void;
@@ -42,6 +42,18 @@ export const useBedState = create<BedStateStore>()(
         selectedBedIds: newSelectedIds,
         isDirty: true
       });
+    },
+
+    removeBedsForPatch: (patchId) => {
+        set(state => {
+            const bedsToKeep = state.beds.filter(b => b.patchId !== patchId);
+            const bedsToKeepIds = new Set(bedsToKeep.map(b => b.id));
+            return {
+                beds: bedsToKeep,
+                selectedBedIds: state.selectedBedIds.filter(id => bedsToKeepIds.has(id)),
+                isDirty: true,
+            };
+        });
     },
 
     selectBeds: (ids) => set({ selectedBedIds: ids }),

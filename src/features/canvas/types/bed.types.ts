@@ -15,6 +15,7 @@ export interface BedConfig {
 
 export interface Bed {
   id: string;
+  patchId: string;
   shape: 'rectangle' | 'circle';
   position: { x: number; y: number }; // center point in meters
   dimensions: BedDimensions;

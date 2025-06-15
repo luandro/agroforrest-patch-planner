@@ -4,6 +4,7 @@ import { PlantSpecies } from '../types/species.types';
 
 export interface PlantPlacement {
   id: string;
+  patchId: string;
   bedId: string;
   species: PlantSpecies;
   position: { x: number; y: number }; // Position within the bed (in meters)
@@ -31,6 +32,7 @@ interface PlantPlacementActions {
   setIsPlacing: (isPlacing: boolean) => void;
   setPlacementPreview: (position: { x: number; y: number } | null) => void;
   clearPlacementsForBed: (bedId: string) => void;
+  clearPlacementsForPatch: (patchId: string) => void;
   loadPlacements: (placements: PlantPlacement[]) => void;
   markClean: () => void;
 }
@@ -114,6 +116,18 @@ export const usePlantPlacementStore = create<PlantPlacementStore>()(
         }),
         isDirty: true
       }));
+    },
+    
+    clearPlacementsForPatch: (patchId) => {
+        set(state => {
+            const placementsToKeep = state.placements.filter(p => p.patchId !== patchId);
+            const placementsToKeepIds = new Set(placementsToKeep.map(p => p.id));
+            return {
+                placements: placementsToKeep,
+                selectedPlacementIds: state.selectedPlacementIds.filter(id => placementsToKeepIds.has(id)),
+                isDirty: true,
+            };
+        });
     },
 
     loadPlacements: (placements) => {
