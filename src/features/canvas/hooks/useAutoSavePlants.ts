@@ -3,41 +3,16 @@ import { useEffect, useRef, useState } from 'react';
 import { usePlantPlacementStore, PlantPlacement } from '../stores/plantPlacementStore';
 import { usePatchStore } from '../stores/patchStore';
 import { useBedStore } from '../stores/bedStore';
-
-const DB_NAME = 'AgroForestDB';
-const DB_VERSION = 3; // Updated to match patch version
-const STORE_NAME = 'placements';
-const KEY_PATH = 'id';
+import {
+  openDB,
+  saveToLocalStorageFallback,
+  loadFromLocalStorageFallback,
+  PLACEMENTS_STORE_NAME
+} from '../utils/storageManager';
 
 interface UseAutoSavePlantsProps {
   debounceMs?: number;
 }
-
-const openDB = () => {
-  return new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains('beds')) {
-        db.createObjectStore('beds', { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: KEY_PATH });
-      }
-      if (!db.objectStoreNames.contains('patches')) {
-        const patchStore = db.createObjectStore('patches', { keyPath: 'id' });
-        patchStore.createIndex('createdAt', 'createdAt', { unique: false });
-      }
-    };
-
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => {
-      console.error('Database error:', request.error);
-      reject(new Error('Failed to open database'));
-    };
-  });
-};
 
 export const useAutoSavePlants = ({ debounceMs = 5000 }: UseAutoSavePlantsProps = {}) => {
   const { placements, isDirty, markClean, loadPlacements } = usePlantPlacementStore();
@@ -58,47 +33,73 @@ export const useAutoSavePlants = ({ debounceMs = 5000 }: UseAutoSavePlantsProps 
     try {
       setIsSaving(true);
       setSaveError(null);
-      console.log('💾 Saving plant placements to IndexedDB for patch:', currentPatchId, 'placements count:', placements.length);
-      
-      const db = await openDB();
-      const transaction = db.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      
-      // Get current bed IDs for this patch
-      const currentPatchBedIds = beds.map(bed => bed.id);
-      
-      // Get all existing placements
-      const getAllRequest = store.getAll();
-      const allPlacements = await new Promise<PlantPlacement[]>((resolve, reject) => {
-        getAllRequest.onsuccess = () => resolve(getAllRequest.result || []);
-        getAllRequest.onerror = () => reject(new Error('Failed to get existing placements'));
-      });
-      
-      // Filter out old placements for current patch beds
-      const otherPatchPlacements = allPlacements.filter(
-        placement => !currentPatchBedIds.includes(placement.bedId)
-      );
-      
-      // Clear store and add all placements
-      store.clear();
-      
-      // Add placements from other patches
-      otherPatchPlacements.forEach(placement => {
-        store.add(placement);
-      });
-      
-      // Add current patch placements
-      placements.forEach(placement => {
-        store.add(placement);
-      });
+      console.log('💾 Saving plant placements to storage for patch:', currentPatchId, 'placements count:', placements.length);
 
-      await new Promise<void>((resolve, reject) => {
-        transaction.oncomplete = () => resolve();
-        transaction.onerror = () => {
-          console.error('Transaction error:', transaction.error);
-          reject(new Error('Failed to save placements'));
-        };
-      });
+      // Try IndexedDB first, fallback to localStorage
+      try {
+        const db = await openDB();
+        const transaction = db.transaction([PLACEMENTS_STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(PLACEMENTS_STORE_NAME);
+
+        // Get all existing placements
+        const getAllRequest = store.getAll();
+        const allPlacements = await new Promise<PlantPlacement[]>((resolve, reject) => {
+          getAllRequest.onsuccess = () => resolve(getAllRequest.result || []);
+          getAllRequest.onerror = () => reject(new Error('Failed to get existing placements'));
+        });
+
+        // Filter out placements from current patch (using both patchId and bedId for compatibility)
+        const currentPatchBedIds = beds.map(bed => bed.id);
+        const otherPatchPlacements = allPlacements.filter(
+          placement => placement.patchId !== currentPatchId && !currentPatchBedIds.includes(placement.bedId)
+        );
+
+        // Clear store and add all placements
+        store.clear();
+
+        // Add placements from other patches
+        otherPatchPlacements.forEach(placement => {
+          store.add(placement);
+        });
+
+        // Add current patch placements with patch ID
+        const placementsWithPatch = placements.map(placement => ({
+          ...placement,
+          patchId: currentPatchId
+        }));
+
+        placementsWithPatch.forEach(placement => {
+          store.add(placement);
+        });
+
+        await new Promise<void>((resolve, reject) => {
+          transaction.oncomplete = () => resolve();
+          transaction.onerror = () => {
+            console.error('Transaction error:', transaction.error);
+            reject(new Error('Failed to save placements'));
+          };
+        });
+
+        db.close();
+      } catch (indexedDBError) {
+        console.warn('⚠️ IndexedDB failed, using localStorage fallback:', indexedDBError);
+
+        // Load existing placements from localStorage
+        const existingPlacements = loadFromLocalStorageFallback('placements', []);
+        const currentPatchBedIds = beds.map(bed => bed.id);
+        const otherPatchPlacements = existingPlacements.filter(
+          (placement: any) => placement.patchId !== currentPatchId && !currentPatchBedIds.includes(placement.bedId)
+        );
+
+        // Add current patch placements with patch ID
+        const placementsWithPatch = placements.map(placement => ({
+          ...placement,
+          patchId: currentPatchId
+        }));
+
+        const allPlacements = [...otherPatchPlacements, ...placementsWithPatch];
+        saveToLocalStorageFallback('placements', allPlacements);
+      }
 
       markClean();
       console.log('✅ Plant placements saved successfully for patch:', currentPatchId);
@@ -112,38 +113,57 @@ export const useAutoSavePlants = ({ debounceMs = 5000 }: UseAutoSavePlantsProps 
 
   const loadPlacementsFromStorage = async () => {
     if (!currentPatchId) return;
-    
-    try {
-      console.log('📂 Loading plant placements from IndexedDB for patch:', currentPatchId);
-      const db = await openDB();
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        console.log('🆕 Placements store does not exist yet. It will be created.');
-        loadPlacements([]);
-        return;
-      }
-      
-      const transaction = db.transaction([STORE_NAME], 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
-      const getAllRequest = store.getAll();
 
-      const allPlacements = await new Promise<PlantPlacement[]>((resolve, reject) => {
-        getAllRequest.onsuccess = () => resolve(getAllRequest.result || []);
-        getAllRequest.onerror = () => {
-           console.error('Get all request error:', getAllRequest.error);
-           reject(new Error('Failed to load placements'));
+    try {
+      console.log('📂 Loading plant placements from storage for patch:', currentPatchId);
+
+      // Try IndexedDB first, fallback to localStorage
+      try {
+        const db = await openDB();
+        if (!db.objectStoreNames.contains(PLACEMENTS_STORE_NAME)) {
+          console.log('🆕 Placements store does not exist yet. It will be created.');
+          loadPlacements([]);
+          db.close();
+          return;
         }
-      });
-      
-      // Get current patch bed IDs
-      const currentPatchBedIds = beds.map(bed => bed.id);
-      
-      // Filter placements for current patch
-      const patchPlacements = allPlacements.filter(
-        placement => currentPatchBedIds.includes(placement.bedId)
-      );
-      
-      loadPlacements(patchPlacements);
-      console.log('✅ Plant placements loaded successfully for patch:', currentPatchId, 'count:', patchPlacements.length);
+
+        const transaction = db.transaction([PLACEMENTS_STORE_NAME], 'readonly');
+        const store = transaction.objectStore(PLACEMENTS_STORE_NAME);
+        const getAllRequest = store.getAll();
+
+        const allPlacements = await new Promise<PlantPlacement[]>((resolve, reject) => {
+          getAllRequest.onsuccess = () => resolve(getAllRequest.result || []);
+          getAllRequest.onerror = () => {
+             console.error('Get all request error:', getAllRequest.error);
+             reject(new Error('Failed to load placements'));
+          }
+        });
+
+        // Get current patch bed IDs for compatibility
+        const currentPatchBedIds = beds.map(bed => bed.id);
+
+        // Filter placements for current patch (using both patchId and bedId for compatibility)
+        const patchPlacements = allPlacements.filter(
+          placement => placement.patchId === currentPatchId || currentPatchBedIds.includes(placement.bedId)
+        );
+
+        loadPlacements(patchPlacements);
+        console.log('✅ Plant placements loaded successfully for patch:', currentPatchId, 'count:', patchPlacements.length);
+
+        db.close();
+      } catch (indexedDBError) {
+        console.warn('⚠️ IndexedDB failed, using localStorage fallback:', indexedDBError);
+
+        // Load from localStorage fallback
+        const allPlacements = loadFromLocalStorageFallback('placements', []);
+        const currentPatchBedIds = beds.map(bed => bed.id);
+        const patchPlacements = allPlacements.filter(
+          (placement: any) => placement.patchId === currentPatchId || currentPatchBedIds.includes(placement.bedId)
+        );
+
+        loadPlacements(patchPlacements);
+        console.log('✅ Plant placements loaded from localStorage for patch:', currentPatchId, 'count:', patchPlacements.length);
+      }
     } catch (error) {
       console.error('❌ Failed to load plant placements:', error);
       loadPlacements([]);
