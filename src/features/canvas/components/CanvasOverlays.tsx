@@ -7,6 +7,7 @@ import { MobileControls } from './MobileControls';
 import { DesktopSidebar } from './DesktopSidebar';
 import { DevelopmentInfo } from './DevelopmentInfo';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { CanvasTool } from '../types/bed.types';
 
 interface CanvasOverlaysProps {
   showConfirmation: boolean;
@@ -16,8 +17,8 @@ interface CanvasOverlaysProps {
   handleZoomIn: () => void;
   handleZoomOut: () => void;
   handleFitAll: () => void;
-  tool: string;
-  setTool: (tool: any) => void;
+  tool: CanvasTool;
+  setTool: (tool: CanvasTool) => void;
   bedConfig: any;
   updateBedConfig: any;
   multiCreationMode: boolean;
@@ -121,41 +122,43 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
       {/* Mobile Controls */}
       {isMobile && !isInFocusMode && (
         <MobileControls
-          tool={tool}
-          setTool={setTool}
+          activeTool={tool}
+          onToolChange={setTool}
           bedConfig={bedConfig}
-          updateBedConfig={updateBedConfig}
-          multiCreationMode={multiCreationMode}
-          setMultiCreationMode={setMultiCreationMode}
-          undo={undo}
-          redo={redo}
+          onBedConfigChange={updateBedConfig}
+          onUndo={undo}
+          onRedo={redo}
           canUndo={canUndo()}
           canRedo={canRedo()}
-          deleteSelected={deleteSelected}
-          selectedBedIds={selectedBedIds}
+          onDeleteSelected={deleteSelected}
+          selectedCount={selectedBedIds.length}
+          isVisible={false}
+          onToggle={() => {}}
           isSaving={isSaving}
+          showConfirmation={showConfirmation}
+          isInFocusMode={isInFocusMode}
         />
       )}
 
       {/* Desktop Sidebar */}
       {!isMobile && !isInFocusMode && (
         <DesktopSidebar
-          tool={tool}
-          setTool={setTool}
+          activeTool={tool}
+          onToolChange={setTool}
           bedConfig={bedConfig}
-          updateBedConfig={updateBedConfig}
-          multiCreationMode={multiCreationMode}
-          setMultiCreationMode={setMultiCreationMode}
-          undo={undo}
-          redo={redo}
+          onBedConfigChange={updateBedConfig}
+          onUndo={undo}
+          onRedo={redo}
           canUndo={canUndo()}
           canRedo={canRedo()}
-          deleteSelected={deleteSelected}
-          beds={beds}
-          selectedBedIds={selectedBedIds}
-          isSaving={isSaving}
+          onDeleteSelected={deleteSelected}
+          selectedCount={selectedBedIds.length}
           isCollapsed={isCollapsed}
-          onToggleCollapse={onToggleCollapse}
+          onToggleCollapse={onToggleCollapse || (() => {})}
+          isSaving={isSaving}
+          beds={beds}
+          viewport={viewport}
+          isInFocusMode={isInFocusMode}
         />
       )}
 
