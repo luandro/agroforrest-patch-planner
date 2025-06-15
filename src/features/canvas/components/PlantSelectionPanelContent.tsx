@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback } from 'react';
 import { PlantSpecies, PlantCategory, CompatibilityLevel } from '../types/species.types';
 import { mockPlantSpecies } from '../data/mockSpecies';
@@ -8,6 +7,7 @@ import { useBulkPlacement } from '../hooks/useBulkPlacement';
 import { PlantSelectionTabs } from './PlantSelectionTabs';
 import { PlantSelectionIndividualMode } from './PlantSelectionIndividualMode';
 import { PlantSelectionBulkMode } from './PlantSelectionBulkMode';
+import { useBulkPlacementStore } from '../stores/bulkPlacementStore';
 
 interface PlantSelectionPanelContentProps {
   onSelectSpecies: (species: PlantSpecies) => void;
@@ -18,25 +18,24 @@ const BulkPlacementManager: React.FC<{
   onCancel: () => void;
 }> = ({ speciesForBulk, onCancel }) => {
   const bulkPlacement = useBulkPlacement();
+  const { initializeBulkPlacement, isActive } = bulkPlacement;
 
-  const { initializeBulkPlacement } = bulkPlacement;
+  // Initialize on mount
   React.useEffect(() => {
-    if (initializeBulkPlacement) {
-      initializeBulkPlacement(speciesForBulk);
-    }
+    initializeBulkPlacement(speciesForBulk);
   }, [speciesForBulk, initializeBulkPlacement]);
 
-  const { isActive } = bulkPlacement;
+  const wasActiveRef = React.useRef(isActive);
   React.useEffect(() => {
     // When bulk placement is finished/cancelled, it becomes inactive.
     // We then trigger the onCancel callback to switch back to the individual tab.
-    if (!isActive) {
-      // Use a timeout to avoid state update loops if isActive flips rapidly.
+    if (wasActiveRef.current && !isActive) {
       const timer = setTimeout(() => {
         onCancel();
       }, 0);
       return () => clearTimeout(timer);
     }
+    wasActiveRef.current = isActive;
   }, [isActive, onCancel]);
 
   return <PlantSelectionBulkMode bulkPlacementProps={bulkPlacement} />;
@@ -55,6 +54,7 @@ export const PlantSelectionPanelContent: React.FC<PlantSelectionPanelContentProp
 
   const { selectedSpecies, isPlacing } = usePlantPlacementStore();
   const { focusMode } = useBedStore();
+  const cancelBulkPlacementAction = useBulkPlacementStore(state => state.cancelBulkPlacement);
 
   const showBulkButton = focusMode.isActive;
 
@@ -92,7 +92,6 @@ export const PlantSelectionPanelContent: React.FC<PlantSelectionPanelContentProp
   }, [filteredSpecies]);
 
   const handleSpeciesSelect = (species: PlantSpecies) => {
-    // Direct selection - immediately enters placement mode
     onSelectSpecies(species);
   };
 
@@ -117,16 +116,16 @@ export const PlantSelectionPanelContent: React.FC<PlantSelectionPanelContentProp
   const handleTabChange = useCallback((tab: 'individual' | 'bulk') => {
     if (tab === 'individual' && activeTab === 'bulk') {
       // If user manually clicks "Individual" tab, cancel bulk placement.
+      cancelBulkPlacementAction();
       handleCancelBulkPlacement();
     } else {
       setActiveTab(tab);
     }
-  }, [activeTab, handleCancelBulkPlacement]);
+  }, [activeTab, handleCancelBulkPlacement, cancelBulkPlacementAction]);
 
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      {/* Mode Tabs */}
       <PlantSelectionTabs
         activeTab={activeTab}
         onTabChange={handleTabChange}

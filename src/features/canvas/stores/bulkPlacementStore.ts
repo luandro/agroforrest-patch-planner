@@ -4,10 +4,12 @@ import { subscribeWithSelector } from 'zustand/middleware';
 import { 
   BulkPlacementConfig, 
   BulkPlacementPreview, 
-  BulkPlacementRequest 
 } from '../types/bulkPlacement.types';
 import { PlantSpecies } from '../types/species.types';
 import { Bed } from '../types/bed.types';
+import { useBedStore } from './bedStore';
+import { usePlantPlacementStore } from './plantPlacementStore';
+import { calculateBulkPlacement, getDefaultBulkConfig } from '../utils/bulkPlacementCalculator';
 
 interface BulkPlacementState {
   isActive: boolean;
@@ -20,14 +22,11 @@ interface BulkPlacementState {
 }
 
 interface BulkPlacementActions {
-  setActive: (active: boolean) => void;
-  setSelectedSpecies: (species: PlantSpecies | null) => void;
-  setSelectedBed: (bed: Bed | null) => void;
-  setConfig: (config: BulkPlacementConfig) => void;
+  initializeBulkPlacement: (species: PlantSpecies) => void;
   updateConfig: (updates: Partial<BulkPlacementConfig>) => void;
-  setPreview: (preview: BulkPlacementPreview | null) => void;
+  executeBulkPlacement: () => boolean;
+  cancelBulkPlacement: () => void;
   setShowPreview: (show: boolean) => void;
-  setIsCalculating: (calculating: boolean) => void;
   reset: () => void;
 }
 
@@ -45,16 +44,31 @@ export const useBulkPlacementStore = create<BulkPlacementStore>()(
     isCalculating: false,
 
     // Actions
-    setActive: (active) => {
-      set({ isActive: active });
-      if (!active) {
-        get().reset();
-      }
-    },
+    initializeBulkPlacement: (species) => {
+      const { beds, focusMode } = useBedStore.getState();
+      const focusedBed = focusMode.isActive && focusMode.bedId
+        ? beds.find(b => b.id === focusMode.bedId) || null
+        : null;
 
-    setSelectedSpecies: (species) => set({ selectedSpecies: species }),
-    setSelectedBed: (bed) => set({ selectedBed: bed }),
-    setConfig: (config) => set({ config }),
+      if (!focusedBed) {
+        console.warn('No focused bed for bulk placement');
+        return;
+      }
+      
+      const defaultConfig = getDefaultBulkConfig(species);
+
+      set({
+        isActive: true,
+        selectedSpecies: species,
+        selectedBed: focusedBed,
+        config: defaultConfig,
+        preview: null,
+        showPreview: false,
+        isCalculating: false,
+      });
+
+      // Since we can't await in the store initializer, we'll let a useEffect handle the first calculation
+    },
     
     updateConfig: (updates) => {
       const currentConfig = get().config;
@@ -63,11 +77,36 @@ export const useBulkPlacementStore = create<BulkPlacementStore>()(
       }
     },
 
-    setPreview: (preview) => set({ preview }),
+    executeBulkPlacement: () => {
+      const { selectedSpecies, selectedBed, preview } = get();
+      if (!selectedSpecies || !selectedBed || !preview || preview.positions.length === 0) {
+        console.warn('Cannot execute bulk placement: missing data');
+        return false;
+      }
+
+      const { addPlacement } = usePlantPlacementStore.getState();
+      preview.positions.forEach(position => {
+        addPlacement({
+          bedId: selectedBed.id,
+          species: selectedSpecies,
+          position: { x: position.x, y: position.y }
+        });
+      });
+
+      get().reset();
+      set({ isActive: false });
+      return true;
+    },
+
+    cancelBulkPlacement: () => {
+      get().reset();
+      set({ isActive: false });
+    },
+
     setShowPreview: (show) => set({ showPreview: show }),
-    setIsCalculating: (calculating) => set({ isCalculating: calculating }),
 
     reset: () => set({
+      isActive: false, // Ensure isActive is false on reset
       selectedSpecies: null,
       selectedBed: null,
       config: null,
