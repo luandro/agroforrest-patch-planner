@@ -70,17 +70,19 @@ export const CanvasControls: React.FC<CanvasControlsProps> = ({
         />
       )}
 
-      {/* View Controls - always visible in top-right */}
+      {/* View Controls with Tool Selection - always visible in top-right */}
       <ViewControls
         zoom={viewport.zoom}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onFitAll={handleFitAll}
         bedsCount={beds.length}
+        activeTool={tool}
+        onToolChange={setTool}
         className="fixed top-20 right-4 z-50"
       />
 
-      {/* Mobile Controls */}
+      {/* Mobile Controls - Updated for context-sensitive FAB */}
       {isMobile && (
         <MobileControls
           activeTool={tool}

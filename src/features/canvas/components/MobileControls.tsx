@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CanvasTool, BedConfig } from '../types/bed.types';
 import { 
-  Square, 
-  Circle, 
-  ArrowUp,
-  ArrowDown
+  Undo,
+  Redo,
+  Trash2,
+  Settings
 } from 'lucide-react';
 
 interface MobileControlsProps {
@@ -41,245 +41,225 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
   onToggle,
   isSaving = false
 }) => {
-  const tools = [
-    {
-      id: 'pan' as CanvasTool,
-      icon: '👋',
-      label: 'Mover',
-      color: 'blue'
-    },
-    {
-      id: 'create-rectangle' as CanvasTool,
-      icon: Square,
-      label: 'Retângulo',
-      color: 'green'
-    },
-    {
-      id: 'create-circle' as CanvasTool,
-      icon: Circle,
-      label: 'Círculo',
-      color: 'purple'
-    },
-    {
-      id: 'select' as CanvasTool,
-      icon: '🎯',
-      label: 'Selecionar',
-      color: 'orange'
+  // Determine FAB content based on active tool and selection
+  const getFABContent = () => {
+    // Default state (Move tool) - show undo/redo
+    if (activeTool === 'pan') {
+      return (
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onUndo}
+            disabled={!canUndo}
+            className="flex-1 h-12 touch-manipulation bg-white/95 backdrop-blur-sm"
+            title="Desfazer"
+          >
+            <Undo className="w-5 h-5 mr-2" />
+            Desfazer
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onRedo}
+            disabled={!canRedo}
+            className="flex-1 h-12 touch-manipulation bg-white/95 backdrop-blur-sm"
+            title="Refazer"
+          >
+            <Redo className="w-5 h-5 mr-2" />
+            Refazer
+          </Button>
+        </div>
+      );
     }
-  ];
+
+    // Rectangle tool active - show bed settings
+    if (activeTool === 'create-rectangle') {
+      return (
+        <div className="space-y-3">
+          <div className="text-sm font-medium text-gray-700 text-center">
+            Configurações do Canteiro
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-gray-600 block mb-1">Comprimento</label>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onBedConfigChange({ length: Math.max(0.5, bedConfig.length - 0.5) })}
+                  className="w-8 h-8 p-0"
+                >
+                  -
+                </Button>
+                <span className="text-sm w-12 text-center font-medium">{bedConfig.length}m</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onBedConfigChange({ length: Math.min(20, bedConfig.length + 0.5) })}
+                  className="w-8 h-8 p-0"
+                >
+                  +
+                </Button>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-gray-600 block mb-1">Largura</label>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onBedConfigChange({ width: Math.max(0.2, bedConfig.width - 0.2) })}
+                  className="w-8 h-8 p-0"
+                >
+                  -
+                </Button>
+                <span className="text-sm w-12 text-center font-medium">{bedConfig.width}m</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onBedConfigChange({ width: Math.min(5, bedConfig.width + 0.2) })}
+                  className="w-8 h-8 p-0"
+                >
+                  +
+                </Button>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-gray-600 block mb-1">Quantidade</label>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onBedConfigChange({ quantity: Math.max(1, bedConfig.quantity - 1) })}
+                  className="w-8 h-8 p-0"
+                >
+                  -
+                </Button>
+                <span className="text-sm w-12 text-center font-medium">{bedConfig.quantity}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onBedConfigChange({ quantity: Math.min(10, bedConfig.quantity + 1) })}
+                  className="w-8 h-8 p-0"
+                >
+                  +
+                </Button>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-gray-600 block mb-1">Espaçamento</label>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onBedConfigChange({ spacing: Math.max(0, bedConfig.spacing - 0.1) })}
+                  className="w-8 h-8 p-0"
+                >
+                  -
+                </Button>
+                <span className="text-sm w-12 text-center font-medium">{bedConfig.spacing.toFixed(1)}m</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onBedConfigChange({ spacing: Math.min(2, bedConfig.spacing + 0.1) })}
+                  className="w-8 h-8 p-0"
+                >
+                  +
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Select tool with selection - show edit controls
+    if (activeTool === 'select' && selectedCount > 0) {
+      return (
+        <div className="space-y-3">
+          <div className="text-sm font-medium text-gray-700 text-center">
+            Editar Canteiro Selecionado
+          </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={onDeleteSelected}
+            className="w-full h-12 touch-manipulation"
+          >
+            <Trash2 className="w-5 h-5 mr-2" />
+            Deletar ({selectedCount})
+          </Button>
+        </div>
+      );
+    }
+
+    // Select tool without selection - show hint
+    if (activeTool === 'select') {
+      return (
+        <div className="text-center py-4 opacity-75">
+          <div className="text-sm text-gray-600">
+            Toque em um canteiro para editar
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  const getFABIcon = () => {
+    if (activeTool === 'create-rectangle') return <Settings className="w-6 h-6" />;
+    if (activeTool === 'select' && selectedCount > 0) return <span className="text-lg">✏️</span>;
+    if (activeTool === 'select') return <span className="text-lg">👆</span>;
+    return <span className="text-lg">⚡</span>; // Default for move tool
+  };
+
+  const shouldShowFAB = activeTool !== 'pan' || canUndo || canRedo;
 
   return (
     <>
-      {/* FAB - Always visible */}
-      <Button
-        className={cn(
-          "fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg z-50 touch-manipulation",
-          "bg-green-600 hover:bg-green-700 text-white border-2 border-white",
-          "transition-all duration-200",
-          isVisible && "scale-110"
-        )}
-        onClick={() => onToggle(!isVisible)}
-        aria-label="Abrir controles"
-      >
-        {isVisible ? <ArrowDown className="w-6 h-6" /> : <ArrowUp className="w-6 h-6" />}
-      </Button>
-
-      {/* Bottom Sheet */}
-      <div className={cn(
-        "fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-xl z-40",
-        "transition-transform duration-300 ease-in-out",
-        isVisible ? "translate-y-0" : "translate-y-full"
-      )}>
-        {/* Handle */}
-        <div className="flex justify-center py-2">
-          <div className="w-12 h-1 bg-gray-300 rounded-full" />
-        </div>
-
-        <div className="px-4 pb-6 space-y-4">
-          {/* Tools Section */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Ferramentas</h3>
-            <div className="grid grid-cols-4 gap-2">
-              {tools.map((tool) => {
-                const isActive = activeTool === tool.id;
-                
-                return (
-                  <Button
-                    key={tool.id}
-                    variant={isActive ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => onToolChange(tool.id)}
-                    className={cn(
-                      "h-12 p-2 flex flex-col items-center gap-1 touch-manipulation",
-                      isActive && "ring-2 ring-offset-1",
-                      tool.color === 'blue' && isActive && "ring-blue-500 bg-blue-600",
-                      tool.color === 'green' && isActive && "ring-green-500 bg-green-600",
-                      tool.color === 'purple' && isActive && "ring-purple-500 bg-purple-600",
-                      tool.color === 'orange' && isActive && "ring-orange-500 bg-orange-600"
-                    )}
-                  >
-                    {typeof tool.icon === 'string' ? (
-                      <span className="text-lg">{tool.icon}</span>
-                    ) : (
-                      <tool.icon className="w-4 h-4" />
-                    )}
-                    <span className="text-xs">{tool.label}</span>
-                  </Button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Bed Configuration */}
-          {(activeTool === 'create-rectangle' || activeTool === 'create-circle') && (
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Configuração do Canteiro</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {activeTool === 'create-rectangle' && (
-                  <>
-                    <div>
-                      <label className="text-xs text-gray-600">Comprimento</label>
-                      <div className="flex items-center gap-1 mt-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onBedConfigChange({ length: Math.max(0.5, bedConfig.length - 0.5) })}
-                          className="w-8 h-8 p-0"
-                        >
-                          -
-                        </Button>
-                        <span className="text-sm w-12 text-center">{bedConfig.length}m</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onBedConfigChange({ length: Math.min(20, bedConfig.length + 0.5) })}
-                          className="w-8 h-8 p-0"
-                        >
-                          +
-                        </Button>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-600">Largura</label>
-                      <div className="flex items-center gap-1 mt-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onBedConfigChange({ width: Math.max(0.2, bedConfig.width - 0.2) })}
-                          className="w-8 h-8 p-0"
-                        >
-                          -
-                        </Button>
-                        <span className="text-sm w-12 text-center">{bedConfig.width}m</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onBedConfigChange({ width: Math.min(5, bedConfig.width + 0.2) })}
-                          className="w-8 h-8 p-0"
-                        >
-                          +
-                        </Button>
-                      </div>
-                    </div>
-                  </>
-                )}
-                
-                <div>
-                  <label className="text-xs text-gray-600">Quantidade</label>
-                  <div className="flex items-center gap-1 mt-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onBedConfigChange({ quantity: Math.max(1, bedConfig.quantity - 1) })}
-                      className="w-8 h-8 p-0"
-                    >
-                      -
-                    </Button>
-                    <span className="text-sm w-12 text-center">{bedConfig.quantity}</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onBedConfigChange({ quantity: Math.min(10, bedConfig.quantity + 1) })}
-                      className="w-8 h-8 p-0"
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="text-xs text-gray-600">Espaçamento</label>
-                  <div className="flex items-center gap-1 mt-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onBedConfigChange({ spacing: Math.max(0, bedConfig.spacing - 0.1) })}
-                      className="w-8 h-8 p-0"
-                    >
-                      -
-                    </Button>
-                    <span className="text-sm w-12 text-center">{bedConfig.spacing}m</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onBedConfigChange({ spacing: Math.min(2, bedConfig.spacing + 0.1) })}
-                      className="w-8 h-8 p-0"
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-              </div>
+      {/* Context-sensitive FAB */}
+      {shouldShowFAB && (
+        <div className={cn(
+          "fixed bottom-6 right-6 z-50 transition-all duration-300",
+          isVisible && "translate-y-0 opacity-100",
+          !isVisible && "translate-y-2 opacity-90"
+        )}>
+          {/* FAB Content Panel */}
+          {isVisible && (
+            <div className="mb-4 bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-xl border border-gray-200 min-w-[280px] max-w-[320px]">
+              {getFABContent()}
             </div>
           )}
 
-          {/* Actions */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-2">Ações</h3>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onUndo}
-                disabled={!canUndo}
-                className="flex-1 touch-manipulation"
-              >
-                ↶ Desfazer
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onRedo}
-                disabled={!canRedo}
-                className="flex-1 touch-manipulation"
-              >
-                ↷ Refazer
-              </Button>
-              {selectedCount > 0 && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={onDeleteSelected}
-                  className="flex-1 touch-manipulation"
-                >
-                  🗑️ Deletar ({selectedCount})
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Save Status */}
-          {isSaving && (
-            <div className="flex items-center justify-center text-sm text-gray-600">
-              <div className="animate-spin w-3 h-3 border border-gray-400 border-t-transparent rounded-full mr-2" />
-              Salvando automaticamente...
-            </div>
-          )}
+          {/* FAB Button */}
+          <Button
+            className={cn(
+              "w-14 h-14 rounded-full shadow-lg border-2 border-white transition-all duration-200 touch-manipulation",
+              activeTool === 'create-rectangle' && "bg-green-600 hover:bg-green-700",
+              activeTool === 'select' && selectedCount > 0 && "bg-orange-600 hover:bg-orange-700",
+              activeTool === 'select' && selectedCount === 0 && "bg-gray-500 hover:bg-gray-600",
+              activeTool === 'pan' && "bg-blue-600 hover:bg-blue-700",
+              isVisible && "scale-110"
+            )}
+            onClick={() => onToggle(!isVisible)}
+            aria-label="Abrir controles contextuais"
+          >
+            {getFABIcon()}
+          </Button>
         </div>
+      )}
 
-        {/* Safe area padding for iOS */}
-        <div className="h-safe-area-inset-bottom" />
-      </div>
+      {/* Save Status */}
+      {isSaving && (
+        <div className="fixed bottom-6 left-6 bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg border border-gray-200 z-40">
+          <div className="flex items-center text-sm text-gray-600">
+            <div className="animate-spin w-3 h-3 border border-gray-400 border-t-transparent rounded-full mr-2" />
+            Salvando...
+          </div>
+        </div>
+      )}
 
       {/* Backdrop */}
       {isVisible && (

@@ -2,6 +2,11 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { CanvasTool } from '../types/bed.types';
+import { 
+  Square, 
+  Move
+} from 'lucide-react';
 
 interface ViewControlsProps {
   zoom: number;
@@ -9,6 +14,8 @@ interface ViewControlsProps {
   onZoomOut: () => void;
   onFitAll: () => void;
   bedsCount: number;
+  activeTool: CanvasTool;
+  onToolChange: (tool: CanvasTool) => void;
   className?: string;
 }
 
@@ -18,8 +25,31 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
   onZoomOut,
   onFitAll,
   bedsCount,
+  activeTool,
+  onToolChange,
   className
 }) => {
+  const tools = [
+    {
+      id: 'pan' as CanvasTool,
+      icon: Move,
+      label: 'Mover',
+      tooltip: 'Arrastar para navegar'
+    },
+    {
+      id: 'create-rectangle' as CanvasTool,
+      icon: Square,
+      label: 'Retângulo',
+      tooltip: 'Criar canteiros retangulares'
+    },
+    {
+      id: 'select' as CanvasTool,
+      icon: '🎯',
+      label: 'Selecionar',
+      tooltip: 'Selecionar e editar canteiros'
+    }
+  ];
+
   return (
     <div className={cn(
       "flex flex-col gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-lg border border-gray-200",
@@ -30,42 +60,70 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
         {zoom.toFixed(1)}x
       </div>
       
-      {/* Zoom In */}
+      {/* Zoom Controls */}
       <Button
         variant="outline"
         size="sm"
         onClick={onZoomIn}
-        className="w-10 h-10 p-0 touch-manipulation hover:bg-green-50 hover:border-green-300"
+        className="w-11 h-11 p-0 touch-manipulation hover:bg-green-50 hover:border-green-300"
         aria-label="Aumentar zoom"
         title="Aumentar zoom"
       >
         <span className="text-lg font-bold text-green-600">+</span>
       </Button>
       
-      {/* Zoom Out */}
       <Button
         variant="outline"
         size="sm"
         onClick={onZoomOut}
-        className="w-10 h-10 p-0 touch-manipulation hover:bg-red-50 hover:border-red-300"
+        className="w-11 h-11 p-0 touch-manipulation hover:bg-red-50 hover:border-red-300"
         aria-label="Diminuir zoom"
         title="Diminuir zoom"
       >
         <span className="text-lg font-bold text-red-600">−</span>
       </Button>
       
-      {/* Fit All Beds */}
       <Button
         variant="outline"
         size="sm"
         onClick={onFitAll}
         disabled={bedsCount === 0}
-        className="w-10 h-10 p-0 text-xs touch-manipulation hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50"
+        className="w-11 h-11 p-0 text-xs touch-manipulation hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50"
         aria-label="Ajustar visualização para todos os canteiros"
         title="Ver todos os canteiros"
       >
         <span className="text-blue-600">📐</span>
       </Button>
+
+      {/* Separator */}
+      <div className="w-full h-px bg-gray-300 my-1" />
+      
+      {/* Tool Selection */}
+      {tools.map((tool) => {
+        const isActive = activeTool === tool.id;
+        
+        return (
+          <Button
+            key={tool.id}
+            variant={isActive ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => onToolChange(tool.id)}
+            className={cn(
+              "w-11 h-11 p-0 touch-manipulation",
+              isActive && "ring-2 ring-blue-500 ring-offset-1 bg-blue-600 hover:bg-blue-700",
+              !isActive && "hover:bg-gray-50"
+            )}
+            title={tool.tooltip}
+            aria-label={tool.tooltip}
+          >
+            {typeof tool.icon === 'string' ? (
+              <span className="text-lg">{tool.icon}</span>
+            ) : (
+              <tool.icon className="w-5 h-5" />
+            )}
+          </Button>
+        );
+      })}
     </div>
   );
 };
