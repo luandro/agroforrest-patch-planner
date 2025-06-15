@@ -1,10 +1,12 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { PlantSpecies } from '../types/species.types';
 import { PlantSpeciesCardIcon } from './PlantSpeciesCardIcon';
 import { PlantSpeciesCardContent } from './PlantSpeciesCardContent';
 import { PlantSpeciesCardAction } from './PlantSpeciesCardAction';
+import { Grid3X3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PlantSpeciesCardProps {
@@ -13,6 +15,8 @@ interface PlantSpeciesCardProps {
   isSelected?: boolean;
   isPlacing?: boolean;
   disabled?: boolean;
+  showBulkButton?: boolean;
+  onBulkSelect?: () => void;
 }
 
 export const PlantSpeciesCard: React.FC<PlantSpeciesCardProps> = ({
@@ -20,7 +24,9 @@ export const PlantSpeciesCard: React.FC<PlantSpeciesCardProps> = ({
   onSelect,
   isSelected = false,
   isPlacing = false,
-  disabled = false
+  disabled = false,
+  showBulkButton = false,
+  onBulkSelect
 }) => {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -33,6 +39,11 @@ export const PlantSpeciesCard: React.FC<PlantSpeciesCardProps> = ({
       onSelect();
       setIsLoading(false);
     }, 100);
+  };
+
+  const handleBulkSelect = () => {
+    if (disabled || !onBulkSelect) return;
+    onBulkSelect();
   };
 
   return (
@@ -68,13 +79,29 @@ export const PlantSpeciesCard: React.FC<PlantSpeciesCardProps> = ({
             disabled={disabled}
           />
 
-          {/* Action Indicator */}
-          <div className="ml-2 flex-shrink-0">
+          {/* Action Indicators */}
+          <div className="ml-2 flex-shrink-0 flex flex-col gap-1">
             <PlantSpeciesCardAction
               isSelected={isSelected}
               isPlacing={isPlacing}
               isLoading={isLoading}
             />
+            
+            {/* Bulk Placement Button */}
+            {showBulkButton && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 w-8 p-0 border-green-300 hover:bg-green-50 hover:border-green-400"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleBulkSelect();
+                }}
+                title="Plantio em massa"
+              >
+                <Grid3X3 className="w-3 h-3 text-green-600" />
+              </Button>
+            )}
           </div>
         </div>
 

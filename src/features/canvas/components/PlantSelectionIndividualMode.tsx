@@ -23,6 +23,7 @@ interface PlantSelectionIndividualModeProps {
   isPlacing: boolean;
   onSelectSpecies: (species: PlantSpecies) => void;
   onBulkSelect: (species: PlantSpecies) => void;
+  showBulkButton?: boolean;
 }
 
 export const PlantSelectionIndividualMode: React.FC<PlantSelectionIndividualModeProps> = ({
@@ -41,7 +42,8 @@ export const PlantSelectionIndividualMode: React.FC<PlantSelectionIndividualMode
   selectedSpecies,
   isPlacing,
   onSelectSpecies,
-  onBulkSelect
+  onBulkSelect,
+  showBulkButton = false
 }) => {
   return (
     <>
@@ -67,7 +69,7 @@ export const PlantSelectionIndividualMode: React.FC<PlantSelectionIndividualMode
         selectedSpecies={selectedSpecies}
         isPlacing={isPlacing}
         onSelectSpecies={onSelectSpecies}
-        showBulkButton={false}
+        showBulkButton={showBulkButton}
         onBulkSelect={onBulkSelect}
       />
 

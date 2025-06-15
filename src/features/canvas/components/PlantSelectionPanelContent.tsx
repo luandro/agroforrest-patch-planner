@@ -1,7 +1,9 @@
+
 import React, { useState, useMemo } from 'react';
 import { PlantSpecies, PlantCategory, CompatibilityLevel } from '../types/species.types';
 import { mockPlantSpecies } from '../data/mockSpecies';
 import { usePlantPlacementStore } from '../stores/plantPlacementStore';
+import { useBedStore } from '../stores/bedStore';
 import { useBulkPlacement } from '../hooks/useBulkPlacement';
 import { PlantSelectionTabs } from './PlantSelectionTabs';
 import { PlantSelectionIndividualMode } from './PlantSelectionIndividualMode';
@@ -21,7 +23,11 @@ export const PlantSelectionPanelContent: React.FC<PlantSelectionPanelContentProp
   const [activeTab, setActiveTab] = useState<'individual' | 'bulk'>('individual');
 
   const { selectedSpecies, isPlacing } = usePlantPlacementStore();
+  const { focusMode } = useBedStore();
   const bulkPlacement = useBulkPlacement();
+
+  // Show bulk buttons only when a bed is in focus mode
+  const showBulkButton = focusMode.isActive;
 
   const filteredSpecies = useMemo(() => {
     return mockPlantSpecies.filter(species => {
@@ -106,6 +112,7 @@ export const PlantSelectionPanelContent: React.FC<PlantSelectionPanelContentProp
           onBulkSelect={(species) => {
             bulkPlacement.initializeBulkPlacement(species);
           }}
+          showBulkButton={showBulkButton}
         />
       ) : (
         <PlantSelectionBulkMode bulkPlacementProps={bulkPlacement} />

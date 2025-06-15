@@ -33,6 +33,8 @@ export const PlantSelectionContent: React.FC<PlantSelectionContentProps> = ({
           isSelected={selectedSpecies?.id === plant.id}
           isPlacing={isPlacing && selectedSpecies?.id === plant.id}
           onSelect={() => onSelectSpecies(plant)}
+          showBulkButton={showBulkButton}
+          onBulkSelect={onBulkSelect ? () => onBulkSelect(plant) : undefined}
         />
       ))}
     </div>
