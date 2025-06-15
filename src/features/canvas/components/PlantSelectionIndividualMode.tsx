@@ -67,7 +67,7 @@ export const PlantSelectionIndividualMode: React.FC<PlantSelectionIndividualMode
         selectedSpecies={selectedSpecies}
         isPlacing={isPlacing}
         onSelectSpecies={onSelectSpecies}
-        showBulkButton={true}
+        showBulkButton={false}
         onBulkSelect={onBulkSelect}
       />
 

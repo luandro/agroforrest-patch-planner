@@ -1,8 +1,7 @@
+
 import React from 'react';
 import { PlantSpecies, PlantCategory } from '../types/species.types';
 import { PlantSpeciesCard } from './PlantSpeciesCard';
-import { Button } from '@/components/ui/button';
-import { Grid3X3 } from 'lucide-react';
 
 interface PlantSelectionContentProps {
   filteredSpecies: PlantSpecies[];
@@ -28,27 +27,13 @@ export const PlantSelectionContent: React.FC<PlantSelectionContentProps> = ({
   const renderSpeciesList = (species: PlantSpecies[]) => (
     <div className="space-y-3">
       {species.map((plant) => (
-        <div key={plant.id} className="space-y-2">
-          <PlantSpeciesCard
-            species={plant}
-            isSelected={selectedSpecies?.id === plant.id}
-            isPlacing={isPlacing && selectedSpecies?.id === plant.id}
-            onSelect={() => onSelectSpecies(plant)}
-          />
-          
-          {/* Bulk Placement Button */}
-          {showBulkButton && onBulkSelect && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full text-xs"
-              onClick={() => onBulkSelect(plant)}
-            >
-              <Grid3X3 className="w-3 h-3 mr-1" />
-              Plantio em Massa
-            </Button>
-          )}
-        </div>
+        <PlantSpeciesCard
+          key={plant.id}
+          species={plant}
+          isSelected={selectedSpecies?.id === plant.id}
+          isPlacing={isPlacing && selectedSpecies?.id === plant.id}
+          onSelect={() => onSelectSpecies(plant)}
+        />
       ))}
     </div>
   );
