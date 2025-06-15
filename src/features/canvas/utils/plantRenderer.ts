@@ -3,7 +3,7 @@ import { CanvasViewport } from '../types/canvas.types';
 import { Bed } from '../types/bed.types';
 import { PlantPlacement } from '../stores/plantPlacementStore';
 import { useBulkPlacementStore } from '../stores/bulkPlacementStore';
-import { drawPlant } from './plants/plantDrawing';
+import { drawPlant, drawSelectionArea } from './plants/plantDrawing';
 import { drawBulkPreviewPlant } from './plants/bulkPreviewRenderer';
 import { calculatePlantScreenPosition } from './plants/plantPositioning';
 import { createBedClippingPath } from './plants/bedClipping';
@@ -14,7 +14,9 @@ export const drawPlantPlacements = (
   placements: PlantPlacement[],
   viewport: CanvasViewport,
   selectedPlacementIds: string[] = [],
-  placementPreview?: { x: number; y: number } | null
+  placementPreview?: { x: number; y: number } | null,
+  hoveredPlacementId?: string | null,
+  selectionArea?: { startX: number; startY: number; endX: number; endY: number } | null
 ) => {
   const canvas = ctx.canvas;
   const pixelsPerMeter = 50 * viewport.zoom;
@@ -41,8 +43,9 @@ export const drawPlantPlacements = (
     );
     
     const isSelected = selectedPlacementIds.includes(placement.id);
+    const isHovered = hoveredPlacementId === placement.id;
     
-    drawPlant(ctx, plantScreenX, plantScreenY, placement.species, isSelected, false);
+    drawPlant(ctx, plantScreenX, plantScreenY, placement.species, isSelected, false, isHovered);
   });
 
   // Draw bulk placement preview if active
@@ -73,6 +76,17 @@ export const drawPlantPlacements = (
   }
 
   ctx.restore();
+
+  // Draw selection area outside of clipping (so it shows over bed boundaries)
+  if (selectionArea) {
+    drawSelectionArea(
+      ctx,
+      selectionArea.startX,
+      selectionArea.startY,
+      selectionArea.endX,
+      selectionArea.endY
+    );
+  }
 };
 
 // Re-export positioning utilities for backwards compatibility
