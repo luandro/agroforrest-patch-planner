@@ -28,6 +28,8 @@ interface DesktopSidebarProps {
   isSaving?: boolean;
   beds: Bed[];
   viewport: CanvasViewport;
+  onEnterFocus?: (bedId: string) => void;
+  isInFocusMode?: boolean;
 }
 
 export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
@@ -45,7 +47,9 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   onToggleCollapse,
   isSaving = false,
   beds,
-  viewport
+  viewport,
+  onEnterFocus,
+  isInFocusMode = false
 }) => {
   return (
     <div className={cn(

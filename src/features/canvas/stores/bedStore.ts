@@ -19,6 +19,9 @@ interface BedStore {
     } | null;
   };
   
+  // Auto-save state
+  isDirty: boolean;
+  
   // Existing actions
   addBed: (bed: Bed) => void;
   updateBed: (id: string, updates: Partial<Bed>) => void;
@@ -37,9 +40,15 @@ interface BedStore {
   enterFocusMode: (bedId: string) => void;
   exitFocusMode: () => void;
   
+  // Auto-save actions
+  markClean: () => void;
+  
   // Internal state
   history: Bed[][];
   historyIndex: number;
+  
+  // Internal methods
+  addToHistory: (beds: Bed[]) => void;
 }
 
 export const useBedStore = create<BedStore>()(
@@ -49,6 +58,7 @@ export const useBedStore = create<BedStore>()(
     tool: 'pan',
     history: [[]],
     historyIndex: 0,
+    isDirty: false,
     
     // Initialize focus mode state
     focusMode: {
@@ -60,7 +70,7 @@ export const useBedStore = create<BedStore>()(
     addBed: (bed) => {
       const state = get();
       const newBeds = [...state.beds, bed];
-      set({ beds: newBeds });
+      set({ beds: newBeds, isDirty: true });
       get().addToHistory(newBeds);
     },
 
@@ -69,7 +79,7 @@ export const useBedStore = create<BedStore>()(
       const newBeds = state.beds.map(bed => 
         bed.id === id ? { ...bed, ...updates } : bed
       );
-      set({ beds: newBeds });
+      set({ beds: newBeds, isDirty: true });
       get().addToHistory(newBeds);
     },
 
@@ -80,6 +90,7 @@ export const useBedStore = create<BedStore>()(
       set({ 
         beds: newBeds, 
         selectedBedIds: newSelectedIds,
+        isDirty: true,
         focusMode: state.focusMode.bedId && ids.includes(state.focusMode.bedId) 
           ? { isActive: false, bedId: null, targetViewport: null }
           : state.focusMode
@@ -100,7 +111,7 @@ export const useBedStore = create<BedStore>()(
     },
 
     setTool: (tool) => set({ tool }),
-    loadBeds: (beds) => set({ beds, history: [beds], historyIndex: 0 }),
+    loadBeds: (beds) => set({ beds, history: [beds], historyIndex: 0, isDirty: false }),
 
     // New focus mode actions
     enterFocusMode: (bedId) => {
@@ -154,6 +165,9 @@ export const useBedStore = create<BedStore>()(
       });
     },
 
+    // Auto-save actions
+    markClean: () => set({ isDirty: false }),
+
     // History management
     addToHistory: (beds: Bed[]) => {
       const state = get();
@@ -176,7 +190,8 @@ export const useBedStore = create<BedStore>()(
         const newIndex = state.historyIndex - 1;
         set({ 
           beds: [...state.history[newIndex]], 
-          historyIndex: newIndex 
+          historyIndex: newIndex,
+          isDirty: true
         });
       }
     },
@@ -187,7 +202,8 @@ export const useBedStore = create<BedStore>()(
         const newIndex = state.historyIndex + 1;
         set({ 
           beds: [...state.history[newIndex]], 
-          historyIndex: newIndex 
+          historyIndex: newIndex,
+          isDirty: true
         });
       }
     },

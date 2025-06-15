@@ -24,6 +24,8 @@ interface MobileControlsProps {
   onToggle: (visible: boolean) => void;
   isSaving?: boolean;
   showConfirmation?: boolean;
+  onEnterFocus?: (bedId: string) => void;
+  isInFocusMode?: boolean;
 }
 
 export const MobileControls: React.FC<MobileControlsProps> = ({
@@ -40,7 +42,9 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
   isVisible,
   onToggle,
   isSaving = false,
-  showConfirmation = false
+  showConfirmation = false,
+  onEnterFocus,
+  isInFocusMode = false
 }) => {
   const getFABContent = () => {
     if (activeTool === 'pan') {
