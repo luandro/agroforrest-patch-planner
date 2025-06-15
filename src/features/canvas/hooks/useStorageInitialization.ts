@@ -71,6 +71,7 @@ export const useStorageInitialization = () => {
       console.log('✅ Storage initialization completed successfully');
     } catch (error) {
       console.error('❌ Storage initialization failed:', error);
+      initializationRef.current = false; // Reset flag to allow retry
       setState(prev => ({ 
         ...prev, 
         error: error instanceof Error ? error.message : 'Unknown error',

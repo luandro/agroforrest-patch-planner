@@ -40,11 +40,37 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
         const transaction = db.transaction([PATCHES_STORE_NAME], 'readwrite');
         const store = transaction.objectStore(PATCHES_STORE_NAME);
 
-        // Clear and save all patches
-        store.clear();
-        patches.forEach(patch => {
-          store.add(patch);
+        // Get existing patches to identify which ones to remove
+        const getAllRequest = store.getAll();
+        const existingPatches = await new Promise<Patch[]>((resolve, reject) => {
+          getAllRequest.onsuccess = () => resolve(getAllRequest.result || []);
+          getAllRequest.onerror = () => reject(new Error('Failed to get existing patches'));
         });
+
+        // Find patches that are no longer present
+        const currentPatchIds = new Set(patches.map(patch => patch.id));
+        const patchesToDelete = existingPatches.filter(patch => !currentPatchIds.has(patch.id));
+
+        // Remove obsolete patches
+        const deletePromises = patchesToDelete.map(patch => 
+          new Promise<void>((resolve, reject) => {
+            const deleteRequest = store.delete(patch.id);
+            deleteRequest.onsuccess = () => resolve();
+            deleteRequest.onerror = () => reject(deleteRequest.error);
+          })
+        );
+
+        // Add/update current patches using upsert (put)
+        const upsertPromises = patches.map(patch =>
+          new Promise<void>((resolve, reject) => {
+            const putRequest = store.put(patch);
+            putRequest.onsuccess = () => resolve();
+            putRequest.onerror = () => reject(putRequest.error);
+          })
+        );
+
+        // Wait for all operations to complete
+        await Promise.all([...deletePromises, ...upsertPromises]);
 
         await new Promise<void>((resolve, reject) => {
           transaction.oncomplete = () => resolve();

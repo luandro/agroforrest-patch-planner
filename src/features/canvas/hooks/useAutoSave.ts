@@ -43,33 +43,43 @@ export const useAutoSave = ({ debounceMs = 3000 }: UseAutoSaveProps = {}) => {
         const transaction = db.transaction([BEDS_STORE_NAME], 'readwrite');
         const store = transaction.objectStore(BEDS_STORE_NAME);
 
-        // Get all existing beds to filter out old patch beds
+        // Get existing beds for current patch to identify which ones to remove
         const getAllRequest = store.getAll();
         const allBeds = await new Promise<any[]>((resolve, reject) => {
           getAllRequest.onsuccess = () => resolve(getAllRequest.result || []);
           getAllRequest.onerror = () => reject(new Error('Failed to get existing beds'));
         });
 
-        // Filter out beds from current patch
-        const otherPatchBeds = allBeds.filter(bed => bed.patchId !== currentPatchId);
+        // Find beds from current patch that are no longer present
+        const existingPatchBeds = allBeds.filter(bed => bed.patchId === currentPatchId);
+        const currentBedIds = new Set(beds.map(bed => bed.id));
+        const bedsToDelete = existingPatchBeds.filter(bed => !currentBedIds.has(bed.id));
 
-        // Clear and rebuild with all beds
-        store.clear();
+        // Remove obsolete beds from current patch
+        const deletePromises = bedsToDelete.map(bed => 
+          new Promise<void>((resolve, reject) => {
+            const deleteRequest = store.delete(bed.id);
+            deleteRequest.onsuccess = () => resolve();
+            deleteRequest.onerror = () => reject(deleteRequest.error);
+          })
+        );
 
-        // Add beds from other patches
-        otherPatchBeds.forEach(bed => {
-          store.add(bed);
-        });
-
-        // Add current patch beds with patch reference
+        // Add/update current patch beds using upsert (put)
         const bedsWithPatch = beds.map(bed => ({
           ...bed,
           patchId: currentPatchId
         }));
 
-        bedsWithPatch.forEach(bed => {
-          store.add(bed);
-        });
+        const upsertPromises = bedsWithPatch.map(bed =>
+          new Promise<void>((resolve, reject) => {
+            const putRequest = store.put(bed);
+            putRequest.onsuccess = () => resolve();
+            putRequest.onerror = () => reject(putRequest.error);
+          })
+        );
+
+        // Wait for all operations to complete
+        await Promise.all([...deletePromises, ...upsertPromises]);
 
         await new Promise<void>((resolve, reject) => {
           transaction.oncomplete = () => resolve();

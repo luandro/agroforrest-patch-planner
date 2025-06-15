@@ -41,36 +41,46 @@ export const useAutoSavePlants = ({ debounceMs = 5000 }: UseAutoSavePlantsProps 
         const transaction = db.transaction([PLACEMENTS_STORE_NAME], 'readwrite');
         const store = transaction.objectStore(PLACEMENTS_STORE_NAME);
 
-        // Get all existing placements
+        // Get existing placements to identify which ones to remove
         const getAllRequest = store.getAll();
         const allPlacements = await new Promise<PlantPlacement[]>((resolve, reject) => {
           getAllRequest.onsuccess = () => resolve(getAllRequest.result || []);
           getAllRequest.onerror = () => reject(new Error('Failed to get existing placements'));
         });
 
-        // Filter out placements from current patch (using both patchId and bedId for compatibility)
+        // Find placements from current patch that are no longer present
         const currentPatchBedIds = beds.map(bed => bed.id);
-        const otherPatchPlacements = allPlacements.filter(
-          placement => placement.patchId !== currentPatchId && !currentPatchBedIds.includes(placement.bedId)
+        const existingPatchPlacements = allPlacements.filter(
+          placement => placement.patchId === currentPatchId || currentPatchBedIds.includes(placement.bedId)
+        );
+        const currentPlacementIds = new Set(placements.map(placement => placement.id));
+        const placementsToDelete = existingPatchPlacements.filter(placement => !currentPlacementIds.has(placement.id));
+
+        // Remove obsolete placements from current patch
+        const deletePromises = placementsToDelete.map(placement => 
+          new Promise<void>((resolve, reject) => {
+            const deleteRequest = store.delete(placement.id);
+            deleteRequest.onsuccess = () => resolve();
+            deleteRequest.onerror = () => reject(deleteRequest.error);
+          })
         );
 
-        // Clear store and add all placements
-        store.clear();
-
-        // Add placements from other patches
-        otherPatchPlacements.forEach(placement => {
-          store.add(placement);
-        });
-
-        // Add current patch placements with patch ID
+        // Add/update current patch placements using upsert (put)
         const placementsWithPatch = placements.map(placement => ({
           ...placement,
           patchId: currentPatchId
         }));
 
-        placementsWithPatch.forEach(placement => {
-          store.add(placement);
-        });
+        const upsertPromises = placementsWithPatch.map(placement =>
+          new Promise<void>((resolve, reject) => {
+            const putRequest = store.put(placement);
+            putRequest.onsuccess = () => resolve();
+            putRequest.onerror = () => reject(putRequest.error);
+          })
+        );
+
+        // Wait for all operations to complete
+        await Promise.all([...deletePromises, ...upsertPromises]);
 
         await new Promise<void>((resolve, reject) => {
           transaction.oncomplete = () => resolve();

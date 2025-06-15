@@ -99,13 +99,24 @@ export const useAutoSaveOrchestrator = () => {
     try {
       // Save in order: patches -> beds -> plants
       if (patchesDirty) {
-        await new Promise<void>((resolve) => {
+        await new Promise<void>((resolve, reject) => {
           patchAutoSave.manualSave();
-          // Wait for save to complete
+          const timeout = setTimeout(() => reject(new Error('Patches save timeout')), 10000);
+          let attempts = 0;
+          const maxAttempts = 100; // 10 seconds maximum
+          
           const checkSave = () => {
             if (!patchAutoSave.isSaving) {
+              clearTimeout(timeout);
               resolve();
+            } else if (patchAutoSave.saveError) {
+              clearTimeout(timeout);
+              reject(new Error(patchAutoSave.saveError));
+            } else if (attempts >= maxAttempts) {
+              clearTimeout(timeout);
+              reject(new Error('Patches save timeout after maximum attempts'));
             } else {
+              attempts++;
               setTimeout(checkSave, 100);
             }
           };
@@ -119,13 +130,24 @@ export const useAutoSaveOrchestrator = () => {
       }
 
       if (bedsDirty) {
-        await new Promise<void>((resolve) => {
+        await new Promise<void>((resolve, reject) => {
           bedAutoSave.manualSave();
-          // Wait for save to complete
+          const timeout = setTimeout(() => reject(new Error('Beds save timeout')), 10000);
+          let attempts = 0;
+          const maxAttempts = 100; // 10 seconds maximum
+          
           const checkSave = () => {
             if (!bedAutoSave.isSaving) {
+              clearTimeout(timeout);
               resolve();
+            } else if (bedAutoSave.saveError) {
+              clearTimeout(timeout);
+              reject(new Error(bedAutoSave.saveError));
+            } else if (attempts >= maxAttempts) {
+              clearTimeout(timeout);
+              reject(new Error('Beds save timeout after maximum attempts'));
             } else {
+              attempts++;
               setTimeout(checkSave, 100);
             }
           };
@@ -139,13 +161,24 @@ export const useAutoSaveOrchestrator = () => {
       }
 
       if (plantsDirty) {
-        await new Promise<void>((resolve) => {
+        await new Promise<void>((resolve, reject) => {
           plantAutoSave.manualSave();
-          // Wait for save to complete
+          const timeout = setTimeout(() => reject(new Error('Plants save timeout')), 10000);
+          let attempts = 0;
+          const maxAttempts = 100; // 10 seconds maximum
+          
           const checkSave = () => {
             if (!plantAutoSave.isSaving) {
+              clearTimeout(timeout);
               resolve();
+            } else if (plantAutoSave.saveError) {
+              clearTimeout(timeout);
+              reject(new Error(plantAutoSave.saveError));
+            } else if (attempts >= maxAttempts) {
+              clearTimeout(timeout);
+              reject(new Error('Plants save timeout after maximum attempts'));
             } else {
+              attempts++;
               setTimeout(checkSave, 100);
             }
           };
@@ -166,6 +199,10 @@ export const useAutoSaveOrchestrator = () => {
       console.log('✅ Manual save all completed');
     } catch (error) {
       console.error('❌ Manual save all failed:', error);
+      setState(prev => ({
+        ...prev,
+        saveErrors: [...prev.saveErrors, error instanceof Error ? error.message : 'Unknown error']
+      }));
     }
   };
 
@@ -173,14 +210,30 @@ export const useAutoSaveOrchestrator = () => {
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       if (patchesDirty || bedsDirty || plantsDirty) {
-        // Trigger immediate saves
-        patchAutoSave.manualSave();
-        bedAutoSave.manualSave();
-        plantAutoSave.manualSave();
+        // Attempt synchronous save using localStorage as last resort
+        try {
+          const { patches } = usePatchStore.getState();
+          const { beds } = useBedStore.getState();  
+          const { placements } = usePlantPlacementStore.getState();
+          
+          if (patchesDirty) {
+            localStorage.setItem('agroforest_patches', JSON.stringify(patches));
+          }
+          if (bedsDirty) {
+            localStorage.setItem('agroforest_beds', JSON.stringify(beds));
+          }
+          if (plantsDirty) {
+            localStorage.setItem('agroforest_placements', JSON.stringify(placements));
+          }
+          
+          console.log('🚨 Emergency save completed before unload');
+        } catch (error) {
+          console.error('Emergency save failed:', error);
+        }
         
         // Show warning to user
         event.preventDefault();
-        event.returnValue = 'Você tem alterações não salvas. Tem certeza que deseja sair?';
+        event.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
         return event.returnValue;
       }
     };
@@ -189,16 +242,22 @@ export const useAutoSaveOrchestrator = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [patchesDirty, bedsDirty, plantsDirty]);
 
-  // Periodic save for safety (every 10 seconds if dirty for testing)
+  // Adaptive periodic save for safety
   useEffect(() => {
     if (!storageInit.isInitialized) return;
+
+    // Adaptive interval based on data size and user activity
+    const getSaveInterval = () => {
+      const dirtyCount = (patchesDirty ? 1 : 0) + (bedsDirty ? 1 : 0) + (plantsDirty ? 1 : 0);
+      return Math.max(30000, dirtyCount * 10000); // 30s minimum, +10s per dirty store
+    };
 
     const interval = setInterval(() => {
       if (patchesDirty || bedsDirty || plantsDirty) {
         console.log('⏰ Periodic save triggered');
         manualSaveAll();
       }
-    }, 10000); // 10 seconds for testing
+    }, getSaveInterval());
 
     return () => clearInterval(interval);
   }, [storageInit.isInitialized, patchesDirty, bedsDirty, plantsDirty]);
