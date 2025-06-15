@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { 
@@ -7,7 +6,7 @@ import {
 } from '../types/bulkPlacement.types';
 import { PlantSpecies } from '../types/species.types';
 import { Bed } from '../types/bed.types';
-import { useBedStore } from './bedStore';
+import { useBedState, useFocusModeStore } from './bedStore';
 import { usePlantPlacementStore } from './plantPlacementStore';
 import { calculateBulkPlacement, getDefaultBulkConfig } from '../utils/bulkPlacementCalculator';
 
@@ -46,7 +45,8 @@ export const useBulkPlacementStore = create<BulkPlacementStore>()(
 
     // Actions
     initializeBulkPlacement: (species) => {
-      const { beds, focusMode } = useBedStore.getState();
+      const { beds } = useBedState.getState();
+      const { focusMode } = useFocusModeStore.getState();
       const focusedBed = focusMode.isActive && focusMode.bedId
         ? beds.find(b => b.id === focusMode.bedId) || null
         : null;
