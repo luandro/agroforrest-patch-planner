@@ -53,6 +53,7 @@ interface CanvasLayoutProps {
   onEnterFocus?: (bedId: string) => void;
   onExitFocus?: () => void;
   onSelectPlantSpecies?: (species: any) => void;
+  onCancelPlantPlacement?: () => void;
 }
 
 export const CanvasLayout: React.FC<CanvasLayoutProps> = (props) => {

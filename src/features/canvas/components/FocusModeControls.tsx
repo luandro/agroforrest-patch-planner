@@ -9,22 +9,24 @@ interface FocusModeControlsProps {
   onExitFocus: () => void;
   onOpenPlantSelection: () => void;
   onSelectSpecies?: (species: any) => void;
+  onCancelPlacement?: () => void;
 }
 
 export const FocusModeControls: React.FC<FocusModeControlsProps> = ({
   focusedBedId,
   onExitFocus,
   onOpenPlantSelection,
+  onCancelPlacement,
 }) => {
-  const { selectedSpecies, isPlacing, getPlacementsForBed, cancelPlacement } = usePlantPlacementStore();
+  const { selectedSpecies, isPlacing, getPlacementsForBed } = usePlantPlacementStore();
 
   // Get current bed placements for stats
   const bedPlacements = getPlacementsForBed(focusedBedId);
   const plantCount = bedPlacements.length;
 
   const handleCancelPlacement = () => {
-    if (cancelPlacement) {
-      cancelPlacement();
+    if (onCancelPlacement) {
+      onCancelPlacement();
     }
   };
 

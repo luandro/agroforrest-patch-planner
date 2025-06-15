@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ViewControls } from './ViewControls';
 import { FocusModeControls } from './FocusModeControls';
@@ -42,6 +43,7 @@ interface CanvasOverlaysProps {
   onOpenPlantSelection?: () => void;
   onSelectPlantSpecies?: (species: any) => void;
   onEnterFocus?: (bedId: string) => void;
+  onCancelPlantPlacement?: () => void;
 }
 
 export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
@@ -77,7 +79,8 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
   onExitFocus,
   onOpenPlantSelection,
   onSelectPlantSpecies,
-  onEnterFocus
+  onEnterFocus,
+  onCancelPlantPlacement
 }) => {
   const isMobile = useIsMobile();
 
@@ -110,6 +113,7 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
           onExitFocus={onExitFocus}
           onOpenPlantSelection={onOpenPlantSelection || (() => {})}
           onSelectSpecies={onSelectPlantSpecies}
+          onCancelPlacement={onCancelPlantPlacement}
         />
       )}
 
