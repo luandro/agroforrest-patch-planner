@@ -5,6 +5,8 @@ import { CanvasTool } from '../../types/bed.types';
 import { MobileControls } from '../MobileControls';
 import { ViewControls } from '../ViewControls';
 import { SaveStatus } from './SaveStatus';
+import { MobilePlantEditor } from './MobilePlantEditor';
+import { usePlantPlacementStore } from '../../stores/plantPlacementStore';
 
 interface MobileLayoutProps {
   activeTool: CanvasTool;
@@ -26,6 +28,7 @@ interface MobileLayoutProps {
   onZoomOut: () => void;
   onFitAll: () => void;
   onOpenPlantSelection?: () => void;
+  focusedBedId?: string;
 }
 
 export const MobileLayout: React.FC<MobileLayoutProps> = ({
@@ -47,9 +50,42 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   onZoomIn,
   onZoomOut,
   onFitAll,
-  onOpenPlantSelection
+  onOpenPlantSelection,
+  focusedBedId
 }) => {
-  // Don't render mobile layout in focus mode
+  const { selectedPlacementIds, clearSelection } = usePlantPlacementStore();
+  const [showPlantEditor, setShowPlantEditor] = React.useState(false);
+
+  // Show plant editor when plants are selected in focus mode
+  const hasSelectedPlants = selectedPlacementIds.length > 0;
+  
+  React.useEffect(() => {
+    if (isInFocusMode && hasSelectedPlants && !showPlantEditor) {
+      // Small delay to ensure selection is complete
+      const timer = setTimeout(() => {
+        setShowPlantEditor(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isInFocusMode, hasSelectedPlants, showPlantEditor]);
+
+  const handleClosePlantEditor = () => {
+    setShowPlantEditor(false);
+    clearSelection();
+  };
+
+  // Don't render standard mobile layout if plant editor is open
+  if (showPlantEditor && isInFocusMode && focusedBedId) {
+    return (
+      <MobilePlantEditor
+        selectedPlacementIds={selectedPlacementIds}
+        onClose={handleClosePlantEditor}
+        focusedBedId={focusedBedId}
+      />
+    );
+  }
+
+  // Focus mode layout
   if (isInFocusMode) {
     return (
       <div className="fixed top-20 right-4 z-30">

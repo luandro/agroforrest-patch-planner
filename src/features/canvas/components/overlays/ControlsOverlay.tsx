@@ -29,6 +29,7 @@ interface ControlsOverlayProps {
   isMobile: boolean;
   isInFocusMode: boolean;
   showConfirmation: boolean;
+  focusedBedId?: string | null;
 }
 
 export const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
@@ -53,7 +54,8 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
   onOpenPlantSelection,
   isMobile,
   isInFocusMode,
-  showConfirmation
+  showConfirmation,
+  focusedBedId
 }) => {
   return (
     <>
@@ -79,6 +81,7 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
           onZoomOut={handleZoomOut}
           onFitAll={handleFitAll}
           onOpenPlantSelection={onOpenPlantSelection}
+          focusedBedId={focusedBedId || undefined}
         />
       )}
 
