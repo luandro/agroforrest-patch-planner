@@ -34,6 +34,7 @@ export const ConfigurationOverlay: React.FC<ConfigurationOverlayProps> = ({
   hasCollision,
   handleConfirmPlacement,
   handleCancelPlacement,
+  cancelCreation,
   isInFocusMode
 }) => {
   return (
@@ -43,7 +44,7 @@ export const ConfigurationOverlay: React.FC<ConfigurationOverlayProps> = ({
         <BedConfigPanel
           config={bedConfig}
           onConfigChange={updateBedConfig}
-          hasCollision={hasCollision}
+          onClose={cancelCreation}
         />
       )}
 
