@@ -8,6 +8,9 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
+import { BedConfigurationPanel } from './desktop/BedConfigurationPanel';
+import { StatisticsPanel } from './desktop/StatisticsPanel';
+import { ActionsPanel } from './desktop/ActionsPanel';
 
 interface DesktopSidebarProps {
   activeTool: CanvasTool;
@@ -44,15 +47,6 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   beds,
   viewport
 }) => {
-  const totalArea = beds.reduce((total, bed) => {
-    if (bed.shape === 'rectangle') {
-      return total + ((bed.dimensions.length || 0) * (bed.dimensions.width || 0));
-    } else {
-      const radius = bed.dimensions.radius || 0;
-      return total + (Math.PI * radius * radius);
-    }
-  }, 0);
-
   return (
     <div className={cn(
       "fixed top-16 right-0 h-[calc(100vh-4rem)] bg-white/95 backdrop-blur-sm border-l border-gray-200 shadow-xl z-40",
@@ -91,164 +85,28 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
           {/* Bed Configuration - only show for rectangle tool */}
           {activeTool === 'create-rectangle' && (
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Configuração do Canteiro</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-gray-600 mb-2 block">Comprimento</label>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onBedConfigChange({ length: Math.max(0.5, bedConfig.length - 0.5) })}
-                      className="w-8 h-8 p-0"
-                    >
-                      -
-                    </Button>
-                    <div className="flex-1 text-center font-medium">{bedConfig.length}m</div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onBedConfigChange({ length: Math.min(20, bedConfig.length + 0.5) })}
-                      className="w-8 h-8 p-0"
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="text-sm text-gray-600 mb-2 block">Largura</label>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onBedConfigChange({ width: Math.max(0.2, bedConfig.width - 0.2) })}
-                      className="w-8 h-8 p-0"
-                    >
-                      -
-                    </Button>
-                    <div className="flex-1 text-center font-medium">{bedConfig.width}m</div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onBedConfigChange({ width: Math.min(5, bedConfig.width + 0.2) })}
-                      className="w-8 h-8 p-0"
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="text-sm text-gray-600 mb-2 block">Quantidade</label>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onBedConfigChange({ quantity: Math.max(1, bedConfig.quantity - 1) })}
-                      className="w-8 h-8 p-0"
-                    >
-                      -
-                    </Button>
-                    <div className="flex-1 text-center font-medium">{bedConfig.quantity}</div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onBedConfigChange({ quantity: Math.min(10, bedConfig.quantity + 1) })}
-                      className="w-8 h-8 p-0"
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="text-sm text-gray-600 mb-2 block">Espaçamento</label>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onBedConfigChange({ spacing: Math.max(0, bedConfig.spacing - 0.1) })}
-                      className="w-8 h-8 p-0"
-                    >
-                      -
-                    </Button>
-                    <div className="flex-1 text-center font-medium">{bedConfig.spacing.toFixed(1)}m</div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onBedConfigChange({ spacing: Math.min(2, bedConfig.spacing + 0.1) })}
-                      className="w-8 h-8 p-0"
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <BedConfigurationPanel
+              bedConfig={bedConfig}
+              onBedConfigChange={onBedConfigChange}
+            />
           )}
 
           {/* Actions */}
-          <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Ações</h3>
-            <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onUndo}
-                  disabled={!canUndo}
-                  className="w-full"
-                >
-                  ↶ Desfazer
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onRedo}
-                  disabled={!canRedo}
-                  className="w-full"
-                >
-                  ↷ Refazer
-                </Button>
-              </div>
-              
-              {selectedCount > 0 && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={onDeleteSelected}
-                  className="w-full"
-                >
-                  🗑️ Deletar Selecionados ({selectedCount})
-                </Button>
-              )}
-            </div>
-          </div>
+          <ActionsPanel
+            onUndo={onUndo}
+            onRedo={onRedo}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onDeleteSelected={onDeleteSelected}
+            selectedCount={selectedCount}
+          />
 
           {/* Statistics */}
-          <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Estatísticas</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Total de Canteiros:</span>
-                <span className="font-medium">{beds.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Selecionados:</span>
-                <span className="font-medium">{selectedCount}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Área Total:</span>
-                <span className="font-medium">{totalArea.toFixed(1)}m²</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Zoom:</span>
-                <span className="font-medium">{viewport.zoom.toFixed(1)}x</span>
-              </div>
-            </div>
-          </div>
+          <StatisticsPanel
+            beds={beds}
+            selectedCount={selectedCount}
+            viewport={viewport}
+          />
 
           {/* Save Status */}
           {isSaving && (
