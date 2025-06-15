@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Trash2, Info, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -58,6 +57,27 @@ export const FocusModePlantTool: React.FC<FocusModePlantToolProps> = ({
   const handleEditSelected = () => {
     setShowEditPanel(true);
   };
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!hasSelection) return;
+      
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        handleDeleteSelected();
+      } else if (e.key === 'F2') {
+        e.preventDefault();
+        handleEditSelected();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        onClearSelection();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [hasSelection, onClearSelection]);
 
   const getCategoryBadgeColor = (category: string) => {
     switch (category) {
@@ -120,7 +140,7 @@ export const FocusModePlantTool: React.FC<FocusModePlantToolProps> = ({
             )}
           </div>
 
-          {/* Selection Actions */}
+          {/* Enhanced Selection Actions */}
           {hasSelection && (
             <div className="space-y-3">
               <div className="text-sm text-gray-600">
@@ -146,6 +166,34 @@ export const FocusModePlantTool: React.FC<FocusModePlantToolProps> = ({
                   Deletar
                 </Button>
               </div>
+
+              {/* Quick Actions for Multi-Select */}
+              {selectedPlacementIds.length > 1 && (
+                <div className="grid grid-cols-2 gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => {
+                      // TODO: Select all same species
+                      console.log('Select same species');
+                    }}
+                  >
+                    Mesma Espécie
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => {
+                      // TODO: Adjust spacing proportionally
+                      console.log('Adjust spacing');
+                    }}
+                  >
+                    Ajustar Espaço
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 
@@ -236,21 +284,25 @@ export const FocusModePlantTool: React.FC<FocusModePlantToolProps> = ({
             </div>
           )}
 
-          {/* Instructions */}
+          {/* Enhanced Instructions */}
           <div className="text-xs text-gray-500 space-y-1">
             <div className="flex items-start gap-2">
               <Info className="w-3 h-3 mt-0.5 text-blue-500" />
               <div>
                 {hasSelection ? (
                   <>
-                    <p>• Use os botões acima para editar ou deletar</p>
-                    <p>• Clique fora para desselecionar</p>
+                    <p>• <kbd className="px-1 py-0.5 bg-gray-200 rounded">F2</kbd> para editar</p>
+                    <p>• <kbd className="px-1 py-0.5 bg-gray-200 rounded">Del</kbd> para deletar</p>
+                    <p>• <kbd className="px-1 py-0.5 bg-gray-200 rounded">Esc</kbd> para desselecionar</p>
                     <p>• Ctrl+Click para seleção múltipla</p>
+                    <p>• Arrastar para seleção em área</p>
                   </>
                 ) : (
                   <>
                     <p>• Selecione uma espécie e clique no canteiro para plantar</p>
                     <p>• Clique nas plantas para selecioná-las</p>
+                    <p>• Duplo-clique para edição rápida</p>
+                    <p>• Botão direito para menu de contexto</p>
                     <p>• As plantas se encaixam numa grade de 10cm</p>
                   </>
                 )}

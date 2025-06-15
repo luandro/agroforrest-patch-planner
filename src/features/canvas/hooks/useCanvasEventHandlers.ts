@@ -41,6 +41,12 @@ export const useCanvasEventHandlers = ({
   const isMobile = useIsMobile();
   const { isPlacing } = usePlantPlacementStore();
   const [hoveredPlacementId, setHoveredPlacementId] = useState<string | null>(null);
+  const [contextMenuState, setContextMenuState] = useState<{
+    isOpen: boolean;
+    placementId: string | null;
+    x: number;
+    y: number;
+  }>({ isOpen: false, placementId: null, x: 0, y: 0 });
   
   // Plant placement hook
   const {
@@ -74,6 +80,9 @@ export const useCanvasEventHandlers = ({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     const isMultiSelect = e.shiftKey || e.ctrlKey;
+
+    // Close any open context menu
+    setContextMenuState({ isOpen: false, placementId: null, x: 0, y: 0 });
 
     // Handle focus mode interactions
     if (focusedBed) {
@@ -127,7 +136,7 @@ export const useCanvasEventHandlers = ({
         handlePlacementPreview(x, y);
         return;
       } else {
-        // Plant hover detection
+        // Plant hover detection for visual feedback
         const hoveredPlant = getPlantAtCanvasPosition(x, y);
         setHoveredPlacementId(hoveredPlant?.id || null);
         
@@ -198,11 +207,12 @@ export const useCanvasEventHandlers = ({
       if (isPlacing) {
         return; // No double-click action in planting mode
       } else {
-        // Double-click plant to edit
+        // Double-click plant to enter quick edit mode
         const plant = getPlantAtCanvasPosition(x, y);
         if (plant) {
-          // TODO: Open quick edit mode
-          console.log('Double-click edit plant:', plant);
+          // Select the plant and trigger edit mode
+          handlePlantSelection(x, y, false);
+          // The edit panel will appear automatically when plant is selected
           return;
         }
       }
@@ -222,16 +232,41 @@ export const useCanvasEventHandlers = ({
     placeBed, 
     focusedBed, 
     isPlacing,
-    getPlantAtCanvasPosition
+    getPlantAtCanvasPosition,
+    handlePlantSelection
   ]);
+
+  // Handle right-click context menu
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (!focusedBed || isPlacing) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const plant = getPlantAtCanvasPosition(x, y);
+    if (plant) {
+      setContextMenuState({
+        isOpen: true,
+        placementId: plant.id,
+        x: e.clientX,
+        y: e.clientY
+      });
+    }
+  }, [focusedBed, isPlacing, getPlantAtCanvasPosition]);
 
   return {
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
     handleDoubleClick,
+    handleContextMenu,
     hoveredPlacementId,
     selectedPlacementIds,
-    selectionArea
+    selectionArea,
+    contextMenuState,
+    setContextMenuState
   };
 };

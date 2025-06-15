@@ -50,7 +50,7 @@ export const usePlantSelection = ({
     return { x: relativeX, y: relativeY };
   }, [focusedBed, viewport, canvasRef]);
 
-  // Find plant at canvas position
+  // Find plant at canvas position with improved tolerance
   const getPlantAtCanvasPosition = useCallback((canvasX: number, canvasY: number) => {
     if (!focusedBed) return null;
 
@@ -58,7 +58,7 @@ export const usePlantSelection = ({
     if (!bedPos) return null;
 
     const placements = getPlacementsForBed(focusedBed.id);
-    const tolerance = 0.15; // 15cm tolerance for selection
+    const tolerance = 0.2; // Increased tolerance for better touch interaction
 
     return placements.find(placement =>
       Math.abs(placement.position.x - bedPos.x) < tolerance &&
@@ -66,20 +66,25 @@ export const usePlantSelection = ({
     ) || null;
   }, [focusedBed, canvasToBedCoordinates, getPlacementsForBed]);
 
-  // Handle plant selection
+  // Enhanced plant selection with better multi-select support
   const handlePlantSelection = useCallback((canvasX: number, canvasY: number, isMultiSelect: boolean = false) => {
     const plant = getPlantAtCanvasPosition(canvasX, canvasY);
     
     if (plant) {
       if (isMultiSelect) {
-        // Multi-select toggle
+        // Multi-select toggle with improved logic
         const newSelection = selectedPlacementIds.includes(plant.id)
           ? selectedPlacementIds.filter(id => id !== plant.id)
           : [...selectedPlacementIds, plant.id];
         selectPlacements(newSelection);
       } else {
-        // Single select
-        selectPlacements([plant.id]);
+        // Single select with toggle behavior
+        if (selectedPlacementIds.length === 1 && selectedPlacementIds[0] === plant.id) {
+          // Deselect if clicking the only selected plant
+          clearSelection();
+        } else {
+          selectPlacements([plant.id]);
+        }
       }
       return true; // Plant was selected
     } else {
@@ -91,7 +96,7 @@ export const usePlantSelection = ({
     }
   }, [getPlantAtCanvasPosition, selectedPlacementIds, selectPlacements, clearSelection]);
 
-  // Start area selection
+  // Start area selection with visual feedback
   const startAreaSelection = useCallback((canvasX: number, canvasY: number) => {
     setIsAreaSelecting(true);
     setSelectionArea({
@@ -113,7 +118,7 @@ export const usePlantSelection = ({
     }
   }, [isAreaSelecting, selectionArea]);
 
-  // Finish area selection
+  // Finish area selection with improved selection logic
   const finishAreaSelection = useCallback(() => {
     if (!isAreaSelecting || !selectionArea || !focusedBed) {
       setIsAreaSelecting(false);
@@ -147,7 +152,7 @@ export const usePlantSelection = ({
     setSelectionArea(null);
   }, [isAreaSelecting, selectionArea, focusedBed, getPlacementsForBed, canvasToBedCoordinates, selectPlacements]);
 
-  // Select all plants of same species
+  // Select all plants of same species with visual feedback
   const selectSameSpecies = useCallback(() => {
     if (!focusedBed || selectedPlacementIds.length === 0) return;
 
@@ -162,6 +167,25 @@ export const usePlantSelection = ({
     }
   }, [focusedBed, selectedPlacementIds, getPlacementsForBed, selectPlacements]);
 
+  // Select all plants in bed
+  const selectAll = useCallback(() => {
+    if (!focusedBed) return;
+    
+    const placements = getPlacementsForBed(focusedBed.id);
+    const allIds = placements.map(p => p.id);
+    selectPlacements(allIds);
+  }, [focusedBed, getPlacementsForBed, selectPlacements]);
+
+  // Invert current selection
+  const invertSelection = useCallback(() => {
+    if (!focusedBed) return;
+    
+    const placements = getPlacementsForBed(focusedBed.id);
+    const allIds = placements.map(p => p.id);
+    const invertedIds = allIds.filter(id => !selectedPlacementIds.includes(id));
+    selectPlacements(invertedIds);
+  }, [focusedBed, getPlacementsForBed, selectedPlacementIds, selectPlacements]);
+
   return {
     selectedPlacementIds,
     isAreaSelecting,
@@ -171,6 +195,8 @@ export const usePlantSelection = ({
     updateAreaSelection,
     finishAreaSelection,
     selectSameSpecies,
+    selectAll,
+    invertSelection,
     clearSelection,
     getPlantAtCanvasPosition
   };

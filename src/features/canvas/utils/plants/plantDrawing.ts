@@ -18,23 +18,33 @@ export const drawPlant = (
 
   const { color, radius, symbol } = getPlantVisuals(species);
 
-  // Selection glow effect
+  // Enhanced selection glow effect
   if (isSelected) {
     ctx.shadowColor = '#0EA5E9';
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 12;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
   } else if (isHovered) {
-    ctx.shadowColor = '#94A3B8';
-    ctx.shadowBlur = 4;
+    ctx.shadowColor = '#64748B';
+    ctx.shadowBlur = 6;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
   }
 
-  // Draw plant circle
-  ctx.fillStyle = isSelected ? '#0EA5E9' : color;
-  ctx.strokeStyle = isSelected ? '#0284C7' : (isHovered ? '#64748B' : '#065F46');
-  ctx.lineWidth = isSelected ? 4 : (isHovered ? 3 : 2);
+  // Draw plant circle with enhanced states
+  if (isSelected) {
+    ctx.fillStyle = '#0EA5E9';
+    ctx.strokeStyle = '#0284C7';
+    ctx.lineWidth = 4;
+  } else if (isHovered) {
+    ctx.fillStyle = color;
+    ctx.strokeStyle = '#64748B';
+    ctx.lineWidth = 3;
+  } else {
+    ctx.fillStyle = color;
+    ctx.strokeStyle = '#065F46';
+    ctx.lineWidth = 2;
+  }
   
   if (isPreview) {
     ctx.setLineDash([3, 3]);
@@ -64,14 +74,14 @@ export const drawPlant = (
     ctx.fillText(symbol, screenX, screenY);
   }
 
-  // Draw selection handles for editing
+  // Draw enhanced selection handles for editing
   if (isSelected) {
-    const handleSize = 4;
-    const handleOffset = radius + 6;
+    const handleSize = 5;
+    const handleOffset = radius + 8;
     
     ctx.fillStyle = '#0EA5E9';
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 2;
     ctx.setLineDash([]);
 
     // Draw selection handles at cardinal points
@@ -90,20 +100,32 @@ export const drawPlant = (
     });
   }
 
-  // Hover highlight ring
+  // Enhanced hover highlight ring
   if (isHovered && !isSelected) {
     ctx.beginPath();
-    ctx.arc(screenX, screenY, radius + 3, 0, 2 * Math.PI);
+    ctx.arc(screenX, screenY, radius + 4, 0, 2 * Math.PI);
     ctx.strokeStyle = '#94A3B8';
     ctx.lineWidth = 2;
-    ctx.setLineDash([2, 2]);
+    ctx.setLineDash([3, 3]);
+    ctx.stroke();
+  }
+
+  // Selection count badge for multi-select (if needed)
+  if (isSelected) {
+    // This could be enhanced to show selection count
+    ctx.beginPath();
+    ctx.arc(screenX + radius - 3, screenY - radius + 3, 6, 0, 2 * Math.PI);
+    ctx.fillStyle = '#0EA5E9';
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
     ctx.stroke();
   }
 
   ctx.restore();
 };
 
-// Draw selection area rectangle
+// Enhanced selection area rectangle with better visual feedback
 export const drawSelectionArea = (
   ctx: CanvasRenderingContext2D,
   startX: number,
@@ -113,11 +135,11 @@ export const drawSelectionArea = (
 ) => {
   ctx.save();
   
-  // Selection rectangle
+  // Selection rectangle with enhanced styling
   ctx.strokeStyle = '#0EA5E9';
-  ctx.fillStyle = 'rgba(14, 165, 233, 0.1)';
+  ctx.fillStyle = 'rgba(14, 165, 233, 0.15)';
   ctx.lineWidth = 2;
-  ctx.setLineDash([5, 5]);
+  ctx.setLineDash([8, 4]);
   
   const x = Math.min(startX, endX);
   const y = Math.min(startY, endY);
@@ -126,6 +148,23 @@ export const drawSelectionArea = (
   
   ctx.fillRect(x, y, width, height);
   ctx.strokeRect(x, y, width, height);
+  
+  // Add corner indicators for better UX
+  const cornerSize = 8;
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#0EA5E9';
+  
+  // Draw corner squares
+  const corners = [
+    { x, y },
+    { x: x + width - cornerSize, y },
+    { x, y: y + height - cornerSize },
+    { x: x + width - cornerSize, y: y + height - cornerSize }
+  ];
+  
+  corners.forEach(corner => {
+    ctx.fillRect(corner.x, corner.y, cornerSize, cornerSize);
+  });
   
   ctx.restore();
 };

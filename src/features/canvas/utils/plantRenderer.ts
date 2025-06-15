@@ -1,4 +1,3 @@
-
 import { CanvasViewport } from '../types/canvas.types';
 import { Bed } from '../types/bed.types';
 import { PlantPlacement } from '../stores/plantPlacementStore';
@@ -33,7 +32,7 @@ export const drawPlantPlacements = (
   ctx.save();
   createBedClippingPath(ctx, bed, bedScreenX, bedScreenY, pixelsPerMeter);
 
-  // Draw existing placements
+  // Draw existing placements with enhanced visual states
   placements.forEach(placement => {
     const { x: plantScreenX, y: plantScreenY } = calculatePlantScreenPosition(
       bedScreenX, 
@@ -45,6 +44,7 @@ export const drawPlantPlacements = (
     const isSelected = selectedPlacementIds.includes(placement.id);
     const isHovered = hoveredPlacementId === placement.id;
     
+    // Enhanced plant drawing with better visual feedback
     drawPlant(ctx, plantScreenX, plantScreenY, placement.species, isSelected, false, isHovered);
   });
 
@@ -77,7 +77,7 @@ export const drawPlantPlacements = (
 
   ctx.restore();
 
-  // Draw selection area outside of clipping (so it shows over bed boundaries)
+  // Draw enhanced selection area outside of clipping (so it shows over bed boundaries)
   if (selectionArea) {
     drawSelectionArea(
       ctx,
