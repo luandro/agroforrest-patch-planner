@@ -1,3 +1,4 @@
+
 import { useCallback, useRef } from 'react';
 
 interface UseCanvasLayoutPropsParams {
@@ -93,39 +94,33 @@ export const useCanvasLayoutProps = (params: UseCanvasLayoutPropsParams) => {
     handleExitFocus
   } = params;
 
-  // Stable (memoized) event handlers: keep their reference across renders using useRef
-  // so dependency list is always [] which prevents recreating them and triggering render loops.
-  // This is important for parent memoized components!
+  // Use refs to maintain stable references to functions
   const zoomToRef = useRef(zoomTo);
-  zoomToRef.current = zoomTo;
-
   const fitAllBedsRef = useRef(fitAllBeds);
+  const viewportRef = useRef(viewport);
+  
+  // Update refs on each render
+  zoomToRef.current = zoomTo;
   fitAllBedsRef.current = fitAllBeds;
+  viewportRef.current = viewport;
 
-  // These handlers only update when minZoom, maxZoom, or the referenced function changes
+  // Stable zoom handlers that don't depend on changing values
   const handleZoomIn = useCallback(() => {
-    const newZoom = Math.min(maxZoom, viewport.zoom * 1.2);
+    const currentZoom = viewportRef.current.zoom;
+    const newZoom = Math.min(maxZoom, currentZoom * 1.2);
     zoomToRef.current(newZoom);
-  }, [maxZoom, viewport.zoom]);
+  }, [maxZoom]);
 
   const handleZoomOut = useCallback(() => {
-    const newZoom = Math.max(minZoom, viewport.zoom / 1.2);
+    const currentZoom = viewportRef.current.zoom;
+    const newZoom = Math.max(minZoom, currentZoom / 1.2);
     zoomToRef.current(newZoom);
-  }, [minZoom, viewport.zoom]);
+  }, [minZoom]);
 
-  // This should never be recreated unless fitAllBeds changes, but with ref, stays stable
+  // Stable fit all handler
   const handleFitAll = useCallback(() => {
     fitAllBedsRef.current();
   }, []);
-
-  // Debug: warn if handlers are being recreated often
-  if (process.env.NODE_ENV === 'development') {
-    // eslint-disable-next-line no-console
-    console.debug(
-      '[useCanvasLayoutProps] render',
-      { handleZoomIn, handleZoomOut, handleFitAll }
-    );
-  }
 
   return {
     viewport,
