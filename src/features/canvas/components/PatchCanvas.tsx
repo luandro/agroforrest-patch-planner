@@ -12,6 +12,7 @@ import { CanvasLayout } from './CanvasLayout';
 export const PatchCanvas: React.FC<PatchCanvasProps> = ({
   initialViewport,
   onViewportChange,
+  onOpenPlantSelection,
   gridSize = 1,
   minZoom = 0.5,
   maxZoom = 5
@@ -188,6 +189,7 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
       isSaving={isSaving}
       cancelCreation={cancelCreation}
       gridSize={gridSize}
+      onOpenPlantSelection={onOpenPlantSelection}
     />
   );
 };

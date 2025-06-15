@@ -23,6 +23,7 @@ export interface CanvasGesture {
 export interface PatchCanvasProps {
   initialViewport?: Partial<CanvasViewport>;
   onViewportChange?: (viewport: CanvasViewport) => void;
+  onOpenPlantSelection?: () => void;
   gridSize?: number; // meters per grid square, default 1
   minZoom?: number;  // default 0.5
   maxZoom?: number;  // default 5
