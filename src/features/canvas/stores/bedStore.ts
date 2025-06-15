@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo } from 'react';
 import { useBedState } from './bedState';
 import { useFocusModeStore } from './focusModeStore';
@@ -47,7 +46,7 @@ export const useBedStore = () => {
     // historyStore.resetHistory();
 
     return unsubscribe;
-  }, [historyStore, activePatchId]);
+  }, [historyStore.addToHistory, activePatchId]);
 
 
   // Enhanced actions that are now patch-aware
