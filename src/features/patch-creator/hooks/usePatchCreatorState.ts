@@ -18,7 +18,7 @@ export const usePatchCreatorState = () => {
   const isMobile = useIsMobile();
 
   // Initialize auto-save for patches at application level
-  const { isSaving: isSavingPatches, saveError: patchSaveError } = useAutoSavePatches();
+  const { isSaving: isSavingPatches, saveError: patchSaveError, manualSave: manualSavePatches } = useAutoSavePatches();
 
   // Debug logging for initialization
   useEffect(() => {
@@ -74,6 +74,11 @@ export const usePatchCreatorState = () => {
     console.log('Exited focus mode from header button');
   };
 
+  const handleManualSave = () => {
+    console.log('🔧 Manual save triggered from UI');
+    manualSavePatches();
+  };
+
   // FPS counter for development
   useEffect(() => {
     if (process.env.NODE_ENV !== 'development') return;
@@ -121,6 +126,7 @@ export const usePatchCreatorState = () => {
     handleSelectSpecies,
     handleExitFocus,
     setTimelineActive,
+    handleManualSave,
     // Expose auto-save status for debugging
     isSavingPatches,
     patchSaveError

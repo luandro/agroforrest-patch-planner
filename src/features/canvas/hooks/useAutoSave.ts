@@ -8,7 +8,7 @@ interface UseAutoSaveProps {
 }
 
 const DB_NAME = 'AgroForestDB';
-const DB_VERSION = 3; // Updated to match patch version
+const DB_VERSION = 3;
 const BEDS_STORE_NAME = 'beds';
 const PLACEMENTS_STORE_NAME = 'placements';
 const PATCHES_STORE_NAME = 'patches';
@@ -39,7 +39,7 @@ const openDB = () => {
   });
 };
 
-export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
+export const useAutoSave = ({ debounceMs = 3000 }: UseAutoSaveProps = {}) => {
   const { beds, isDirty, markClean, loadBeds } = useBedStore();
   const { currentPatchId } = usePatchStore();
   const [isSaving, setIsSaving] = useState(false);
@@ -53,7 +53,10 @@ export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
 
   // Save beds with patch ID
   const saveBeds = async () => {
-    if (!isDirty || !currentPatchId) return;
+    if (!isDirty || !currentPatchId) {
+      console.log('⏭️ Skipping beds save - isDirty:', isDirty, 'currentPatchId:', currentPatchId);
+      return;
+    }
     
     try {
       setIsSaving(true);
@@ -64,10 +67,25 @@ export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
       const transaction = db.transaction([BEDS_STORE_NAME], 'readwrite');
       const store = transaction.objectStore(BEDS_STORE_NAME);
       
-      // Clear all beds first
+      // Get all existing beds to filter out old patch beds
+      const getAllRequest = store.getAll();
+      const allBeds = await new Promise<any[]>((resolve, reject) => {
+        getAllRequest.onsuccess = () => resolve(getAllRequest.result || []);
+        getAllRequest.onerror = () => reject(new Error('Failed to get existing beds'));
+      });
+
+      // Filter out beds from current patch
+      const otherPatchBeds = allBeds.filter(bed => bed.patchId !== currentPatchId);
+      
+      // Clear and rebuild with all beds
       store.clear();
       
-      // Add beds with patch reference
+      // Add beds from other patches
+      otherPatchBeds.forEach(bed => {
+        store.add(bed);
+      });
+      
+      // Add current patch beds with patch reference
       const bedsWithPatch = beds.map(bed => ({
         ...bed,
         patchId: currentPatchId
@@ -97,7 +115,11 @@ export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
 
   // Load beds for current patch
   const loadBedsFromStorage = async () => {
-    if (!currentPatchId) return;
+    if (!currentPatchId) {
+      console.log('⏭️ No current patch, clearing beds');
+      loadBeds([]);
+      return;
+    }
     
     try {
       console.log('📂 Loading beds from IndexedDB for patch:', currentPatchId);
@@ -152,11 +174,7 @@ export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
 
   // Load beds when patch changes
   useEffect(() => {
-    if (currentPatchId) {
-      loadBedsFromStorage();
-    } else {
-      loadBeds([]);
-    }
+    loadBedsFromStorage();
   }, [currentPatchId]);
 
   const manualSave = () => {

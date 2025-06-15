@@ -12,14 +12,16 @@ interface PatchState {
 
 interface PatchActions {
   createPatch: (data: PatchCreationData) => Promise<string>;
-  loadPatches: (patches: Patch[]) => void;
+  loadPatches: (patches: Patch[], markDirty?: boolean) => void;
   setCurrentPatch: (patchId: string) => void;
   updatePatch: (id: string, updates: Partial<Patch>) => void;
   deletePatch: (id: string) => void;
   duplicatePatch: (sourceId: string, newName: string) => Promise<string>;
   getCurrentPatch: () => Patch | null;
   markClean: () => void;
+  markDirty: () => void;
   setLoading: (loading: boolean) => void;
+  manualSave: () => void;
 }
 
 interface PatchStore extends PatchState, PatchActions {}
@@ -55,17 +57,20 @@ export const usePatchStore = create<PatchStore>()(
         isDirty: true
       }));
 
+      console.log('✅ Patch created and marked dirty:', newPatch.id);
       return newPatch.id;
     },
 
-    loadPatches: (patches) => {
-      set({ patches, isDirty: false });
+    loadPatches: (patches, markDirty = false) => {
+      set({ patches, isDirty: markDirty });
+      console.log('📂 Patches loaded, isDirty:', markDirty, 'count:', patches.length);
     },
 
     setCurrentPatch: (patchId) => {
       set({ currentPatchId: patchId });
       // Store current patch in localStorage
       localStorage.setItem('currentPatchId', patchId);
+      console.log('🎯 Current patch set:', patchId);
     },
 
     updatePatch: (id, updates) => {
@@ -77,6 +82,7 @@ export const usePatchStore = create<PatchStore>()(
         ),
         isDirty: true
       }));
+      console.log('📝 Patch updated and marked dirty:', id);
     },
 
     deletePatch: (id) => {
@@ -92,6 +98,7 @@ export const usePatchStore = create<PatchStore>()(
           isDirty: true
         };
       });
+      console.log('🗑️ Patch deleted and marked dirty:', id);
     },
 
     duplicatePatch: async (sourceId, newName) => {
@@ -111,6 +118,7 @@ export const usePatchStore = create<PatchStore>()(
         isDirty: true
       }));
 
+      console.log('📄 Patch duplicated and marked dirty:', duplicatedPatch.id);
       return duplicatedPatch.id;
     },
 
@@ -119,7 +127,25 @@ export const usePatchStore = create<PatchStore>()(
       return state.patches.find(p => p.id === state.currentPatchId) || null;
     },
 
-    markClean: () => set({ isDirty: false }),
-    setLoading: (loading) => set({ isLoading: loading })
+    markClean: () => {
+      set({ isDirty: false });
+      console.log('✅ Patch store marked clean');
+    },
+
+    markDirty: () => {
+      set({ isDirty: true });
+      console.log('💾 Patch store marked dirty');
+    },
+
+    setLoading: (loading) => set({ isLoading: loading }),
+
+    manualSave: () => {
+      const state = get();
+      if (state.isDirty) {
+        console.log('🔧 Manual save triggered for patches');
+        // The auto-save hook will handle the actual saving
+        set({ isDirty: true }); // Force trigger auto-save
+      }
+    }
   }))
 );

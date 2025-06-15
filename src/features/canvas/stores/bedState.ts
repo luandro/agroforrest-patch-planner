@@ -31,6 +31,7 @@ export const useBedState = create<BedStateStore>()(
       
       const newBeds = [...state.beds, bedWithPatch];
       set({ beds: newBeds, isDirty: true });
+      console.log('🛏️ Bed added and marked dirty:', bed.id);
     },
 
     updateBed: (id, updates) => {
@@ -39,6 +40,7 @@ export const useBedState = create<BedStateStore>()(
         bed.id === id ? { ...bed, ...updates } : bed
       );
       set({ beds: newBeds, isDirty: true });
+      console.log('📝 Bed updated and marked dirty:', id);
     },
 
     removeBeds: (ids) => {
@@ -50,6 +52,7 @@ export const useBedState = create<BedStateStore>()(
         selectedBedIds: newSelectedIds,
         isDirty: true
       });
+      console.log('🗑️ Beds removed and marked dirty:', ids);
     },
 
     selectBeds: (ids) => set({ selectedBedIds: ids }),
@@ -67,9 +70,15 @@ export const useBedState = create<BedStateStore>()(
 
     setTool: (tool) => set({ tool }),
     
-    loadBeds: (beds) => set({ beds, isDirty: false }),
+    loadBeds: (beds) => {
+      set({ beds, isDirty: false });
+      console.log('📂 Beds loaded, count:', beds.length);
+    },
     
-    markClean: () => set({ isDirty: false }),
+    markClean: () => {
+      set({ isDirty: false });
+      console.log('✅ Bed store marked clean');
+    },
 
     // Internal methods
     _setBeds: (beds) => set({ beds }),

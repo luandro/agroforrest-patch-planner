@@ -4,7 +4,7 @@ import { usePatchStore } from '../stores/patchStore';
 import { Patch } from '../types/patch.types';
 
 const DB_NAME = 'AgroForestDB';
-const DB_VERSION = 3; // Increment version for new patches store
+const DB_VERSION = 3;
 const PATCHES_STORE_NAME = 'patches';
 
 interface UseAutoSavePatchesProps {
@@ -41,11 +41,12 @@ const openDB = () => {
   });
 };
 
-export const useAutoSavePatches = ({ debounceMs = 5000 }: UseAutoSavePatchesProps = {}) => {
-  const { patches, isDirty, markClean, loadPatches, setCurrentPatch } = usePatchStore();
+export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProps = {}) => {
+  const { patches, isDirty, markClean, loadPatches, setCurrentPatch, createPatch } = usePatchStore();
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout>();
+  const isInitialized = useRef(false);
 
   // Debug logging for hook initialization
   useEffect(() => {
@@ -96,21 +97,7 @@ export const useAutoSavePatches = ({ debounceMs = 5000 }: UseAutoSavePatchesProp
       
       if (!db.objectStoreNames.contains(PATCHES_STORE_NAME)) {
         console.log('🆕 Patches store does not exist yet. Creating default patch.');
-        
-        // Create a default patch
-        const defaultPatch: Patch = {
-          id: `patch-${Date.now()}`,
-          name: 'Meu Primeiro Canteiro',
-          description: 'Canteiro principal para experimentos agroflorestais',
-          size: { width: 20, height: 20 },
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-          lastViewport: { zoom: 1, centerX: 0, centerY: 0 }
-        };
-        
-        loadPatches([defaultPatch]);
-        setCurrentPatch(defaultPatch.id);
-        console.log('✅ Default patch created:', defaultPatch.id);
+        await createDefaultPatch();
         return;
       }
 
@@ -128,22 +115,10 @@ export const useAutoSavePatches = ({ debounceMs = 5000 }: UseAutoSavePatchesProp
 
       if (loadedPatches.length === 0) {
         console.log('🆕 No patches found. Creating default patch.');
-        // Create default patch if none exist
-        const defaultPatch: Patch = {
-          id: `patch-${Date.now()}`,
-          name: 'Meu Primeiro Canteiro',
-          description: 'Canteiro principal para experimentos agroflorestais',
-          size: { width: 20, height: 20 },
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-          lastViewport: { zoom: 1, centerX: 0, centerY: 0 }
-        };
-        
-        loadPatches([defaultPatch]);
-        setCurrentPatch(defaultPatch.id);
-        console.log('✅ Default patch created:', defaultPatch.id);
+        await createDefaultPatch();
       } else {
-        loadPatches(loadedPatches);
+        // Load patches without marking dirty
+        loadPatches(loadedPatches, false);
         
         // Restore last active patch
         const savedCurrentPatchId = localStorage.getItem('currentPatchId');
@@ -159,31 +134,45 @@ export const useAutoSavePatches = ({ debounceMs = 5000 }: UseAutoSavePatchesProp
       console.log('✅ Patches loaded successfully:', loadedPatches.length);
     } catch (error) {
       console.error('❌ Failed to load patches:', error);
-      
-      // Create default patch on error
-      const defaultPatch: Patch = {
-        id: `patch-${Date.now()}`,
-        name: 'Meu Primeiro Canteiro',
-        description: 'Erro ao carregar - canteiro de recuperação',
-        size: { width: 20, height: 20 },
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        lastViewport: { zoom: 1, centerX: 0, centerY: 0 }
-      };
-      
-      loadPatches([defaultPatch]);
-      setCurrentPatch(defaultPatch.id);
-      console.log('🆘 Created recovery patch after error:', defaultPatch.id);
+      await createDefaultPatch();
     }
   };
 
-  // Auto-save effect
+  const createDefaultPatch = async () => {
+    try {
+      const defaultPatchId = await createPatch({
+        name: 'Meu Primeiro Canteiro',
+        description: 'Canteiro principal para experimentos agroflorestais',
+        size: { width: 20, height: 20 }
+      });
+      
+      console.log('✅ Default patch created:', defaultPatchId);
+      
+      // Immediately save the new default patch
+      setTimeout(() => {
+        savePatches();
+      }, 100);
+    } catch (error) {
+      console.error('❌ Failed to create default patch:', error);
+      setSaveError('Failed to create default patch');
+    }
+  };
+
+  // Auto-save effect with immediate save for new patches
   useEffect(() => {
     if (!isDirty) return;
 
     console.log('⏰ Scheduling patch auto-save in', debounceMs, 'ms');
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
+    }
+
+    // Immediate save for first-time patch creation
+    if (patches.length === 1 && !isInitialized.current) {
+      console.log('🚀 Immediate save for new default patch');
+      savePatches();
+      isInitialized.current = true;
+      return;
     }
 
     timeoutRef.current = setTimeout(() => {
@@ -199,11 +188,14 @@ export const useAutoSavePatches = ({ debounceMs = 5000 }: UseAutoSavePatchesProp
 
   // Load patches on mount
   useEffect(() => {
-    loadPatchesFromStorage();
+    if (!isInitialized.current) {
+      loadPatchesFromStorage();
+      isInitialized.current = true;
+    }
   }, []);
 
   const manualSave = () => {
-    console.log('🔧 Manual save triggered');
+    console.log('🔧 Manual patch save triggered');
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
