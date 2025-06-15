@@ -1,4 +1,3 @@
-
 import { useRef, useCallback, useEffect } from 'react';
 import { CanvasGesture, CanvasPoint } from '../types/canvas.types';
 
@@ -7,7 +6,7 @@ interface UseCanvasGesturesProps {
   onZoom: (zoom: number, centerX?: number, centerY?: number) => void;
   canvasRef: React.RefObject<HTMLCanvasElement>;
   currentZoom: number;
-  enabled?: boolean; // Add enabled prop to control gesture handling
+  enabled?: boolean;
 }
 
 export const useCanvasGestures = ({
@@ -45,24 +44,20 @@ export const useCanvasGestures = ({
     };
   }, [canvasRef]);
 
-  // Touch event handlers
+  // Touch event handlers with improved stability
   const handleTouchStart = useCallback((e: TouchEvent) => {
     if (!enabled) return;
     
-    console.log('Touch start:', e.touches.length, 'fingers');
     e.preventDefault();
     
     if (e.touches.length === 1) {
-      // Single finger - start panning
       const point = getCanvasPoint(e.touches[0].clientX, e.touches[0].clientY);
       gestureRef.current = {
         isPanning: true,
         isZooming: false,
         lastPanPoint: point
       };
-      console.log('Started panning at:', point);
     } else if (e.touches.length === 2) {
-      // Two fingers - start pinch zoom
       const distance = getDistance(e.touches);
       gestureRef.current = {
         isPanning: false,
@@ -70,7 +65,6 @@ export const useCanvasGestures = ({
         initialDistance: distance,
         initialZoom: zoomRef.current,
       };
-      console.log('Started zooming, initial distance:', distance);
     }
   }, [getCanvasPoint, getDistance, enabled]);
 
@@ -86,15 +80,13 @@ export const useCanvasGestures = ({
       const deltaX = point.x - gesture.lastPanPoint.x;
       const deltaY = point.y - gesture.lastPanPoint.y;
       
-      console.log('Panning delta:', { deltaX, deltaY });
       onPan(deltaX, deltaY);
       gesture.lastPanPoint = point;
     } else if (gesture.isZooming && e.touches.length === 2 && gesture.initialDistance && gesture.initialZoom) {
       const distance = getDistance(e.touches);
       const scale = distance / gesture.initialDistance;
-      const newZoom = gesture.initialZoom * scale;
+      const newZoom = Math.max(0.1, Math.min(10, gesture.initialZoom * scale));
       
-      console.log('Zooming scale:', scale, 'new zoom:', newZoom);
       onZoom(newZoom);
     }
   }, [getCanvasPoint, getDistance, onPan, onZoom, enabled]);
@@ -102,7 +94,6 @@ export const useCanvasGestures = ({
   const handleTouchEnd = useCallback((e: TouchEvent) => {
     if (!enabled) return;
     
-    console.log('Touch end, remaining touches:', e.touches.length);
     e.preventDefault();
     
     if (e.touches.length === 0) {
@@ -110,15 +101,13 @@ export const useCanvasGestures = ({
         isPanning: false,
         isZooming: false
       };
-      console.log('Gesture ended');
     }
   }, [enabled]);
 
-  // Mouse event handlers
+  // Mouse handlers remain the same
   const handleMouseDown = useCallback((e: MouseEvent) => {
-    if (!enabled || e.button !== 0) return; // Only handle left click
+    if (!enabled || e.button !== 0) return;
     
-    console.log('Mouse down at:', e.clientX, e.clientY);
     const point = getCanvasPoint(e.clientX, e.clientY);
     gestureRef.current = {
       isPanning: true,
@@ -137,7 +126,6 @@ export const useCanvasGestures = ({
       const deltaX = point.x - gesture.lastPanPoint.x;
       const deltaY = point.y - gesture.lastPanPoint.y;
       
-      console.log('Mouse pan delta:', { deltaX, deltaY });
       onPan(deltaX, deltaY);
       gesture.lastPanPoint = point;
     }
@@ -146,7 +134,6 @@ export const useCanvasGestures = ({
   const handleMouseUp = useCallback(() => {
     if (!enabled) return;
     
-    console.log('Mouse up');
     gestureRef.current = {
       isPanning: false,
       isZooming: false
@@ -159,20 +146,17 @@ export const useCanvasGestures = ({
     e.preventDefault();
     
     const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-    const newZoom = zoomRef.current * zoomFactor;
+    const newZoom = Math.max(0.1, Math.min(10, zoomRef.current * zoomFactor));
     
-    console.log('Wheel zoom:', e.deltaY, 'new zoom:', newZoom);
     onZoom(newZoom);
   }, [onZoom, enabled]);
 
-  // Set up event listeners
+  // Set up event listeners with passive: false for touch events
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !enabled) return;
 
-    console.log('Setting up gesture event listeners');
-
-    // Touch events
+    // Touch events - passive: false to allow preventDefault
     canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
     canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
     canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
@@ -186,7 +170,6 @@ export const useCanvasGestures = ({
     canvas.addEventListener('wheel', handleWheel, { passive: false });
 
     return () => {
-      console.log('Cleaning up gesture event listeners');
       canvas.removeEventListener('touchstart', handleTouchStart);
       canvas.removeEventListener('touchmove', handleTouchMove);
       canvas.removeEventListener('touchend', handleTouchEnd);

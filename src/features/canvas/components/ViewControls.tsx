@@ -56,32 +56,44 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
   ];
 
   return (
-    <div className={cn(
-      "flex flex-col gap-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200",
-      // Enhanced mobile-first responsive sizing
-      "p-2 sm:p-2.5",
-      className
-    )}>
-      {/* Zoom Level Indicator */}
+    <div className={cn("flex flex-col gap-2", className)}>
+      {/* Tool Selection - Primary controls */}
+      <div className="flex gap-1">
+        {tools.map((tool) => {
+          const isActive = activeTool === tool.id;
+          
+          return (
+            <Button
+              key={tool.id}
+              variant={isActive ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onToolChange(tool.id)}
+              className={cn(
+                "w-12 h-12 p-0 touch-manipulation active:scale-95 transition-all",
+                isActive && "bg-blue-600 hover:bg-blue-700 ring-2 ring-blue-500 ring-offset-1",
+                !isActive && "hover:bg-gray-50"
+              )}
+              title={tool.tooltip}
+              aria-label={tool.tooltip}
+            >
+              {typeof tool.icon === 'string' ? (
+                <span className="text-lg">{tool.icon}</span>
+              ) : (
+                <tool.icon className="w-5 h-5" />
+              )}
+            </Button>
+          );
+        })}
+      </div>
+
+      {/* Zoom Controls - Secondary controls */}
       {!hideZoomControls && (
-        <div className="text-xs text-gray-600 text-center px-2 py-1 bg-gray-50 rounded">
-          {zoom.toFixed(1)}x
-        </div>
-      )}
-      
-      {/* Zoom Controls - Optimized touch targets */}
-      {!hideZoomControls && (
-        <>
+        <div className="flex gap-1">
           <Button
             variant="outline"
             size="sm"
             onClick={onZoomIn}
-            className={cn(
-              "p-0 touch-manipulation hover:bg-green-50 hover:border-green-300 active:bg-green-100",
-              // 48px minimum touch target for mobile accessibility
-              "w-12 h-12 sm:w-11 sm:h-11",
-              "active:scale-95 transition-transform"
-            )}
+            className="w-12 h-12 p-0 touch-manipulation hover:bg-green-50 hover:border-green-300 active:scale-95"
             aria-label="Aumentar zoom"
             title="Aumentar zoom"
           >
@@ -92,11 +104,7 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
             variant="outline"
             size="sm"
             onClick={onZoomOut}
-            className={cn(
-              "p-0 touch-manipulation hover:bg-red-50 hover:border-red-300 active:bg-red-100",
-              "w-12 h-12 sm:w-11 sm:h-11",
-              "active:scale-95 transition-transform"
-            )}
+            className="w-12 h-12 p-0 touch-manipulation hover:bg-red-50 hover:border-red-300 active:scale-95"
             aria-label="Diminuir zoom"
             title="Diminuir zoom"
           >
@@ -108,71 +116,34 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
             size="sm"
             onClick={onFitAll}
             disabled={bedsCount === 0}
-            className={cn(
-              "p-0 text-xs touch-manipulation hover:bg-blue-50 hover:border-blue-300 active:bg-blue-100",
-              "w-12 h-12 sm:w-11 sm:h-11",
-              "disabled:opacity-50 active:scale-95 transition-transform"
-            )}
-            aria-label="Ajustar visualização para todos os canteiros"
+            className="w-12 h-12 p-0 text-xs touch-manipulation hover:bg-blue-50 hover:border-blue-300 active:scale-95 disabled:opacity-50"
+            aria-label="Ajustar visualização"
             title="Ver todos os canteiros"
           >
             <span className="text-blue-600">📐</span>
           </Button>
-
-          {/* Separator */}
-          <div className="w-full h-px bg-gray-300 my-1" />
-        </>
+        </div>
       )}
-      
-      {/* Tool Selection - Enhanced mobile experience */}
-      {tools.map((tool) => {
-        const isActive = activeTool === tool.id;
-        
-        return (
-          <Button
-            key={tool.id}
-            variant={isActive ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => onToolChange(tool.id)}
-            className={cn(
-              "p-0 touch-manipulation",
-              // Minimum 48px touch targets
-              "w-12 h-12 sm:w-11 sm:h-11",
-              "active:scale-95 transition-all",
-              isActive && "ring-2 ring-blue-500 ring-offset-1 bg-blue-600 hover:bg-blue-700 active:bg-blue-800",
-              !isActive && "hover:bg-gray-50 active:bg-gray-100"
-            )}
-            title={tool.tooltip}
-            aria-label={tool.tooltip}
-          >
-            {typeof tool.icon === 'string' ? (
-              <span className="text-lg">{tool.icon}</span>
-            ) : (
-              <tool.icon className="w-5 h-5" />
-            )}
-          </Button>
-        );
-      })}
 
       {/* Plant Selection Button */}
       {onOpenPlantSelection && (
-        <>
-          <div className="w-full h-px bg-gray-300 my-1" />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onOpenPlantSelection}
-            className={cn(
-              "p-0 touch-manipulation hover:bg-green-50 hover:border-green-300 active:bg-green-100",
-              "w-12 h-12 sm:w-11 sm:h-11",
-              "active:scale-95 transition-transform"
-            )}
-            title="Selecionar plantas"
-            aria-label="Abrir seleção de plantas"
-          >
-            <Sprout className="w-5 h-5 text-green-600" />
-          </Button>
-        </>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onOpenPlantSelection}
+          className="w-12 h-12 p-0 touch-manipulation hover:bg-green-50 hover:border-green-300 active:scale-95"
+          title="Selecionar plantas"
+          aria-label="Abrir seleção de plantas"
+        >
+          <Sprout className="w-5 h-5 text-green-600" />
+        </Button>
+      )}
+
+      {/* Zoom Level Indicator */}
+      {!hideZoomControls && (
+        <div className="text-xs text-gray-600 text-center px-2 py-1 bg-gray-50 rounded">
+          {zoom.toFixed(1)}x
+        </div>
       )}
     </div>
   );

@@ -1,6 +1,8 @@
 
 import React from 'react';
-import { EnhancedMiniMap } from '../EnhancedMiniMap';
+import { MiniMap } from '../MiniMap';
+import { MobileMiniMap } from '../mobile/MobileMiniMap';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MiniMapOverlayProps {
   viewport: any;
@@ -15,13 +17,26 @@ export const MiniMapOverlay: React.FC<MiniMapOverlayProps> = ({
   onNavigate,
   isVisible
 }) => {
-  if (!isVisible) return null;
+  const isMobile = useIsMobile();
+
+  if (!isVisible) {
+    return null;
+  }
+
+  if (isMobile) {
+    return (
+      <MobileMiniMap
+        viewport={viewport}
+        beds={beds}
+        onNavigate={onNavigate}
+        className="fixed bottom-6 left-4 z-30"
+      />
+    );
+  }
 
   return (
-    <EnhancedMiniMap
+    <MiniMap
       viewport={viewport}
-      beds={beds}
-      onNavigate={onNavigate}
       className="fixed bottom-4 left-4 z-30"
     />
   );

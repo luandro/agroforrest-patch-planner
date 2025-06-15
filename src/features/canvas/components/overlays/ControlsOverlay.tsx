@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { MobileControls } from '../MobileControls';
+import React from 'react';
+import { MobileLayout } from '../mobile/MobileLayout';
 import { DesktopSidebar } from '../DesktopSidebar';
 import { ViewControls } from '../ViewControls';
 import { CanvasTool } from '../../types/bed.types';
@@ -55,13 +55,11 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
   isInFocusMode,
   showConfirmation
 }) => {
-  const [isFabMenuOpen, setIsFabMenuOpen] = useState(false);
-
   return (
     <>
-      {/* Mobile Controls - Properly positioned to avoid header overlap */}
-      {isMobile && !isInFocusMode && (
-        <MobileControls
+      {/* Mobile Layout */}
+      {isMobile && (
+        <MobileLayout
           activeTool={tool}
           onToolChange={setTool}
           bedConfig={bedConfig}
@@ -72,11 +70,15 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
           canRedo={canRedo()}
           onDeleteSelected={deleteSelected}
           selectedCount={selectedBedIds.length}
-          isVisible={isFabMenuOpen}
-          onToggle={setIsFabMenuOpen}
           isSaving={isSaving}
           showConfirmation={showConfirmation}
           isInFocusMode={isInFocusMode}
+          viewport={viewport}
+          beds={beds}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onFitAll={handleFitAll}
+          onOpenPlantSelection={onOpenPlantSelection}
         />
       )}
 
@@ -102,8 +104,8 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
         />
       )}
 
-      {/* View Controls - Fixed mobile positioning */}
-      {!isInFocusMode && (
+      {/* Desktop View Controls */}
+      {!isMobile && !isInFocusMode && (
         <ViewControls
           zoom={viewport.zoom}
           onZoomIn={handleZoomIn}
@@ -114,13 +116,8 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
           onToolChange={setTool}
           onOpenPlantSelection={onOpenPlantSelection}
           className={cn(
-            "fixed transition-all duration-300 ease-in-out",
-            // Mobile: Position away from FAB and header
-            isMobile 
-              ? "top-20 left-4 z-20" // Top-left on mobile, below header
-              : "bottom-4 right-4 z-30", // Bottom-right on desktop
-            // Desktop adjustments for sidebar
-            !isMobile && (isCollapsed ? "md:right-20" : "md:right-[21rem]")
+            "fixed bottom-4 right-4 z-30 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-2",
+            isCollapsed ? "md:right-20" : "md:right-[21rem]"
           )}
         />
       )}
