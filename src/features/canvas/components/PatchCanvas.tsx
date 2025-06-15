@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { PatchCanvasProps } from '../types/canvas.types';
 import { useCanvasViewport } from '../hooks/useCanvasViewport';
 import { useBedCreation } from '../hooks/useBedCreation';
@@ -19,6 +19,7 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isCollapsed, onToggleCollapse] = useState(false);
 
   // Canvas viewport and rendering
   const { viewport, pan, zoomTo, updateViewport, centerOnBed, fitAllBeds } = useCanvasViewport({
@@ -194,6 +195,8 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
       gridSize={gridSize}
       onOpenPlantSelection={onOpenPlantSelection}
       canvasRef={canvasRef}
+      isCollapsed={isCollapsed}
+      onToggleCollapse={onToggleCollapse}
     />
   );
 };

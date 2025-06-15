@@ -38,6 +38,8 @@ interface CanvasLayoutProviderProps {
   cancelCreation: () => void;
   gridSize?: number;
   children: React.ReactNode;
+  isCollapsed?: boolean;
+  onToggleCollapse?: (collapsed: boolean) => void;
 }
 
 export const CanvasLayoutProvider: React.FC<CanvasLayoutProviderProps> = ({

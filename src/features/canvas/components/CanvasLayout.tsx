@@ -45,6 +45,8 @@ interface CanvasLayoutProps {
   gridSize?: number;
   onOpenPlantSelection?: () => void;
   canvasRef?: React.RefObject<HTMLCanvasElement>;
+  isCollapsed?: boolean;
+  onToggleCollapse?: (collapsed: boolean) => void;
 }
 
 export const CanvasLayout: React.FC<CanvasLayoutProps> = (props) => {

@@ -16,6 +16,7 @@ interface CanvasOverlaysProps {
   handleCancelPlacement: () => void;
   hasCollision?: boolean;
   isMobile?: boolean;
+  isCollapsed?: boolean;
 }
 
 export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
@@ -30,8 +31,15 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
   handleConfirmPlacement,
   handleCancelPlacement,
   hasCollision = false,
-  isMobile = false
+  isMobile = false,
+  isCollapsed,
 }) => {
+  const desktopPanelPositionClass = isMobile
+    ? ''
+    : `top-1/2 transform -translate-y-1/2 -translate-x-1/2 ${
+        isCollapsed === false ? 'left-[calc(50%-10rem)]' : 'left-1/2'
+      }`;
+
   return (
     <>
       {/* Creation Mode Indicator */}
@@ -71,7 +79,7 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
           onConfirm={handleConfirmPlacement}
           onCancel={handleCancelPlacement}
           hasCollision={hasCollision}
-          className={isMobile ? '' : 'top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2'}
+          className={desktopPanelPositionClass}
         />
       )}
     </>
