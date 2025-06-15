@@ -74,7 +74,7 @@ export const PlantDeletionDialog: React.FC<PlantDeletionDialogProps> = ({
             <AlertTriangle className="h-5 w-5 text-red-500" />
             {isSingle ? 'Deletar Planta?' : `Deletar ${totalCount} Plantas?`}
           </AlertDialogTitle>
-          <AlertDialogDescription asChild>
+          <AlertDialogDescription>
             <div className="space-y-3">
               <p className="text-sm text-gray-600">
                 {isSingle 

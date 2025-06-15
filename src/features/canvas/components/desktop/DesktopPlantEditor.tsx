@@ -82,7 +82,7 @@ export const DesktopPlantEditor: React.FC<DesktopPlantEditorProps> = ({
             {Object.entries(speciesGroups).map(([speciesName, count]) => (
               <div key={speciesName} className="flex justify-between items-center">
                 <span className="text-sm">{speciesName}</span>
-                <Badge variant="secondary">{count}</Badge>
+                <Badge variant="secondary">{count.toString()}</Badge>
               </div>
             ))}
           </div>

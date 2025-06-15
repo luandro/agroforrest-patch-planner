@@ -1,5 +1,14 @@
+
 import { create } from 'zustand';
-import { PlantPlacement, PlantSpecies } from '../types/species.types';
+import { PlantSpecies } from '../types/species.types';
+
+export interface PlantPlacement {
+  id: string;
+  bedId: string;
+  species: PlantSpecies;
+  position: { x: number; y: number };
+  notes?: string;
+}
 
 interface PlantPlacementState {
   placements: PlantPlacement[];
@@ -9,6 +18,7 @@ interface PlantPlacementState {
   placementPreview: { x: number; y: number } | null;
   history: PlantPlacement[][];
   historyIndex: number;
+  isDirty: boolean;
 }
 
 interface PlantPlacementActions {
@@ -28,6 +38,9 @@ interface PlantPlacementActions {
   canUndo: () => boolean;
   canRedo: () => boolean;
   addToHistory: () => void;
+  // Auto-save actions
+  markClean: () => void;
+  loadPlacements: (placements: PlantPlacement[]) => void;
 }
 
 interface PlantPlacementStore extends PlantPlacementState, PlantPlacementActions {}
@@ -41,6 +54,7 @@ export const usePlantPlacementStore = create<PlantPlacementStore>((set, get) => 
   placementPreview: null,
   history: [[]],
   historyIndex: 0,
+  isDirty: false,
 
   // Actions
   addPlacement: (placement) => {
@@ -50,7 +64,8 @@ export const usePlantPlacementStore = create<PlantPlacementStore>((set, get) => 
     };
     
     set((state) => ({
-      placements: [...state.placements, newPlacement]
+      placements: [...state.placements, newPlacement],
+      isDirty: true
     }));
     
     // Add to history
@@ -60,7 +75,8 @@ export const usePlantPlacementStore = create<PlantPlacementStore>((set, get) => 
   removePlacements: (ids) => {
     set((state) => ({
       placements: state.placements.filter(p => !ids.includes(p.id)),
-      selectedPlacementIds: state.selectedPlacementIds.filter(id => !ids.includes(id))
+      selectedPlacementIds: state.selectedPlacementIds.filter(id => !ids.includes(id)),
+      isDirty: true
     }));
     
     // Add to history
@@ -71,7 +87,8 @@ export const usePlantPlacementStore = create<PlantPlacementStore>((set, get) => 
     set((state) => ({
       placements: state.placements.map(p => 
         p.id === id ? { ...p, ...updates } : p
-      )
+      ),
+      isDirty: true
     }));
     
     // Add to history
@@ -93,7 +110,8 @@ export const usePlantPlacementStore = create<PlantPlacementStore>((set, get) => 
       placements: state.placements.filter(p => p.bedId !== bedId),
       selectedPlacementIds: state.selectedPlacementIds.filter(id => 
         !state.placements.find(p => p.id === id && p.bedId === bedId)
-      )
+      ),
+      isDirty: true
     }));
     
     // Add to history
@@ -125,7 +143,8 @@ export const usePlantPlacementStore = create<PlantPlacementStore>((set, get) => 
       set({ 
         placements: placementsAtIndex,
         historyIndex: newIndex,
-        selectedPlacementIds: [] // Clear selection on undo
+        selectedPlacementIds: [],
+        isDirty: true
       });
     }
   },
@@ -139,11 +158,21 @@ export const usePlantPlacementStore = create<PlantPlacementStore>((set, get) => 
       set({ 
         placements: placementsAtIndex,
         historyIndex: newIndex,
-        selectedPlacementIds: [] // Clear selection on redo
+        selectedPlacementIds: [],
+        isDirty: true
       });
     }
   },
 
   canUndo: () => get().historyIndex > 0,
-  canRedo: () => get().historyIndex < get().history.length - 1
+  canRedo: () => get().historyIndex < get().history.length - 1,
+
+  // Auto-save actions
+  markClean: () => set({ isDirty: false }),
+  loadPlacements: (placements) => set({ 
+    placements, 
+    isDirty: false,
+    history: [placements],
+    historyIndex: 0
+  })
 }));
