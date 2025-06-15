@@ -1,112 +1,91 @@
 
 import React from 'react';
 import { CanvasContainer } from './CanvasContainer';
-import { CanvasKeyboardHandler } from './CanvasKeyboardHandler';
-import { CanvasTool } from '../types/bed.types';
+import { DevelopmentInfo } from './DevelopmentInfo';
 
 interface CanvasViewportProps {
   viewport: any;
-  tool: CanvasTool;
+  beds: any[];
+  selectedBedIds: string[];
+  tool: any;
   isCreating: boolean;
+  previewBed: any;
+  placementBed: any;
+  previewBeds?: any[];
+  placementBeds?: any[];
+  hasCollision?: boolean;
   handlePointerDown: (e: React.PointerEvent) => void;
   handlePointerMove: (e: React.PointerEvent) => void;
   handlePointerUp: () => void;
   handleDoubleClick: (e: React.MouseEvent) => void;
   pan: (deltaX: number, deltaY: number) => void;
   zoomTo: (zoom: number) => void;
-  handleZoomIn: () => void;
-  handleZoomOut: () => void;
-  handleFitAll: () => void;
-  beds: any[];
-  selectedBedIds: string[];
-  previewBed: any;
-  placementBed: any;
+  bedConfig: any;
   gridSize?: number;
-  cancelCreation: () => void;
-  setTool: (tool: CanvasTool) => void;
-  deleteSelected: () => void;
-  isMobile?: boolean;
-  showDesktopSidebar?: boolean;
-  bedConfig?: any;
   canvasRef?: React.RefObject<HTMLCanvasElement>;
   focusedBed?: any;
 }
 
 export const CanvasViewport: React.FC<CanvasViewportProps> = ({
   viewport,
+  beds,
+  selectedBedIds,
   tool,
   isCreating,
+  previewBed,
+  placementBed,
+  previewBeds,
+  placementBeds,
+  hasCollision,
   handlePointerDown,
   handlePointerMove,
   handlePointerUp,
   handleDoubleClick,
   pan,
   zoomTo,
-  handleZoomIn,
-  handleZoomOut,
-  handleFitAll,
-  beds,
-  selectedBedIds,
-  previewBed,
-  placementBed,
-  gridSize = 1,
-  cancelCreation,
-  setTool,
-  deleteSelected,
-  isMobile = false,
-  showDesktopSidebar = true,
   bedConfig,
+  gridSize = 1,
   canvasRef,
   focusedBed
 }) => {
-  // Use relative positioning for better scrolling behavior
-  const canvasStyle = {
-    width: isMobile ? '100vw' : showDesktopSidebar ? 'calc(100vw - 300px)' : '100vw',
-    height: 'calc(100vh - 4rem)', // Subtract header height
-    position: 'relative' as const, // Changed from fixed to relative
-    overflow: 'hidden' as const, // Prevent default scrolling
-    zIndex: 10
-  };
-
-  console.log('CanvasViewport render - tool:', tool, 'isCreating:', isCreating, 'isMobile:', isMobile);
-
   return (
-    <>
-      {/* Canvas container with relative positioning */}
-      <div style={canvasStyle}>
-        <CanvasContainer
+    <div className="relative w-full h-screen pt-16">
+      {/* Main Canvas */}
+      <CanvasContainer
+        viewport={viewport}
+        tool={tool}
+        isCreating={isCreating}
+        handlePointerDown={handlePointerDown}
+        handlePointerMove={handlePointerMove}
+        handlePointerUp={handlePointerUp}
+        handleDoubleClick={handleDoubleClick}
+        pan={pan}
+        zoomTo={zoomTo}
+        beds={beds}
+        selectedBedIds={selectedBedIds}
+        previewBed={previewBed}
+        placementBed={placementBed}
+        previewBeds={previewBeds}
+        placementBeds={placementBeds}
+        hasCollision={hasCollision}
+        gridSize={gridSize}
+        bedConfig={bedConfig}
+        canvasRef={canvasRef}
+        focusedBed={focusedBed}
+      />
+
+      {/* Development Info */}
+      {process.env.NODE_ENV === 'development' && (
+        <DevelopmentInfo
+          beds={beds}
+          selectedBedIds={selectedBedIds}
           viewport={viewport}
           tool={tool}
           isCreating={isCreating}
-          handlePointerDown={handlePointerDown}
-          handlePointerMove={handlePointerMove}
-          handlePointerUp={handlePointerUp}
-          handleDoubleClick={handleDoubleClick}
-          pan={pan}
-          zoomTo={zoomTo}
-          beds={beds}
-          selectedBedIds={selectedBedIds}
           previewBed={previewBed}
           placementBed={placementBed}
-          gridSize={gridSize}
-          bedConfig={bedConfig}
-          canvasRef={canvasRef}
-          focusedBed={focusedBed}
         />
-      </div>
-
-      {/* Keyboard Handler */}
-      <CanvasKeyboardHandler
-        pan={pan}
-        handleZoomIn={handleZoomIn}
-        handleZoomOut={handleZoomOut}
-        handleFitAll={handleFitAll}
-        isCreating={isCreating}
-        cancelCreation={cancelCreation}
-        setTool={setTool}
-        selectedBedIds={selectedBedIds}
-        deleteSelected={deleteSelected}
-      />
-    </>
+      )}
+    </div>
   );
 };

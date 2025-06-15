@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { CanvasTool } from '../types/bed.types'; // <-- Import added!
+import { CanvasTool } from '../types/bed.types';
 import { CanvasLayoutProvider } from './CanvasLayoutProvider';
 import { CanvasViewport } from './CanvasViewport';
 import { CanvasOverlays } from './CanvasOverlays';
@@ -59,7 +59,28 @@ interface CanvasLayoutProps {
 export const CanvasLayout: React.FC<CanvasLayoutProps> = (props) => {
   return (
     <CanvasLayoutProvider {...props}>
-      <CanvasViewport {...props} />
+      <CanvasViewport 
+        viewport={props.viewport}
+        beds={props.beds}
+        selectedBedIds={props.selectedBedIds}
+        tool={props.tool}
+        isCreating={props.isCreating}
+        previewBed={props.previewBed}
+        placementBed={props.placementBed}
+        previewBeds={props.previewBeds}
+        placementBeds={props.placementBeds}
+        hasCollision={props.hasCollision}
+        handlePointerDown={props.handlePointerDown}
+        handlePointerMove={props.handlePointerMove}
+        handlePointerUp={props.handlePointerUp}
+        handleDoubleClick={props.handleDoubleClick}
+        pan={props.pan}
+        zoomTo={props.zoomTo}
+        bedConfig={props.bedConfig}
+        gridSize={props.gridSize}
+        canvasRef={props.canvasRef}
+        focusedBed={props.focusedBed}
+      />
       <CanvasOverlays {...props} />
     </CanvasLayoutProvider>
   );

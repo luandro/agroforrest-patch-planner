@@ -17,6 +17,9 @@ interface CanvasContainerProps {
   selectedBedIds: string[];
   previewBed: any;
   placementBed?: any;
+  previewBeds?: any[];
+  placementBeds?: any[];
+  hasCollision?: boolean;
   gridSize?: number;
   bedConfig?: any;
   canvasRef?: React.RefObject<HTMLCanvasElement>;
@@ -37,6 +40,9 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
   selectedBedIds,
   previewBed,
   placementBed,
+  previewBeds,
+  placementBeds,
+  hasCollision,
   gridSize = 1,
   bedConfig,
   canvasRef: externalCanvasRef,
@@ -88,18 +94,18 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
         ctx.scale(dpr, dpr);
       }
 
-      scheduleRender(viewport, beds, selectedBedIds, previewBed, placementBed);
+      scheduleRender(viewport, beds, selectedBedIds, previewBed, placementBed, previewBeds, placementBeds, hasCollision);
     };
 
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
     return () => window.removeEventListener('resize', resizeCanvas);
-  }, [viewport, scheduleRender, beds, selectedBedIds, previewBed, placementBed, canvasRef]);
+  }, [viewport, scheduleRender, beds, selectedBedIds, previewBed, placementBed, previewBeds, placementBeds, hasCollision, canvasRef]);
 
   // Render when viewport or beds change
   useEffect(() => {
-    scheduleRender(viewport, beds, selectedBedIds, previewBed, placementBed);
-  }, [viewport, beds, selectedBedIds, previewBed, placementBed, scheduleRender]);
+    scheduleRender(viewport, beds, selectedBedIds, previewBed, placementBed, previewBeds, placementBeds, hasCollision);
+  }, [viewport, beds, selectedBedIds, previewBed, placementBed, previewBeds, placementBeds, hasCollision, scheduleRender]);
 
   const getCursorStyle = () => {
     if (isCreating) return 'crosshair';

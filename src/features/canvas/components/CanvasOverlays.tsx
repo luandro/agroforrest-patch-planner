@@ -1,139 +1,153 @@
 
 import React from 'react';
-import { ViewControls } from './ViewControls';
-import { FocusModeControls } from './FocusModeControls';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { CanvasTool } from '../types/bed.types';
+import { BedConfigPanel } from './BedConfigPanel';
 import { BedConfirmationPanel } from './BedConfirmationPanel';
 import { MobileControls } from './MobileControls';
 import { DesktopSidebar } from './DesktopSidebar';
-import { DevelopmentInfo } from './DevelopmentInfo';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { CanvasTool } from '../types/bed.types';
+import { ViewControls } from './ViewControls';
+import { FocusModeControls } from './FocusModeControls';
+import { EnhancedMiniMap } from './EnhancedMiniMap';
 
 interface CanvasOverlaysProps {
-  showConfirmation: boolean;
-  handleConfirmPlacement: () => void;
-  handleCancelPlacement: () => void;
   viewport: any;
-  handleZoomIn: () => void;
-  handleZoomOut: () => void;
-  handleFitAll: () => void;
+  updateViewport: any;
+  beds: any[];
+  selectedBedIds: string[];
   tool: CanvasTool;
   setTool: (tool: CanvasTool) => void;
   bedConfig: any;
   updateBedConfig: any;
+  isCreating: boolean;
+  previewBed: any;
+  placementBed: any;
+  showConfirmation: boolean;
   multiCreationMode: boolean;
   setMultiCreationMode: (enabled: boolean) => void;
+  hasCollision?: boolean;
+  handleConfirmPlacement: () => void;
+  handleCancelPlacement: () => void;
+  pan: (deltaX: number, deltaY: number) => void;
+  zoomTo: (zoom: number) => void;
+  handleZoomIn: () => void;
+  handleZoomOut: () => void;
+  handleFitAll: () => void;
   undo: () => void;
   redo: () => void;
   canUndo: () => boolean;
   canRedo: () => boolean;
   deleteSelected: () => void;
-  beds: any[];
-  selectedBedIds: string[];
   isSaving: boolean;
-  gridSize?: number;
+  cancelCreation: () => void;
   isCollapsed?: boolean;
   onToggleCollapse?: (collapsed: boolean) => void;
-  placementBed?: any;
-  hasCollision?: boolean;
-  // Focus mode props
+  onOpenPlantSelection?: () => void;
   isInFocusMode?: boolean;
   focusedBedId?: string | null;
   onExitFocus?: () => void;
-  onOpenPlantSelection?: () => void;
   onSelectPlantSpecies?: (species: any) => void;
-  onEnterFocus?: (bedId: string) => void;
   onCancelPlantPlacement?: () => void;
+  isMobile?: boolean;
 }
 
 export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
-  showConfirmation,
-  handleConfirmPlacement,
-  handleCancelPlacement,
   viewport,
-  handleZoomIn,
-  handleZoomOut,
-  handleFitAll,
+  beds,
+  selectedBedIds,
   tool,
   setTool,
   bedConfig,
   updateBedConfig,
+  isCreating,
+  showConfirmation,
   multiCreationMode,
   setMultiCreationMode,
+  hasCollision,
+  handleConfirmPlacement,
+  handleCancelPlacement,
+  pan,
+  zoomTo,
+  handleZoomIn,
+  handleZoomOut,
+  handleFitAll,
   undo,
   redo,
   canUndo,
   canRedo,
   deleteSelected,
-  beds,
-  selectedBedIds,
   isSaving,
-  gridSize = 1,
+  cancelCreation,
   isCollapsed = false,
   onToggleCollapse,
-  placementBed,
-  hasCollision = false,
-  // Focus mode props
-  isInFocusMode = false,
-  focusedBedId = null,
-  onExitFocus,
   onOpenPlantSelection,
+  isInFocusMode = false,
+  focusedBedId,
+  onExitFocus,
   onSelectPlantSpecies,
-  onEnterFocus,
-  onCancelPlantPlacement
+  onCancelPlantPlacement,
+  isMobile = false
 }) => {
-  const isMobile = useIsMobile();
+  // Navigation handler for mini-map
+  const handleMiniMapNavigate = (x: number, y: number) => {
+    // Update viewport to center on clicked position
+    const newViewport = {
+      ...viewport,
+      centerX: x,
+      centerY: y
+    };
+    
+    // Use the pan function to smoothly navigate
+    const deltaX = x - viewport.centerX;
+    const deltaY = y - viewport.centerY;
+    pan(deltaX, deltaY);
+  };
 
   return (
     <>
-      {/* Bed Confirmation Panel - always positioned absolutely/fixed so never hidden at bottom */}
-      {showConfirmation && placementBed && (
-        <BedConfirmationPanel
-          bed={placementBed}
+      {/* Enhanced Mini-Map - Always visible except in focus mode */}
+      {!isInFocusMode && (
+        <EnhancedMiniMap
+          viewport={viewport}
           beds={beds}
-          bedConfig={bedConfig}
-          multiCreationMode={multiCreationMode}
-          onMultiCreationToggle={setMultiCreationMode}
-          onConfirm={handleConfirmPlacement}
-          onCancel={handleCancelPlacement}
-          hasCollision={hasCollision}
-          // Fix position on desktop and mobile
-          className={
-            isMobile
-              ? "fixed inset-x-0 bottom-0 z-[150] max-w-full"
-              : "fixed bottom-8 left-1/2 -translate-x-1/2 z-[150] w-[340px] max-w-full"
-          }
+          onNavigate={handleMiniMapNavigate}
+          className="fixed bottom-4 left-4 z-30"
         />
       )}
 
       {/* Focus Mode Controls */}
-      {isInFocusMode && focusedBedId && onExitFocus && (
+      {isInFocusMode && focusedBedId && onExitFocus && onOpenPlantSelection && (
         <FocusModeControls
           focusedBedId={focusedBedId}
           onExitFocus={onExitFocus}
-          onOpenPlantSelection={onOpenPlantSelection || (() => {})}
+          onOpenPlantSelection={onOpenPlantSelection}
           onSelectSpecies={onSelectPlantSpecies}
           onCancelPlacement={onCancelPlantPlacement}
         />
       )}
 
-      {/* Only one menu: ViewControls (toolbar/FAB/undo-redo) or Sidebar, never duplicated */}
-
-      {/* On desktop, show ViewControls on left if not in focus mode */}
-      {!isMobile && !isInFocusMode && (
-        <ViewControls
-          zoom={viewport.zoom}
-          onZoomIn={handleZoomIn}
-          onZoomOut={handleZoomOut}
-          onFitAll={handleFitAll}
-          bedsCount={beds.length}
+      {/* Mobile Controls */}
+      {isMobile && !isInFocusMode && (
+        <MobileControls
           activeTool={tool}
           onToolChange={setTool}
-          className="fixed top-28 left-4 z-40"
+          bedConfig={bedConfig}
+          onBedConfigChange={updateBedConfig}
+          onUndo={undo}
+          onRedo={redo}
+          canUndo={canUndo()}
+          canRedo={canRedo()}
+          onDeleteSelected={deleteSelected}
+          selectedCount={selectedBedIds.length}
+          isCreating={isCreating}
+          multiCreationMode={multiCreationMode}
+          onMultiCreationModeChange={setMultiCreationMode}
+          onCancelCreation={cancelCreation}
+          isSaving={isSaving}
         />
       )}
 
-      {/* Desktop Sidebar - only one sidebar at a time, left side */}
+      {/* Desktop Sidebar */}
       {!isMobile && !isInFocusMode && (
         <DesktopSidebar
           activeTool={tool}
@@ -152,39 +166,41 @@ export const CanvasOverlays: React.FC<CanvasOverlaysProps> = ({
           beds={beds}
           viewport={viewport}
           isInFocusMode={isInFocusMode}
-          onEnterFocus={selectedBedIds.length === 1 ? () => onEnterFocus?.(selectedBedIds[0]) : undefined}
         />
       )}
 
-      {/* Mobile Controls (FAB and panels) - only one! */}
-      {isMobile && !isInFocusMode && (
-        <MobileControls
-          activeTool={tool}
-          onToolChange={setTool}
+      {/* View Controls - Bottom Right */}
+      {!isInFocusMode && (
+        <ViewControls
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onFitAll={handleFitAll}
+          currentZoom={viewport.zoom}
+          className="fixed bottom-4 right-4 z-30"
+        />
+      )}
+
+      {/* Bed Configuration Panel - Mobile Bottom Sheet / Desktop Modal */}
+      {isCreating && tool === 'create-rectangle' && !showConfirmation && (
+        <BedConfigPanel
           bedConfig={bedConfig}
-          onBedConfigChange={updateBedConfig}
-          onUndo={undo}
-          onRedo={redo}
-          canUndo={canUndo()}
-          canRedo={canRedo()}
-          onDeleteSelected={deleteSelected}
-          selectedCount={selectedBedIds.length}
-          isVisible={!showConfirmation}
-          onToggle={() => {}} // handled elsewhere
-          isSaving={isSaving}
-          showConfirmation={showConfirmation}
-          isInFocusMode={isInFocusMode}
+          onConfigChange={updateBedConfig}
+          multiCreationMode={multiCreationMode}
+          onMultiCreationModeChange={setMultiCreationMode}
+          onCancel={cancelCreation}
+          hasCollision={hasCollision}
         />
       )}
 
-      {/* Development Info */}
-      {process.env.NODE_ENV === 'development' && (
-        <DevelopmentInfo
-          viewport={viewport}
-          beds={beds}
-          selectedBedIds={selectedBedIds}
-          tool={tool}
-          isMobile={isMobile}
+      {/* Bed Confirmation Panel */}
+      {showConfirmation && (
+        <BedConfirmationPanel
+          bedConfig={bedConfig}
+          onConfirm={handleConfirmPlacement}
+          onCancel={handleCancelPlacement}
+          multiCreationMode={multiCreationMode}
+          onMultiCreationModeChange={setMultiCreationMode}
+          hasCollision={hasCollision}
         />
       )}
     </>

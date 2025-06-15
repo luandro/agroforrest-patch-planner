@@ -1,3 +1,4 @@
+
 import { useCallback, useRef } from 'react';
 import { CanvasViewport } from '../types/canvas.types';
 import { Bed } from '../types/bed.types';
@@ -28,7 +29,10 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedB
     beds: Bed[] = [], 
     selectedBedIds: string[] = [], 
     previewBed?: Bed | null,
-    placementBed?: Bed | null
+    placementBed?: Bed | null,
+    previewBeds?: Bed[],
+    placementBeds?: Bed[],
+    hasCollision?: boolean
   ) => {
     const canvas = activeCanvasRef.current;
     if (!canvas) return;
@@ -46,9 +50,13 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedB
     // 3. Draw grid with fine grid for focused bed
     let snapHighlight: { x: number; y: number } | undefined;
     
-    // Show snap highlight for preview or placement bed
-    if (previewBed) {
+    // Show snap highlight for preview or placement bed (use first bed for position)
+    if (previewBeds && previewBeds.length > 0) {
+      snapHighlight = previewBeds[0].position;
+    } else if (previewBed) {
       snapHighlight = previewBed.position;
+    } else if (placementBeds && placementBeds.length > 0) {
+      snapHighlight = placementBeds[0].position;
     } else if (placementBed) {
       snapHighlight = placementBed.position;
     }
@@ -84,30 +92,71 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedB
       }
     });
 
-    // 6. Draw placement bed if it exists (confirmed bed awaiting creation)
-    if (placementBed) {
-      drawBed(ctx, placementBed, viewport, false, false, true, focusedBed ? 0 : spacing);
-    }
+    // 6. Draw placement beds if they exist (confirmed beds awaiting creation)
+    const finalPlacementBeds = placementBeds || (placementBed ? [placementBed] : []);
+    finalPlacementBeds.forEach(bed => {
+      drawBed(ctx, bed, viewport, false, false, true, focusedBed ? 0 : spacing, hasCollision);
+    });
 
-    // 7. Draw preview bed if it exists (follows cursor)
-    if (previewBed) {
-      drawBed(ctx, previewBed, viewport, false, true, false, focusedBed ? 0 : spacing);
+    // 7. Draw preview beds if they exist (follows cursor)
+    const finalPreviewBeds = previewBeds || (previewBed ? [previewBed] : []);
+    finalPreviewBeds.forEach(bed => {
+      drawBed(ctx, bed, viewport, false, true, false, focusedBed ? 0 : spacing, hasCollision);
+    });
+
+    // 8. Draw collision indicators if there are collisions
+    if (hasCollision && (finalPreviewBeds.length > 0 || finalPlacementBeds.length > 0)) {
+      drawCollisionIndicators(ctx, viewport, finalPreviewBeds.concat(finalPlacementBeds));
     }
   }, [activeCanvasRef, gridSize, spacing, focusedBed, getPlacementsForBed, selectedPlacementIds, placementPreview]);
+
+  // Helper function to draw collision indicators
+  const drawCollisionIndicators = (ctx: CanvasRenderingContext2D, viewport: CanvasViewport, beds: Bed[]) => {
+    ctx.save();
+    
+    beds.forEach(bed => {
+      const pixelsPerMeter = 50 * viewport.zoom;
+      const displayWidth = ctx.canvas.width / (window.devicePixelRatio || 1);
+      const displayHeight = ctx.canvas.height / (window.devicePixelRatio || 1);
+      
+      const screenX = (displayWidth / 2) + (bed.position.x - viewport.centerX) * pixelsPerMeter;
+      const screenY = (displayHeight / 2) - (bed.position.y - viewport.centerY) * pixelsPerMeter;
+      
+      // Draw warning icon
+      ctx.fillStyle = '#EF4444';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('⚠️', screenX, screenY - 30);
+      
+      // Draw warning text
+      ctx.fillStyle = 'white';
+      ctx.strokeStyle = '#EF4444';
+      ctx.lineWidth = 2;
+      ctx.font = 'bold 12px sans-serif';
+      const warningText = 'COLISÃO';
+      ctx.strokeText(warningText, screenX, screenY - 10);
+      ctx.fillText(warningText, screenX, screenY - 10);
+    });
+    
+    ctx.restore();
+  };
 
   const scheduleRender = useCallback((
     viewport: CanvasViewport, 
     beds: Bed[] = [], 
     selectedBedIds: string[] = [], 
     previewBed?: Bed | null,
-    placementBed?: Bed | null
+    placementBed?: Bed | null,
+    previewBeds?: Bed[],
+    placementBeds?: Bed[],
+    hasCollision?: boolean
   ) => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
     
     animationFrameRef.current = requestAnimationFrame(() => {
-      render(viewport, beds, selectedBedIds, previewBed, placementBed);
+      render(viewport, beds, selectedBedIds, previewBed, placementBed, previewBeds, placementBeds, hasCollision);
     });
   }, [render]);
 
