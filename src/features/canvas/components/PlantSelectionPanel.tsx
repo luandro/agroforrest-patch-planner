@@ -1,15 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { X, Search, Filter } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { PlantSpecies, PlantCategory, CompatibilityLevel, PlantFilter } from '../types/species.types';
+import { PlantSpecies, PlantCategory, CompatibilityLevel } from '../types/species.types';
 import { mockPlantSpecies } from '../data/mockSpecies';
-import { PlantSpeciesCard } from './PlantSpeciesCard';
-import { PlantCategoryFilter } from './PlantCategoryFilter';
-import { PlantCompatibilityFilter } from './PlantCompatibilityFilter';
 import { usePlantPlacementStore } from '../stores/plantPlacementStore';
+import { PlantSelectionHeader } from './PlantSelectionHeader';
+import { PlantSelectionSearch } from './PlantSelectionSearch';
+import { PlantSelectionResults } from './PlantSelectionResults';
+import { PlantSelectionContent } from './PlantSelectionContent';
+import { PlantSelectionHelpText } from './PlantSelectionHelpText';
 
 interface PlantSelectionPanelProps {
   isOpen: boolean;
@@ -64,13 +62,6 @@ export const PlantSelectionPanel: React.FC<PlantSelectionPanelProps> = ({
     return categories;
   }, [filteredSpecies]);
 
-  const categoryLabels: Record<PlantCategory, string> = {
-    'trees': 'Árvores',
-    'shrubs': 'Arbustos',
-    'ground-cover': 'Cobertura de Solo',
-    'herbs': 'Ervas'
-  };
-
   const handleSpeciesSelect = (species: PlantSpecies) => {
     // Direct selection - immediately enters placement mode
     onSelectSpecies(species);
@@ -82,6 +73,8 @@ export const PlantSelectionPanel: React.FC<PlantSelectionPanelProps> = ({
     setSelectedCategory('all');
     setSelectedCompatibility('all');
   };
+
+  const hasActiveFilters = selectedCategory !== 'all' || selectedCompatibility !== 'all' || searchTerm;
 
   return (
     <>
@@ -99,156 +92,38 @@ export const PlantSelectionPanel: React.FC<PlantSelectionPanelProps> = ({
         "transition-transform duration-300 ease-in-out",
         isOpen ? "translate-x-0" : "translate-x-full"
       )}>
-        {/* Header */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Selecionar Plantas
-              </h2>
-              {isPlacing && selectedSpecies && (
-                <p className="text-sm text-green-600 mt-1 font-medium">
-                  ✓ {selectedSpecies.commonName} selecionada
-                </p>
-              )}
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="p-2"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-          
-          {selectedBedId && (
-            <p className="text-sm text-gray-600 mt-2">
-              {isPlacing 
-                ? "Clique no canteiro para plantar ou selecione outra espécie"
-                : "Clique em uma espécie para começar a plantar"
-              }
-            </p>
-          )}
-        </div>
+        <PlantSelectionHeader
+          onClose={onClose}
+          isPlacing={isPlacing}
+          selectedSpecies={selectedSpecies}
+          selectedBedId={selectedBedId}
+        />
 
-        {/* Search and Filters */}
-        <div className="p-4 space-y-3 border-b border-gray-200">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              placeholder="Buscar por nome comum ou científico..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+        <PlantSelectionSearch
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+          selectedCompatibility={selectedCompatibility}
+          onCompatibilityChange={setSelectedCompatibility}
+          showFilters={showFilters}
+          onToggleFilters={() => setShowFilters(!showFilters)}
+          onClearFilters={clearFilters}
+          hasActiveFilters={hasActiveFilters}
+        />
 
-          {/* Filter Toggle */}
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2"
-            >
-              <Filter className="w-4 h-4" />
-              Filtros
-            </Button>
+        <PlantSelectionResults count={filteredSpecies.length} />
 
-            {(selectedCategory !== 'all' || selectedCompatibility !== 'all' || searchTerm) && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearFilters}
-                className="text-xs"
-              >
-                Limpar
-              </Button>
-            )}
-          </div>
+        <PlantSelectionContent
+          filteredSpecies={filteredSpecies}
+          speciesByCategory={speciesByCategory}
+          selectedCategory={selectedCategory}
+          selectedSpecies={selectedSpecies}
+          isPlacing={isPlacing}
+          onSelectSpecies={handleSpeciesSelect}
+        />
 
-          {/* Filters */}
-          {showFilters && (
-            <div className="space-y-3 pt-3 border-t border-gray-100">
-              <PlantCategoryFilter
-                selected={selectedCategory}
-                onSelect={setSelectedCategory}
-              />
-              <PlantCompatibilityFilter
-                selected={selectedCompatibility}
-                onSelect={setSelectedCompatibility}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Results Count */}
-        <div className="px-4 py-2 text-sm text-gray-600 bg-gray-50">
-          {filteredSpecies.length} espécie{filteredSpecies.length !== 1 ? 's' : ''} encontrada{filteredSpecies.length !== 1 ? 's' : ''}
-        </div>
-
-        {/* Species List */}
-        <ScrollArea className="flex-1">
-          <div className="p-4 space-y-6">
-            {selectedCategory === 'all' ? (
-              // Show by categories
-              Object.entries(speciesByCategory).map(([category, species]) => {
-                if (species.length === 0) return null;
-                
-                return (
-                  <div key={category}>
-                    <h3 className="text-sm font-medium text-gray-700 mb-3 sticky top-0 bg-white/95 backdrop-blur-sm py-1">
-                      {categoryLabels[category as PlantCategory]} ({species.length})
-                    </h3>
-                    <div className="space-y-3">
-                      {species.map(speciesItem => (
-                        <PlantSpeciesCard
-                          key={speciesItem.id}
-                          species={speciesItem}
-                          onSelect={() => handleSpeciesSelect(speciesItem)}
-                          isSelected={selectedSpecies?.id === speciesItem.id}
-                          isPlacing={isPlacing && selectedSpecies?.id === speciesItem.id}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              // Show flat list when category is selected
-              <div className="space-y-3">
-                {filteredSpecies.map(species => (
-                  <PlantSpeciesCard
-                    key={species.id}
-                    species={species}
-                    onSelect={() => handleSpeciesSelect(species)}
-                    isSelected={selectedSpecies?.id === species.id}
-                    isPlacing={isPlacing && selectedSpecies?.id === species.id}
-                  />
-                ))}
-              </div>
-            )}
-
-            {filteredSpecies.length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-gray-500">Nenhuma espécie encontrada</p>
-                <p className="text-sm text-gray-400 mt-1">
-                  Tente ajustar os filtros ou termo de busca
-                </p>
-              </div>
-            )}
-          </div>
-        </ScrollArea>
-
-        {/* Help Text */}
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
-          <p className="text-xs text-gray-600">
-            💡 <strong>Dica:</strong> Clique em qualquer espécie para começar a plantar. 
-            Pressione ESC ou clique em área vazia para cancelar.
-          </p>
-        </div>
+        <PlantSelectionHelpText />
       </div>
     </>
   );
