@@ -15,6 +15,8 @@ export const useBedStore = () => {
   const plantPlacementState = usePlantPlacementStore();
   const patchState = usePatchStore();
 
+  const addToHistoryForEffect = useHistoryStore(state => state.addToHistory);
+
   const { activePatchId } = patchState;
 
   // Memoize filtered beds and placements for performance
@@ -35,7 +37,7 @@ export const useBedStore = () => {
       state => state.beds.filter(b => b.patchId === activePatchId),
       (beds, prevBeds) => {
         if (JSON.stringify(beds) !== JSON.stringify(prevBeds)) {
-          historyStore.addToHistory(beds);
+          addToHistoryForEffect(beds);
         }
       },
       { fireImmediately: false }
@@ -46,7 +48,7 @@ export const useBedStore = () => {
     // historyStore.resetHistory();
 
     return unsubscribe;
-  }, [historyStore.addToHistory, activePatchId]);
+  }, [addToHistoryForEffect, activePatchId]);
 
 
   // Enhanced actions that are now patch-aware
