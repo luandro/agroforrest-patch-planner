@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import PatchCanvas from '../features/canvas/components/PatchCanvas';
 import MainLayout from '../components/layout/MainLayout';
@@ -16,7 +15,7 @@ const PatchCreatorPage: React.FC = () => {
   const [fps, setFps] = useState(0);
   const [isPlantSelectionOpen, setIsPlantSelectionOpen] = useState(false);
   const { beds, selectedBedIds, tool, setTool, loadBeds, focusMode, exitFocusMode } = useBedStore();
-  const { setSelectedSpecies } = usePlantPlacementStore();
+  const { setSelectedSpecies, setIsPlacing } = usePlantPlacementStore();
 
   // Ensure pan tool is default on page load
   useEffect(() => {
@@ -55,6 +54,7 @@ const PatchCreatorPage: React.FC = () => {
   const handleSelectSpecies = (species: PlantSpecies) => {
     console.log('Selected species for placement:', species);
     setSelectedSpecies(species);
+    setIsPlacing(true); // Enable placement mode
     // Panel will close automatically via the PlantSelectionPanel component
   };
 
