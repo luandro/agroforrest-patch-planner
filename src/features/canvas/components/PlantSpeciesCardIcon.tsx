@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { PlantCategory } from '../types/species.types';
-import { Trees, Shrub, Grass, Leaf } from 'lucide-react';
+import { Trees, Shrub, Leaf } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PlantSpeciesCardIconProps {
@@ -22,7 +22,7 @@ export const PlantSpeciesCardIcon: React.FC<PlantSpeciesCardIconProps> = ({
       case 'shrubs':
         return Shrub;
       case 'ground-cover':
-        return Grass;
+        return Leaf; // Changed from Grass to Leaf
       case 'herbs':
         return Leaf;
       default:

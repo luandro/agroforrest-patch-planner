@@ -10,9 +10,11 @@ export const mockPlantSpecies: PlantSpecies[] = [
     category: 'trees',
     companionCompatibility: 'high',
     matureSize: { height: 4, width: 2.5 },
+    spacing: { min: 2, max: 3 },
     growthRate: 'fast',
     sunRequirement: 'full',
     waterRequirement: 'high',
+    isEdible: true,
     description: 'Frutífera tropical de crescimento rápido, ideal para sistemas agroflorestais.'
   },
   {
@@ -22,9 +24,11 @@ export const mockPlantSpecies: PlantSpecies[] = [
     category: 'trees',
     companionCompatibility: 'medium',
     matureSize: { height: 12, width: 8 },
+    spacing: { min: 8, max: 12 },
     growthRate: 'medium',
     sunRequirement: 'full',
     waterRequirement: 'medium',
+    isEdible: true,
     description: 'Árvore frutífera de grande porte, fornece sombra e frutos nutritivos.'
   },
   {
@@ -34,9 +38,11 @@ export const mockPlantSpecies: PlantSpecies[] = [
     category: 'trees',
     companionCompatibility: 'medium',
     matureSize: { height: 15, width: 12 },
+    spacing: { min: 10, max: 15 },
     growthRate: 'slow',
     sunRequirement: 'full',
     waterRequirement: 'medium',
+    isEdible: true,
     description: 'Árvore frutífera de grande porte, excelente para sombra e produção de frutas.'
   },
 
@@ -48,9 +54,11 @@ export const mockPlantSpecies: PlantSpecies[] = [
     category: 'shrubs',
     companionCompatibility: 'high',
     matureSize: { height: 2.5, width: 1.5 },
+    spacing: { min: 1, max: 1.5 },
     growthRate: 'medium',
     sunRequirement: 'partial',
     waterRequirement: 'medium',
+    isEdible: false,
     description: 'Arbusto produtor de café, cresce bem sob sombra parcial de árvores.'
   },
   {
@@ -60,9 +68,11 @@ export const mockPlantSpecies: PlantSpecies[] = [
     category: 'shrubs',
     companionCompatibility: 'high',
     matureSize: { height: 3, width: 2 },
+    spacing: { min: 1.5, max: 2.5 },
     growthRate: 'fast',
     sunRequirement: 'full',
     waterRequirement: 'medium',
+    isEdible: true,
     description: 'Frutífera arbustiva de crescimento rápido e alta produtividade.'
   },
   {
@@ -72,9 +82,11 @@ export const mockPlantSpecies: PlantSpecies[] = [
     category: 'shrubs',
     companionCompatibility: 'high',
     matureSize: { height: 2, width: 1.5 },
+    spacing: { min: 1, max: 1.5 },
     growthRate: 'fast',
     sunRequirement: 'full',
     waterRequirement: 'medium',
+    isEdible: false,
     description: 'Arbusto ornamental com flores vistosas, atrai polinizadores.'
   },
 
@@ -86,9 +98,11 @@ export const mockPlantSpecies: PlantSpecies[] = [
     category: 'ground-cover',
     companionCompatibility: 'high',
     matureSize: { height: 0.2, width: 0.3 },
+    spacing: { min: 0.2, max: 0.3 },
     growthRate: 'fast',
     sunRequirement: 'partial',
     waterRequirement: 'high',
+    isEdible: true,
     description: 'Cobertura do solo produtiva, ideal para sombreamento parcial.'
   },
   {
@@ -98,9 +112,11 @@ export const mockPlantSpecies: PlantSpecies[] = [
     category: 'ground-cover',
     companionCompatibility: 'high',
     matureSize: { height: 0.3, width: 1 },
+    spacing: { min: 0.5, max: 1 },
     growthRate: 'fast',
     sunRequirement: 'full',
     waterRequirement: 'medium',
+    isEdible: true,
     description: 'Cobertura rasteira comestível, melhora o solo e produz tubérculos.'
   },
   {
@@ -110,9 +126,11 @@ export const mockPlantSpecies: PlantSpecies[] = [
     category: 'ground-cover',
     companionCompatibility: 'medium',
     matureSize: { height: 0.4, width: 0.5 },
+    spacing: { min: 0.3, max: 0.5 },
     growthRate: 'fast',
     sunRequirement: 'partial',
     waterRequirement: 'high',
+    isEdible: true,
     description: 'Erva aromática que se espalha rapidamente, repele pragas.'
   },
 
@@ -124,9 +142,11 @@ export const mockPlantSpecies: PlantSpecies[] = [
     category: 'herbs',
     companionCompatibility: 'high',
     matureSize: { height: 0.6, width: 0.4 },
+    spacing: { min: 0.2, max: 0.4 },
     growthRate: 'fast',
     sunRequirement: 'full',
     waterRequirement: 'medium',
+    isEdible: true,
     description: 'Erva aromática culinária, repele insetos e atrai polinizadores.'
   },
   {
@@ -136,9 +156,11 @@ export const mockPlantSpecies: PlantSpecies[] = [
     category: 'herbs',
     companionCompatibility: 'medium',
     matureSize: { height: 1, width: 0.8 },
+    spacing: { min: 0.5, max: 0.8 },
     growthRate: 'slow',
     sunRequirement: 'full',
     waterRequirement: 'low',
+    isEdible: true,
     description: 'Erva perene aromática, resistente à seca e repele pragas.'
   },
   {
@@ -148,9 +170,11 @@ export const mockPlantSpecies: PlantSpecies[] = [
     category: 'herbs',
     companionCompatibility: 'high',
     matureSize: { height: 0.5, width: 0.3 },
+    spacing: { min: 0.1, max: 0.3 },
     growthRate: 'fast',
     sunRequirement: 'partial',
     waterRequirement: 'medium',
+    isEdible: true,
     description: 'Erva culinária de ciclo rápido, atrai insetos benéficos.'
   },
   {
@@ -160,9 +184,11 @@ export const mockPlantSpecies: PlantSpecies[] = [
     category: 'herbs',
     companionCompatibility: 'high',
     matureSize: { height: 0.4, width: 0.4 },
+    spacing: { min: 0.2, max: 0.4 },
     growthRate: 'medium',
     sunRequirement: 'full',
     waterRequirement: 'low',
+    isEdible: true,
     description: 'Erva perene aromática, fácil cultivo e múltiplos usos.'
   },
   {
@@ -172,9 +198,11 @@ export const mockPlantSpecies: PlantSpecies[] = [
     category: 'herbs',
     companionCompatibility: 'high',
     matureSize: { height: 0.3, width: 0.2 },
+    spacing: { min: 0.1, max: 0.2 },
     growthRate: 'fast',
     sunRequirement: 'full',
     waterRequirement: 'medium',
+    isEdible: true,
     description: 'Erva perene da família da cebola, repele pragas naturalmente.'
   }
 ];

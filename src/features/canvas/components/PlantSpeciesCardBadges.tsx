@@ -23,9 +23,9 @@ export const PlantSpeciesCardBadges: React.FC<PlantSpeciesCardBadgesProps> = ({
           variant="secondary" 
           className={cn(badgeSize, "bg-green-100 text-green-700")}
         >
-          {species.growthSpeed === 'fast' && 'Rápido'}
-          {species.growthSpeed === 'medium' && 'Médio'}
-          {species.growthSpeed === 'slow' && 'Lento'}
+          {species.growthRate === 'fast' && 'Rápido'}
+          {species.growthRate === 'medium' && 'Médio'}
+          {species.growthRate === 'slow' && 'Lento'}
         </Badge>
       )}
 
@@ -34,9 +34,9 @@ export const PlantSpeciesCardBadges: React.FC<PlantSpeciesCardBadgesProps> = ({
         variant="secondary" 
         className={cn(badgeSize, "bg-yellow-100 text-yellow-700")}
       >
-        {species.sunRequirements === 'full-sun' && (compact ? 'Sol' : 'Sol Pleno')}
-        {species.sunRequirements === 'partial-shade' && (compact ? 'Meia' : 'Meia Sombra')}
-        {species.sunRequirements === 'full-shade' && 'Sombra'}
+        {species.sunRequirement === 'full' && (compact ? 'Sol' : 'Sol Pleno')}
+        {species.sunRequirement === 'partial' && (compact ? 'Meia' : 'Meia Sombra')}
+        {species.sunRequirement === 'shade' && 'Sombra'}
       </Badge>
 
       {/* Water needs - only show in non-compact mode */}
@@ -45,9 +45,9 @@ export const PlantSpeciesCardBadges: React.FC<PlantSpeciesCardBadgesProps> = ({
           variant="secondary" 
           className={cn(badgeSize, "bg-blue-100 text-blue-700")}
         >
-          {species.waterNeeds === 'low' && 'Pouca Água'}
-          {species.waterNeeds === 'medium' && 'Água Média'}
-          {species.waterNeeds === 'high' && 'Muita Água'}
+          {species.waterRequirement === 'low' && 'Pouca Água'}
+          {species.waterRequirement === 'medium' && 'Água Média'}
+          {species.waterRequirement === 'high' && 'Muita Água'}
         </Badge>
       )}
 

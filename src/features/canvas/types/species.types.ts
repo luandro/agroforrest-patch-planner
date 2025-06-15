@@ -10,10 +10,15 @@ export interface PlantSpecies {
     height: number; // in meters
     width: number; // in meters
   };
+  spacing: {
+    min: number; // minimum spacing in meters
+    max: number; // maximum spacing in meters
+  };
   description?: string;
   growthRate: GrowthRate;
   sunRequirement: SunRequirement;
   waterRequirement: WaterRequirement;
+  isEdible?: boolean;
 }
 
 export type PlantCategory = 'trees' | 'shrubs' | 'ground-cover' | 'herbs';
