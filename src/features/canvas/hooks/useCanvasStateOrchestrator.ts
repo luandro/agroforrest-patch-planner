@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { useBedStore } from '../stores/bedStore';
 import { useAutoSave } from './useAutoSave';
 import { useAutoSavePlants } from './useAutoSavePlants';
+import { useAutoSavePatches } from './useAutoSavePatches';
 import { useCanvasViewport } from './useCanvasViewport';
 import { useCanvasInitialization } from './useCanvasInitialization';
 import { PatchCanvasProps } from '../types/canvas.types';
@@ -32,9 +33,10 @@ export const useCanvasStateOrchestrator = ({
   const bedStore = useBedStore();
   const { beds, selectedBedIds, undo, redo, canUndo, canRedo } = bedStore;
 
-  // Auto-save state
+  // Auto-save state (now includes patches)
   const { isSaving: isSavingBeds } = useAutoSave();
   const { isSaving: isSavingPlacements } = useAutoSavePlants();
+  const { isSaving: isSavingPatches } = useAutoSavePatches();
 
   // Initialize canvas to home position
   useCanvasInitialization({
@@ -65,8 +67,8 @@ export const useCanvasStateOrchestrator = ({
     canUndo,
     canRedo,
     
-    // Auto-save
-    isSaving: isSavingBeds || isSavingPlacements,
+    // Auto-save (includes patches now)
+    isSaving: isSavingBeds || isSavingPlacements || isSavingPatches,
     
     // Store reference for other hooks
     bedStore

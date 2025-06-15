@@ -1,15 +1,17 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useBedStore } from '../stores/bedStore';
+import { usePatchStore } from '../stores/patchStore';
 
 interface UseAutoSaveProps {
   debounceMs?: number;
 }
 
 const DB_NAME = 'AgroForestDB';
-const DB_VERSION = 2; // IMPORTANT: Must match useAutoSavePlants
+const DB_VERSION = 3; // Updated to match patch version
 const BEDS_STORE_NAME = 'beds';
 const PLACEMENTS_STORE_NAME = 'placements';
+const PATCHES_STORE_NAME = 'patches';
 
 const openDB = () => {
   return new Promise<IDBDatabase>((resolve, reject) => {
@@ -23,6 +25,10 @@ const openDB = () => {
       if (!db.objectStoreNames.contains(PLACEMENTS_STORE_NAME)) {
         db.createObjectStore(PLACEMENTS_STORE_NAME, { keyPath: 'id' });
       }
+      if (!db.objectStoreNames.contains(PATCHES_STORE_NAME)) {
+        const patchStore = db.createObjectStore(PATCHES_STORE_NAME, { keyPath: 'id' });
+        patchStore.createIndex('createdAt', 'createdAt', { unique: false });
+      }
     };
 
     request.onsuccess = () => resolve(request.result);
@@ -33,16 +39,16 @@ const openDB = () => {
   });
 };
 
-
 export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
   const { beds, isDirty, markClean, loadBeds } = useBedStore();
+  const { currentPatchId } = usePatchStore();
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout>();
 
-  // Save to IndexedDB
+  // Save beds with patch ID
   const saveBeds = async () => {
-    if (!isDirty) return;
+    if (!isDirty || !currentPatchId) return;
     
     try {
       setIsSaving(true);
@@ -52,17 +58,21 @@ export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
       const transaction = db.transaction([BEDS_STORE_NAME], 'readwrite');
       const store = transaction.objectStore(BEDS_STORE_NAME);
       
+      // Clear all beds first
       store.clear();
       
-      beds.forEach(bed => {
+      // Add beds with patch reference
+      const bedsWithPatch = beds.map(bed => ({
+        ...bed,
+        patchId: currentPatchId
+      }));
+      
+      bedsWithPatch.forEach(bed => {
         store.add(bed);
       });
 
       await new Promise<void>((resolve, reject) => {
-        transaction.oncomplete = () => {
-          resolve();
-        };
-
+        transaction.oncomplete = () => resolve();
         transaction.onerror = () => {
           console.error('Transaction error:', transaction.error);
           reject(new Error('Failed to save beds'));
@@ -70,7 +80,7 @@ export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
       });
 
       markClean();
-      console.log('Beds saved successfully');
+      console.log('Beds saved successfully for patch:', currentPatchId);
     } catch (error) {
       console.error('Failed to save beds:', error);
       setSaveError(error instanceof Error ? error.message : 'Unknown error');
@@ -79,8 +89,10 @@ export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
     }
   };
 
-  // Load beds from IndexedDB
+  // Load beds for current patch
   const loadBedsFromStorage = async () => {
+    if (!currentPatchId) return;
+    
     try {
       const db = await openDB();
       if (!db.objectStoreNames.contains(BEDS_STORE_NAME)) {
@@ -88,23 +100,23 @@ export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
         loadBeds([]);
         return;
       }
+      
       const transaction = db.transaction([BEDS_STORE_NAME], 'readonly');
       const store = transaction.objectStore(BEDS_STORE_NAME);
       const getAllRequest = store.getAll();
 
-      const loadedBeds = await new Promise<any[]>((resolve, reject) => {
-        getAllRequest.onsuccess = () => {
-          resolve(getAllRequest.result || []);
-        };
-
+      const allBeds = await new Promise<any[]>((resolve, reject) => {
+        getAllRequest.onsuccess = () => resolve(getAllRequest.result || []);
         getAllRequest.onerror = () => {
           console.error('Get all request error:', getAllRequest.error);
           reject(new Error('Failed to load beds'));
         };
       });
 
-      loadBeds(loadedBeds);
-      console.log('Beds loaded successfully:', loadedBeds.length);
+      // Filter beds for current patch
+      const patchBeds = allBeds.filter(bed => bed.patchId === currentPatchId);
+      loadBeds(patchBeds);
+      console.log('Beds loaded successfully for patch:', currentPatchId, patchBeds.length);
     } catch (error) {
       console.error('Failed to load beds:', error);
       loadBeds([]);
@@ -115,12 +127,10 @@ export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
   useEffect(() => {
     if (!isDirty) return;
 
-    // Clear existing timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
 
-    // Set new timeout
     timeoutRef.current = setTimeout(() => {
       saveBeds();
     }, debounceMs);
@@ -130,14 +140,17 @@ export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [isDirty, beds, debounceMs]);
+  }, [isDirty, beds, debounceMs, currentPatchId]);
 
-  // Load beds on mount
+  // Load beds when patch changes
   useEffect(() => {
-    loadBedsFromStorage();
-  }, []);
+    if (currentPatchId) {
+      loadBedsFromStorage();
+    } else {
+      loadBeds([]);
+    }
+  }, [currentPatchId]);
 
-  // Manual save function
   const manualSave = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);

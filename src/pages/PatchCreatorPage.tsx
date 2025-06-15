@@ -29,12 +29,20 @@ const PatchCreatorPage: React.FC = () => {
     setTimelineActive,
   } = usePatchCreatorState();
 
+  const handlePatchSwitch = (patchId: string) => {
+    // The patch switching is handled automatically by the auto-save hooks
+    // when the current patch changes in the store
+    console.log('Switching to patch:', patchId);
+  };
+
   return (
     <GrowthTimelineProvider>
       <MainLayout 
         showUserMenu={true}
+        showPatchSelector={true}
         onFitAll={handleFitAll}
         onCreateNewPatch={handleCreateNewPatch}
+        onPatchSwitch={handlePatchSwitch}
       >
         <PatchCreatorHeader 
           isMobile={isMobile}

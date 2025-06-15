@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { BedState, BedActions } from './types';
 import { Bed, CanvasTool } from '../types/bed.types';
+import { usePatchStore } from './patchStore';
 
 interface BedStateStore extends BedState, BedActions {
   // Internal method for other stores to update beds
@@ -21,7 +22,14 @@ export const useBedState = create<BedStateStore>()(
     // Actions
     addBed: (bed) => {
       const state = get();
-      const newBeds = [...state.beds, bed];
+      const { currentPatchId } = usePatchStore.getState();
+      
+      const bedWithPatch: Bed = {
+        ...bed,
+        patchId: currentPatchId || undefined
+      };
+      
+      const newBeds = [...state.beds, bedWithPatch];
       set({ beds: newBeds, isDirty: true });
     },
 

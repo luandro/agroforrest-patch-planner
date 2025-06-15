@@ -4,19 +4,24 @@ import { Menu, X, User, LogOut } from 'lucide-react';
 import { useMenuStore } from '@/stores/menuStore';
 import { UserMenu } from '@/components/UserMenu';
 import { Button } from '@/components/ui/button';
+import { PatchSelector } from '@/features/canvas/components/PatchSelector';
 
 interface MainLayoutProps {
   children: React.ReactNode;
   showUserMenu?: boolean;
+  showPatchSelector?: boolean;
   onFitAll?: () => void;
   onCreateNewPatch?: () => void;
+  onPatchSwitch?: (patchId: string) => void;
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ 
   children, 
   showUserMenu = false,
+  showPatchSelector = false,
   onFitAll = () => {},
-  onCreateNewPatch = () => {}
+  onCreateNewPatch = () => {},
+  onPatchSwitch
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isMenuOpen, toggleMenu } = useMenuStore();
@@ -35,6 +40,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({
             <div className="flex items-center">
               <h1 className="text-xl font-semibold text-gray-900">AgroForrest</h1>
             </div>
+
+            {/* Center - Patch Selector */}
+            {showPatchSelector && (
+              <div className="hidden md:flex flex-1 justify-center max-w-md mx-4">
+                <PatchSelector onPatchSwitch={onPatchSwitch} />
+              </div>
+            )}
 
             {/* Right side controls */}
             <div className="flex items-center space-x-2">
@@ -77,6 +89,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({
               )}
             </div>
           </div>
+
+          {/* Mobile Patch Selector */}
+          {showPatchSelector && (
+            <div className="md:hidden px-4 pb-3 border-t border-gray-200">
+              <div className="mt-3">
+                <PatchSelector onPatchSwitch={onPatchSwitch} />
+              </div>
+            </div>
+          )}
 
           {/* Mobile Menu (for other pages) */}
           {!showUserMenu && isMobileMenuOpen && (
