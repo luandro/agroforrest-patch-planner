@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -154,7 +153,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
       {/* Backdrop - Proper z-index for mobile interaction, only show when FAB is visible */}
       {isVisible && !isFABHidden && (
         <div 
-          className="fixed inset-0 bg-black/20 z-20 touch-manipulation"
+          className="fixed inset-0 bg-black/20 z-[29] touch-manipulation"
           onClick={() => onToggle(false)}
         />
       )}

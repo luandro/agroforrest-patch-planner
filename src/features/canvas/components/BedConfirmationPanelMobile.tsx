@@ -46,7 +46,7 @@ export const BedConfirmationPanelMobile: React.FC<BedConfirmationPanelProps> = (
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/50 z-40"
+        className="fixed inset-0 bg-black/50 z-[49]"
         onClick={onCancel}
       />
       

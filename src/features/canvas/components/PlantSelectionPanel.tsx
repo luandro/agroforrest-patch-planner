@@ -30,7 +30,7 @@ export const PlantSelectionPanel: React.FC<PlantSelectionPanelProps> = ({
     <>
       {/* Backdrop - only render when open */}
       <div 
-        className="fixed inset-0 bg-black/30 z-40"
+        className="fixed inset-0 bg-black/30 z-[49]"
         onClick={onClose}
       />
 

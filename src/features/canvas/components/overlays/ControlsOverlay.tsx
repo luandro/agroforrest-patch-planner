@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { MobileControls } from '../MobileControls';
 import { DesktopSidebar } from '../DesktopSidebar';
 import { ViewControls } from '../ViewControls';
@@ -55,6 +55,8 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
   isInFocusMode,
   showConfirmation
 }) => {
+  const [isFabMenuOpen, setIsFabMenuOpen] = useState(false);
+
   return (
     <>
       {/* Mobile Controls - Properly positioned to avoid header overlap */}
@@ -70,8 +72,8 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
           canRedo={canRedo()}
           onDeleteSelected={deleteSelected}
           selectedCount={selectedBedIds.length}
-          isVisible={true}
-          onToggle={() => {}}
+          isVisible={isFabMenuOpen}
+          onToggle={setIsFabMenuOpen}
           isSaving={isSaving}
           showConfirmation={showConfirmation}
           isInFocusMode={isInFocusMode}

@@ -21,6 +21,11 @@ export const useCanvasGestures = ({
     isPanning: false,
     isZooming: false
   });
+  const zoomRef = useRef(currentZoom);
+
+  useEffect(() => {
+    zoomRef.current = currentZoom;
+  }, [currentZoom]);
 
   const getDistance = useCallback((touches: TouchList): number => {
     if (touches.length < 2) return 0;
@@ -63,11 +68,11 @@ export const useCanvasGestures = ({
         isPanning: false,
         isZooming: true,
         initialDistance: distance,
-        initialZoom: currentZoom
+        initialZoom: zoomRef.current,
       };
       console.log('Started zooming, initial distance:', distance);
     }
-  }, [getCanvasPoint, getDistance, currentZoom, enabled]);
+  }, [getCanvasPoint, getDistance, enabled]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!enabled) return;
@@ -154,11 +159,11 @@ export const useCanvasGestures = ({
     e.preventDefault();
     
     const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-    const newZoom = currentZoom * zoomFactor;
+    const newZoom = zoomRef.current * zoomFactor;
     
     console.log('Wheel zoom:', e.deltaY, 'new zoom:', newZoom);
     onZoom(newZoom);
-  }, [currentZoom, onZoom, enabled]);
+  }, [onZoom, enabled]);
 
   // Set up event listeners
   useEffect(() => {
