@@ -1,8 +1,9 @@
 
 import React from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { PlantSpecies, PlantCategory } from '../types/species.types';
 import { PlantSpeciesCard } from './PlantSpeciesCard';
+import { Button } from '@/components/ui/button';
+import { Grid3X3 } from 'lucide-react';
 
 interface PlantSelectionContentProps {
   filteredSpecies: PlantSpecies[];
@@ -11,6 +12,8 @@ interface PlantSelectionContentProps {
   selectedSpecies: PlantSpecies | null;
   isPlacing: boolean;
   onSelectSpecies: (species: PlantSpecies) => void;
+  showBulkButton?: boolean;
+  onBulkSelect?: (species: PlantSpecies) => void;
 }
 
 export const PlantSelectionContent: React.FC<PlantSelectionContentProps> = ({
@@ -19,66 +22,73 @@ export const PlantSelectionContent: React.FC<PlantSelectionContentProps> = ({
   selectedCategory,
   selectedSpecies,
   isPlacing,
-  onSelectSpecies
+  onSelectSpecies,
+  showBulkButton = false,
+  onBulkSelect
 }) => {
-  const categoryLabels: Record<PlantCategory, string> = {
-    'trees': 'Árvores',
-    'shrubs': 'Arbustos',
-    'ground-cover': 'Cobertura de Solo',
-    'herbs': 'Ervas'
-  };
+  const renderSpeciesList = (species: PlantSpecies[]) => (
+    <div className="space-y-3">
+      {species.map((plant) => (
+        <div key={plant.id} className="space-y-2">
+          <PlantSpeciesCard
+            species={plant}
+            isSelected={selectedSpecies?.id === plant.id}
+            isPlacing={isPlacing && selectedSpecies?.id === plant.id}
+            onClick={() => onSelectSpecies(plant)}
+          />
+          
+          {/* Bulk Placement Button */}
+          {showBulkButton && onBulkSelect && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs"
+              onClick={() => onBulkSelect(plant)}
+            >
+              <Grid3X3 className="w-3 h-3 mr-1" />
+              Plantio em Massa
+            </Button>
+          )}
+        </div>
+      ))}
+    </div>
+  );
 
   return (
-    <ScrollArea className="flex-1">
-      <div className="p-4 space-y-6">
-        {selectedCategory === 'all' ? (
-          // Show by categories
-          Object.entries(speciesByCategory).map(([category, species]) => {
+    <div className="flex-1 overflow-y-auto px-4 pb-4">
+      {selectedCategory === 'all' ? (
+        <div className="space-y-6">
+          {Object.entries(speciesByCategory).map(([category, species]) => {
             if (species.length === 0) return null;
             
+            const categoryNames = {
+              'trees': 'Árvores',
+              'shrubs': 'Arbustos',
+              'ground-cover': 'Cobertura do Solo',
+              'herbs': 'Ervas'
+            };
+
             return (
               <div key={category}>
-                <h3 className="text-sm font-medium text-gray-700 mb-3 sticky top-0 bg-white/95 backdrop-blur-sm py-1">
-                  {categoryLabels[category as PlantCategory]} ({species.length})
+                <h3 className="font-medium text-gray-900 mb-3 border-b border-gray-200 pb-1">
+                  {categoryNames[category as PlantCategory]} ({species.length})
                 </h3>
-                <div className="space-y-3">
-                  {species.map(speciesItem => (
-                    <PlantSpeciesCard
-                      key={speciesItem.id}
-                      species={speciesItem}
-                      onSelect={() => onSelectSpecies(speciesItem)}
-                      isSelected={selectedSpecies?.id === speciesItem.id}
-                      isPlacing={isPlacing && selectedSpecies?.id === speciesItem.id}
-                    />
-                  ))}
-                </div>
+                {renderSpeciesList(species)}
               </div>
             );
-          })
-        ) : (
-          // Show flat list when category is selected
-          <div className="space-y-3">
-            {filteredSpecies.map(species => (
-              <PlantSpeciesCard
-                key={species.id}
-                species={species}
-                onSelect={() => onSelectSpecies(species)}
-                isSelected={selectedSpecies?.id === species.id}
-                isPlacing={isPlacing && selectedSpecies?.id === species.id}
-              />
-            ))}
-          </div>
-        )}
+          })}
+        </div>
+      ) : (
+        renderSpeciesList(filteredSpecies)
+      )}
 
-        {filteredSpecies.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-gray-500">Nenhuma espécie encontrada</p>
-            <p className="text-sm text-gray-400 mt-1">
-              Tente ajustar os filtros ou termo de busca
-            </p>
-          </div>
-        )}
-      </div>
-    </ScrollArea>
+      {filteredSpecies.length === 0 && (
+        <div className="text-center py-8">
+          <p className="text-gray-500 text-sm">
+            Nenhuma espécie encontrada com os filtros atuais.
+          </p>
+        </div>
+      )}
+    </div>
   );
 };

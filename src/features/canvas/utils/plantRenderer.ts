@@ -2,6 +2,7 @@
 import { CanvasViewport } from '../types/canvas.types';
 import { Bed } from '../types/bed.types';
 import { PlantPlacement } from '../stores/plantPlacementStore';
+import { useBulkPlacementStore } from '../stores/bulkPlacementStore';
 
 export const drawPlantPlacements = (
   ctx: CanvasRenderingContext2D,
@@ -52,7 +53,18 @@ export const drawPlantPlacements = (
     drawPlant(ctx, plantScreenX, plantScreenY, placement.species, isSelected, false);
   });
 
-  // Draw placement preview
+  // Draw bulk placement preview if active
+  const bulkStore = useBulkPlacementStore.getState();
+  if (bulkStore.showPreview && bulkStore.preview && bulkStore.selectedBed?.id === bed.id) {
+    bulkStore.preview.positions.forEach(position => {
+      const previewScreenX = bedScreenX + (position.x * pixelsPerMeter);
+      const previewScreenY = bedScreenY - (position.y * pixelsPerMeter);
+      
+      drawBulkPreviewPlant(ctx, previewScreenX, previewScreenY, bulkStore.selectedSpecies, position);
+    });
+  }
+
+  // Draw individual placement preview
   if (placementPreview) {
     const previewScreenX = bedScreenX + (placementPreview.x * pixelsPerMeter);
     const previewScreenY = bedScreenY - (placementPreview.y * pixelsPerMeter);
@@ -119,7 +131,7 @@ const drawPlant = (
   ctx.textBaseline = 'middle';
   ctx.fillStyle = 'white';
   
-  if (symbol.startsWith('�')) {
+  if (symbol.startsWith('🌳')) {
     // For emoji, make them slightly smaller
     ctx.font = `${radius * 0.8}px sans-serif`;
     ctx.fillText(symbol, screenX, screenY);
@@ -136,6 +148,59 @@ const drawPlant = (
     ctx.lineWidth = 2;
     ctx.setLineDash([2, 2]);
     ctx.stroke();
+  }
+
+  ctx.restore();
+};
+
+const drawBulkPreviewPlant = (
+  ctx: CanvasRenderingContext2D,
+  screenX: number,
+  screenY: number,
+  species: any = null,
+  position: any
+) => {
+  ctx.save();
+  ctx.globalAlpha = 0.6;
+
+  const getPlantVisuals = (species: any) => {
+    if (!species) {
+      return { color: '#10B981', radius: 6 };
+    }
+
+    switch (species.category) {
+      case 'trees':
+        return { color: '#059669', radius: 8 };
+      case 'shrubs':
+        return { color: '#34D399', radius: 7 };
+      case 'ground-cover':
+        return { color: '#6EE7B7', radius: 4 };
+      case 'herbs':
+        return { color: '#A7F3D0', radius: 5 };
+      default:
+        return { color: '#10B981', radius: 6 };
+    }
+  };
+
+  const { color, radius } = getPlantVisuals(species);
+
+  // Draw preview circle with pattern indicator
+  ctx.fillStyle = color;
+  ctx.strokeStyle = '#065F46';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([2, 2]);
+
+  ctx.beginPath();
+  ctx.arc(screenX, screenY, radius, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.stroke();
+
+  // Draw row/column indicators for better visualization
+  if (position.row === 0 || position.column === 0) {
+    ctx.fillStyle = '#059669';
+    ctx.beginPath();
+    ctx.arc(screenX, screenY, 2, 0, 2 * Math.PI);
+    ctx.fill();
   }
 
   ctx.restore();
