@@ -38,9 +38,9 @@ export const PlantSelectionPanel: React.FC<PlantSelectionPanelProps> = ({
 
       {/* Panel - Mobile responsive */}
       <div className={cn(
-        "fixed z-50 bg-white/95 backdrop-blur-sm shadow-xl",
+        "fixed z-50 bg-white shadow-xl",
         "flex flex-col transition-transform duration-300 ease-in-out",
-        // Mobile: Full screen style
+        // Mobile: Full screen style with minimal chrome
         isMobile && [
           "inset-0",
           "pt-[env(safe-area-inset-top)]",
@@ -49,7 +49,7 @@ export const PlantSelectionPanel: React.FC<PlantSelectionPanelProps> = ({
         // Desktop: Right sidebar
         !isMobile && [
           "top-16 right-0 h-[calc(100vh-4rem)] w-96 border-l border-gray-200",
-          "translate-x-0"
+          "translate-x-0 bg-white/95 backdrop-blur-sm"
         ]
       )}>
         <PlantSelectionHeader

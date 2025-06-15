@@ -3,6 +3,7 @@ import React from 'react';
 import { PlantSpecies, PlantCategory } from '../types/species.types';
 import { PlantSpeciesCard } from './PlantSpeciesCard';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 interface PlantSelectionContentProps {
   filteredSpecies: PlantSpecies[];
@@ -28,7 +29,7 @@ export const PlantSelectionContent: React.FC<PlantSelectionContentProps> = ({
   const isMobile = useIsMobile();
 
   const renderSpeciesList = (species: PlantSpecies[]) => (
-    <div className={isMobile ? "space-y-2" : "space-y-3"}>
+    <div className={cn("space-y-1", !isMobile && "space-y-2")}>
       {species.map((plant) => (
         <PlantSpeciesCard
           key={plant.id}
@@ -45,22 +46,28 @@ export const PlantSelectionContent: React.FC<PlantSelectionContentProps> = ({
   );
 
   return (
-    <div className="flex-1 overflow-y-auto px-3 pb-4 md:px-4">
+    <div className={cn(
+      "h-full overflow-y-auto",
+      isMobile ? "px-2 py-2" : "px-3 pb-4 md:px-4"
+    )}>
       {selectedCategory === 'all' ? (
-        <div className="space-y-4 md:space-y-6">
+        <div className={cn("space-y-3", isMobile && "space-y-2")}>
           {Object.entries(speciesByCategory).map(([category, species]) => {
             if (species.length === 0) return null;
             
             const categoryNames = {
               'trees': 'Árvores',
               'shrubs': 'Arbustos',
-              'ground-cover': 'Cobertura do Solo',
+              'ground-cover': 'Cobertura',
               'herbs': 'Ervas'
             };
 
             return (
               <div key={category}>
-                <h3 className="font-medium text-gray-900 mb-2 md:mb-3 border-b border-gray-200 pb-1 text-sm md:text-base">
+                <h3 className={cn(
+                  "font-medium text-gray-900 border-b border-gray-200 pb-1",
+                  isMobile ? "text-sm mb-1" : "text-sm md:text-base mb-2 md:mb-3"
+                )}>
                   {categoryNames[category as PlantCategory]} ({species.length})
                 </h3>
                 {renderSpeciesList(species)}
@@ -74,8 +81,8 @@ export const PlantSelectionContent: React.FC<PlantSelectionContentProps> = ({
 
       {filteredSpecies.length === 0 && (
         <div className="text-center py-8">
-          <p className="text-gray-500 text-sm">
-            Nenhuma espécie encontrada com os filtros atuais.
+          <p className={cn("text-gray-500", isMobile ? "text-sm" : "text-sm")}>
+            Nenhuma espécie encontrada.
           </p>
         </div>
       )}

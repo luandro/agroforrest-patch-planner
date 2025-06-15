@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { Search } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 interface PlantSelectionResultsProps {
   count: number;
@@ -9,17 +10,24 @@ interface PlantSelectionResultsProps {
 export const PlantSelectionResults: React.FC<PlantSelectionResultsProps> = ({
   count
 }) => {
+  const isMobile = useIsMobile();
+
+  // On mobile, make this very compact or hide it
+  if (isMobile) {
+    return (
+      <div className="px-2 py-1 bg-gray-50 border-b border-gray-100 flex-shrink-0">
+        <p className="text-xs text-gray-600">
+          {count} espécie{count !== 1 ? 's' : ''}
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="px-4 py-3 text-sm bg-gray-50 border-b border-gray-200 flex items-center gap-2">
-      <Search className="w-4 h-4 text-gray-400" />
-      <span className="text-gray-600">
+    <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 flex-shrink-0">
+      <p className="text-sm text-gray-600">
         {count} espécie{count !== 1 ? 's' : ''} encontrada{count !== 1 ? 's' : ''}
-      </span>
-      {count === 0 && (
-        <span className="text-gray-400 ml-2">
-          • Tente ajustar os filtros
-        </span>
-      )}
+      </p>
     </div>
   );
 };
