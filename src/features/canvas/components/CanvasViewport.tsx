@@ -51,6 +51,12 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
 }) => {
   const isMobile = useIsMobile();
 
+  // DEBUG: Log focusedBed as received
+  if (process.env.NODE_ENV === "development") {
+    // eslint-disable-next-line no-console
+    console.debug("[CanvasViewport] focusedBed", focusedBed);
+  }
+
   return (
     <div className="relative w-full h-screen pt-16">
       {/* Main Canvas */}
@@ -76,7 +82,6 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
         canvasRef={canvasRef}
         focusedBed={focusedBed}
       />
-
       {/* Development Info */}
       {process.env.NODE_ENV === 'development' && (
         <DevelopmentInfo

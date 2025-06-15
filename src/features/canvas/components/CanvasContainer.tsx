@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from 'react';
 import { useCanvasGestures } from '../hooks/useCanvasGestures';
 import { useCanvasRenderer } from '../hooks/useCanvasRenderer';
@@ -54,6 +53,12 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
   // Use external canvas ref if provided, otherwise use internal
   const canvasRef = externalCanvasRef || internalCanvasRef;
   
+  // DEBUG: Log focusedBed as received
+  if (process.env.NODE_ENV === "development") {
+    // eslint-disable-next-line no-console
+    console.debug("[CanvasContainer] focusedBed", focusedBed);
+  }
+
   const { scheduleRender } = useCanvasRenderer({
     canvasRef,
     gridSize,

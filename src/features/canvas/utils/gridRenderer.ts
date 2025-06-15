@@ -140,6 +140,30 @@ export const drawGrid = (
     
     ctx.clip();
     
+    // DEBUG: draw a bright red border showing grid area in dev mode
+    if (process.env.NODE_ENV === "development") {
+      ctx.save();
+      ctx.beginPath();
+      if (focusedBed.shape === 'rectangle') {
+        const length = (focusedBed.dimensions.length || 1) * pixelsPerMeter;
+        const width = (focusedBed.dimensions.width || 1) * pixelsPerMeter;
+        ctx.rect(
+          bedScreenX - length / 2, 
+          bedScreenY - width / 2, 
+          length, 
+          width
+        );
+      } else {
+        const radius = (focusedBed.dimensions.radius || 0.5) * pixelsPerMeter;
+        ctx.arc(bedScreenX, bedScreenY, radius, 0, 2 * Math.PI);
+      }
+      ctx.strokeStyle = "red";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 3]);
+      ctx.stroke();
+      ctx.restore();
+    }
+    
     // Draw fine grid lines
     const startFineMeterX = Math.floor((bedBounds.minX - offsetX) / pixelsPerMeter / fineGridSize) * fineGridSize;
     const endFineMeterX = Math.ceil((bedBounds.maxX - offsetX) / pixelsPerMeter / fineGridSize) * fineGridSize;

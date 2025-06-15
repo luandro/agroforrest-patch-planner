@@ -57,6 +57,12 @@ interface CanvasLayoutProps {
 }
 
 export const CanvasLayout: React.FC<CanvasLayoutProps> = (props) => {
+  // DEBUG: Log focusedBed and focus mode props
+  if (process.env.NODE_ENV === "development") {
+    // eslint-disable-next-line no-console
+    console.debug("[CanvasLayout] focusedBedId", props.focusedBedId, "focusedBed", props.focusedBed);
+  }
+
   return (
     <CanvasLayoutProvider {...props}>
       <CanvasViewport 

@@ -1,4 +1,3 @@
-
 import { useCallback, useRef } from 'react';
 import { CanvasViewport } from '../types/canvas.types';
 import { Bed } from '../types/bed.types';
@@ -24,16 +23,15 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedB
   // Get plant placement data
   const { getPlacementsForBed, selectedPlacementIds, placementPreview } = usePlantPlacementStore();
 
+  // DEBUG: Log whenever render fires
   const render = useCallback((
-    viewport: CanvasViewport, 
-    beds: Bed[] = [], 
-    selectedBedIds: string[] = [], 
-    previewBed?: Bed | null,
-    placementBed?: Bed | null,
-    previewBeds?: Bed[],
-    placementBeds?: Bed[],
-    hasCollision?: boolean
+    viewport, beds = [], selectedBedIds = [], previewBed, placementBed, previewBeds, placementBeds, hasCollision
   ) => {
+    if (process.env.NODE_ENV === "development") {
+      // eslint-disable-next-line no-console
+      console.debug("[useCanvasRenderer:render] focusedBed:", focusedBed);
+    }
+
     const canvas = activeCanvasRef.current;
     if (!canvas) return;
 
