@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import PatchCanvas from '../features/canvas/components/PatchCanvas';
 import MainLayout from '../components/layout/MainLayout';
@@ -6,16 +7,20 @@ import { CanvasViewport } from '../features/canvas/types/canvas.types';
 import { PlantSpecies } from '../features/canvas/types/species.types';
 import { useBedStore } from '../features/canvas/stores/bedStore';
 import { usePlantPlacementStore } from '../features/canvas/stores/plantPlacementStore';
+import { useTimelineStore } from '../features/canvas/stores/timelineStore';
 import { GrowthTimelineProvider } from '../features/canvas/providers/GrowthTimelineProvider';
-import { ArrowLeft } from 'lucide-react';
+import { DesktopGrowthTimeline } from '../features/canvas/components/desktop/DesktopGrowthTimeline';
+import { ArrowLeft, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const PatchCreatorPage: React.FC = () => {
   const [viewport, setViewport] = useState<CanvasViewport | null>(null);
   const [fps, setFps] = useState(0);
   const [isPlantSelectionOpen, setIsPlantSelectionOpen] = useState(false);
+  const [isTimelineOpen, setIsTimelineOpen] = useState(false);
   const { beds, selectedBedIds, tool, setTool, loadBeds, focusMode, exitFocusMode } = useBedStore();
-  const { setSelectedSpecies, setIsPlacing } = usePlantPlacementStore();
+  const { setSelectedSpecies, setIsPlacing, placements } = usePlantPlacementStore();
+  const { setTimelineActive } = useTimelineStore();
 
   // Ensure pan tool is default on page load
   useEffect(() => {
@@ -63,6 +68,19 @@ const PatchCreatorPage: React.FC = () => {
   const handleExitFocus = () => {
     exitFocusMode();
     console.log('Exited focus mode from header button');
+  };
+
+  // Timeline controls
+  const handleToggleTimeline = () => {
+    const newState = !isTimelineOpen;
+    setIsTimelineOpen(newState);
+    setTimelineActive(newState);
+    console.log('Timeline toggled:', newState);
+  };
+
+  const handleCloseTimeline = () => {
+    setIsTimelineOpen(false);
+    setTimelineActive(false);
   };
 
   // FPS counter for development
@@ -125,12 +143,27 @@ const PatchCreatorPage: React.FC = () => {
               </div>
             </div>
             
-            {process.env.NODE_ENV === 'development' && (
-              <div className="text-xs text-gray-500 hidden md:block">
-                FPS: {fps} | Canteiros: {beds.length} | Selecionados: {selectedBedIds.length} | Ferramenta: {tool}
-                {focusMode.isActive && ` | Focado: ${focusMode.bedId}`}
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              {/* Timeline Toggle Button */}
+              {placements.length > 0 && (
+                <Button
+                  variant={isTimelineOpen ? "default" : "outline"}
+                  size="sm"
+                  onClick={handleToggleTimeline}
+                  className="flex items-center gap-2"
+                >
+                  <Clock className="w-4 h-4" />
+                  Linha do Tempo
+                </Button>
+              )}
+              
+              {process.env.NODE_ENV === 'development' && (
+                <div className="text-xs text-gray-500 hidden md:block">
+                  FPS: {fps} | Canteiros: {beds.length} | Selecionados: {selectedBedIds.length} | Ferramenta: {tool}
+                  {focusMode.isActive && ` | Focado: ${focusMode.bedId}`}
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
@@ -152,6 +185,15 @@ const PatchCreatorPage: React.FC = () => {
           onSelectSpecies={handleSelectSpecies}
           selectedBedId={focusMode.isActive ? focusMode.bedId : undefined}
         />
+
+        {/* Desktop Growth Timeline */}
+        {isTimelineOpen && (
+          <DesktopGrowthTimeline
+            onClose={handleCloseTimeline}
+            focusedBedId={focusMode.isActive ? focusMode.bedId : undefined}
+            isInFocusMode={focusMode.isActive}
+          />
+        )}
 
         {/* Hidden stats for development */}
         {process.env.NODE_ENV === 'development' && viewport && (
