@@ -1,8 +1,8 @@
-
 import { useEffect } from 'react';
 import { useBedState } from './bedState';
 import { useFocusModeStore } from './focusModeStore';
 import { useHistoryStore } from './historyStore';
+import { usePlantPlacementStore } from './plantPlacementStore';
 import { Bed } from '../types/bed.types';
 
 // Re-export the combined store interface for backward compatibility
@@ -43,6 +43,12 @@ export const useBedStore = () => {
       focusModeStore.exitFocusMode();
     }
     
+    // Clear placements for each removed bed
+    const { clearPlacementsForBed } = usePlantPlacementStore.getState();
+    ids.forEach(bedId => {
+      clearPlacementsForBed(bedId);
+    });
+
     bedState.removeBeds(ids);
   };
 
@@ -96,4 +102,5 @@ export const useBedStore = () => {
 export { useBedState } from './bedState';
 export { useFocusModeStore } from './focusModeStore';
 export { useHistoryStore } from './historyStore';
+export { usePlantPlacementStore } from './plantPlacementStore';
 export type { FocusMode, BedState, BedActions, HistoryState, HistoryActions, FocusModeActions } from './types';

@@ -2,6 +2,7 @@
 import { useCallback } from 'react';
 import { useBedStore } from '../stores/bedStore';
 import { useAutoSave } from './useAutoSave';
+import { useAutoSavePlants } from './useAutoSavePlants';
 import { useCanvasViewport } from './useCanvasViewport';
 import { PatchCanvasProps } from '../types/canvas.types';
 
@@ -31,7 +32,8 @@ export const useCanvasStateOrchestrator = ({
   const { beds, selectedBedIds, undo, redo, canUndo, canRedo } = bedStore;
 
   // Auto-save state
-  const { isSaving } = useAutoSave();
+  const { isSaving: isSavingBeds } = useAutoSave();
+  const { isSaving: isSavingPlacements } = useAutoSavePlants();
 
   // Create wrapper for fitAllBeds that doesn't require parameters
   const handleFitAllBeds = useCallback(() => {
@@ -57,7 +59,7 @@ export const useCanvasStateOrchestrator = ({
     canRedo,
     
     // Auto-save
-    isSaving,
+    isSaving: isSavingBeds || isSavingPlacements,
     
     // Store reference for other hooks
     bedStore

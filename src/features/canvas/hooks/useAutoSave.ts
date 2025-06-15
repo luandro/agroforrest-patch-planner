@@ -6,6 +6,34 @@ interface UseAutoSaveProps {
   debounceMs?: number;
 }
 
+const DB_NAME = 'AgroForestDB';
+const DB_VERSION = 2; // IMPORTANT: Must match useAutoSavePlants
+const BEDS_STORE_NAME = 'beds';
+const PLACEMENTS_STORE_NAME = 'placements';
+
+const openDB = () => {
+  return new Promise<IDBDatabase>((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(BEDS_STORE_NAME)) {
+        db.createObjectStore(BEDS_STORE_NAME, { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains(PLACEMENTS_STORE_NAME)) {
+        db.createObjectStore(PLACEMENTS_STORE_NAME, { keyPath: 'id' });
+      }
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => {
+      console.error('Database error:', request.error);
+      reject(new Error('Failed to open database'));
+    };
+  });
+};
+
+
 export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
   const { beds, isDirty, markClean, loadBeds } = useBedStore();
   const [isSaving, setIsSaving] = useState(false);
@@ -14,45 +42,30 @@ export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
 
   // Save to IndexedDB
   const saveBeds = async () => {
+    if (!isDirty) return;
+    
     try {
       setIsSaving(true);
       setSaveError(null);
 
-      // Save to IndexedDB
+      const db = await openDB();
+      const transaction = db.transaction([BEDS_STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(BEDS_STORE_NAME);
+      
+      store.clear();
+      
+      beds.forEach(bed => {
+        store.add(bed);
+      });
+
       await new Promise<void>((resolve, reject) => {
-        const request = indexedDB.open('AgroForestDB', 1);
-        
-        request.onupgradeneeded = () => {
-          const db = request.result;
-          if (!db.objectStoreNames.contains('beds')) {
-            db.createObjectStore('beds', { keyPath: 'id' });
-          }
+        transaction.oncomplete = () => {
+          resolve();
         };
 
-        request.onsuccess = () => {
-          const db = request.result;
-          const transaction = db.transaction(['beds'], 'readwrite');
-          const store = transaction.objectStore('beds');
-          
-          // Clear existing beds
-          store.clear();
-          
-          // Add all current beds
-          beds.forEach(bed => {
-            store.add(bed);
-          });
-
-          transaction.oncomplete = () => {
-            resolve();
-          };
-
-          transaction.onerror = () => {
-            reject(new Error('Failed to save beds'));
-          };
-        };
-
-        request.onerror = () => {
-          reject(new Error('Failed to open database'));
+        transaction.onerror = () => {
+          console.error('Transaction error:', transaction.error);
+          reject(new Error('Failed to save beds'));
         };
       });
 
@@ -69,33 +82,24 @@ export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
   // Load beds from IndexedDB
   const loadBedsFromStorage = async () => {
     try {
+      const db = await openDB();
+      if (!db.objectStoreNames.contains(BEDS_STORE_NAME)) {
+        console.log('Beds store does not exist yet. It will be created.');
+        loadBeds([]);
+        return;
+      }
+      const transaction = db.transaction([BEDS_STORE_NAME], 'readonly');
+      const store = transaction.objectStore(BEDS_STORE_NAME);
+      const getAllRequest = store.getAll();
+
       const loadedBeds = await new Promise<any[]>((resolve, reject) => {
-        const request = indexedDB.open('AgroForestDB', 1);
-        
-        request.onupgradeneeded = () => {
-          const db = request.result;
-          if (!db.objectStoreNames.contains('beds')) {
-            db.createObjectStore('beds', { keyPath: 'id' });
-          }
+        getAllRequest.onsuccess = () => {
+          resolve(getAllRequest.result || []);
         };
 
-        request.onsuccess = () => {
-          const db = request.result;
-          const transaction = db.transaction(['beds'], 'readonly');
-          const store = transaction.objectStore('beds');
-          const getAllRequest = store.getAll();
-
-          getAllRequest.onsuccess = () => {
-            resolve(getAllRequest.result || []);
-          };
-
-          getAllRequest.onerror = () => {
-            reject(new Error('Failed to load beds'));
-          };
-        };
-
-        request.onerror = () => {
-          reject(new Error('Failed to open database'));
+        getAllRequest.onerror = () => {
+          console.error('Get all request error:', getAllRequest.error);
+          reject(new Error('Failed to load beds'));
         };
       });
 
@@ -103,6 +107,7 @@ export const useAutoSave = ({ debounceMs = 5000 }: UseAutoSaveProps = {}) => {
       console.log('Beds loaded successfully:', loadedBeds.length);
     } catch (error) {
       console.error('Failed to load beds:', error);
+      loadBeds([]);
     }
   };
 

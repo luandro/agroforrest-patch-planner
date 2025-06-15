@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { PlantSpecies } from '../types/species.types';
@@ -18,6 +17,7 @@ interface PlantPlacementState {
   isPlacing: boolean;
   selectedSpecies: PlantSpecies | null;
   placementPreview: { x: number; y: number } | null;
+  isDirty: boolean;
 }
 
 interface PlantPlacementActions {
@@ -31,6 +31,8 @@ interface PlantPlacementActions {
   setIsPlacing: (isPlacing: boolean) => void;
   setPlacementPreview: (position: { x: number; y: number } | null) => void;
   clearPlacementsForBed: (bedId: string) => void;
+  loadPlacements: (placements: PlantPlacement[]) => void;
+  markClean: () => void;
 }
 
 type PlantPlacementStore = PlantPlacementState & PlantPlacementActions;
@@ -43,6 +45,7 @@ export const usePlantPlacementStore = create<PlantPlacementStore>()(
     isPlacing: false,
     selectedSpecies: null,
     placementPreview: null,
+    isDirty: false,
 
     // Actions
     addPlacement: (placement) => {
@@ -53,14 +56,16 @@ export const usePlantPlacementStore = create<PlantPlacementStore>()(
       };
       
       set(state => ({
-        placements: [...state.placements, newPlacement]
+        placements: [...state.placements, newPlacement],
+        isDirty: true
       }));
     },
 
     removePlacements: (ids) => {
       set(state => ({
         placements: state.placements.filter(p => !ids.includes(p.id)),
-        selectedPlacementIds: state.selectedPlacementIds.filter(id => !ids.includes(id))
+        selectedPlacementIds: state.selectedPlacementIds.filter(id => !ids.includes(id)),
+        isDirty: true
       }));
     },
 
@@ -68,7 +73,8 @@ export const usePlantPlacementStore = create<PlantPlacementStore>()(
       set(state => ({
         placements: state.placements.map(p => 
           p.id === id ? { ...p, ...updates } : p
-        )
+        ),
+        isDirty: true
       }));
     },
 
@@ -105,8 +111,17 @@ export const usePlantPlacementStore = create<PlantPlacementStore>()(
         selectedPlacementIds: state.selectedPlacementIds.filter(id => {
           const placement = state.placements.find(p => p.id === id);
           return placement?.bedId !== bedId;
-        })
+        }),
+        isDirty: true
       }));
+    },
+
+    loadPlacements: (placements) => {
+      set({ placements, isDirty: false });
+    },
+
+    markClean: () => {
+      set({ isDirty: false });
     }
   }))
 );
