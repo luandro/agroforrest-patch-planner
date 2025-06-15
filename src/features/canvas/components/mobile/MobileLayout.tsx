@@ -8,6 +8,8 @@ import { SaveStatus } from './SaveStatus';
 import { MobilePlantEditor } from './MobilePlantEditor';
 import { GrowthTimelineSlider } from '../timeline/GrowthTimelineSlider';
 import { usePlantPlacementStore } from '../../stores/plantPlacementStore';
+import { Button } from '@/components/ui/button';
+import { Undo, Redo } from 'lucide-react';
 
 interface MobileLayoutProps {
   activeTool: CanvasTool;
@@ -54,7 +56,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   onOpenPlantSelection,
   focusedBedId
 }) => {
-  const { selectedPlacementIds, clearSelection } = usePlantPlacementStore();
+  const { selectedPlacementIds, clearSelection, selectedSpecies } = usePlantPlacementStore();
   const [showPlantEditor, setShowPlantEditor] = React.useState(false);
   const [showTimeline, setShowTimeline] = React.useState(false);
 
@@ -95,14 +97,51 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
           <SaveStatus isSaving={isSaving} />
         </div>
         
-        {/* Timeline Toggle Button */}
-        <div className="fixed bottom-20 left-4 z-30">
+        {/* Plant Tool Controls - Bottom left */}
+        <div className="fixed bottom-20 left-4 z-30 space-y-3">
+          {/* Timeline Toggle Button */}
           <button
             onClick={() => setShowTimeline(!showTimeline)}
             className="bg-green-600 text-white rounded-full p-3 shadow-lg hover:bg-green-700 transition-colors"
+            title="Linha do Tempo"
           >
             📈
           </button>
+
+          {/* Change Species Button */}
+          {selectedSpecies && (
+            <button
+              onClick={onOpenPlantSelection}
+              className="bg-blue-600 text-white rounded-lg px-3 py-2 shadow-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+              title="Trocar Espécie"
+            >
+              Trocar Espécie
+            </button>
+          )}
+
+          {/* Plant Placement Undo/Redo */}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onUndo}
+              disabled={!canUndo}
+              className="h-10 w-10 p-0 bg-white/95 backdrop-blur-sm shadow-lg border-gray-200"
+              title="Desfazer Plantio"
+            >
+              <Undo className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRedo}
+              disabled={!canRedo}
+              className="h-10 w-10 p-0 bg-white/95 backdrop-blur-sm shadow-lg border-gray-200"
+              title="Refazer Plantio"
+            >
+              <Redo className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Growth Timeline Slider */}
