@@ -90,6 +90,7 @@ export const PlantSelectionPanel: React.FC<PlantSelectionPanelProps> = ({
       {/* Panel */}
       <div className={cn(
         "fixed top-16 right-0 h-[calc(100vh-4rem)] w-96 bg-white/95 backdrop-blur-sm shadow-xl border-l border-gray-200 z-50",
+        "flex flex-col",
         "transition-transform duration-300 ease-in-out",
         isOpen ? "translate-x-0" : "translate-x-full"
       )}>
