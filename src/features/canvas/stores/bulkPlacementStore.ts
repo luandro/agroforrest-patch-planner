@@ -6,7 +6,7 @@ import {
 } from '../types/bulkPlacement.types';
 import { PlantSpecies } from '../types/species.types';
 import { Bed } from '../types/bed.types';
-import { useBedState, useFocusModeStore, useBedStore } from './bedStore';
+import { useBedState, useFocusModeStore } from './bedStore';
 import { usePlantPlacementStore } from './plantPlacementStore';
 import { calculateBulkPlacement, getDefaultBulkConfig } from '../utils/bulkPlacementCalculator';
 
@@ -111,7 +111,7 @@ export const useBulkPlacementStore = create<BulkPlacementStore>()(
         return false;
       }
 
-      const { addPlacement } = useBedStore.getState();
+      const { addPlacement } = usePlantPlacementStore.getState();
       preview.positions.forEach(position => {
         addPlacement({
           bedId: selectedBed.id,
