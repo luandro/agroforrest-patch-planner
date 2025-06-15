@@ -10,7 +10,7 @@ interface TimelineState {
 
 interface TimelineActions {
   setTimelineActive: (active: boolean) => void;
-  setCurrentMonth: (month: number) => void;
+  setCurrentMonth: (month: number | ((prev: number) => number)) => void;
   setIsPlaying: (playing: boolean) => void;
   setPlaybackSpeed: (speed: number) => void;
   resetTimeline: () => void;
@@ -33,10 +33,11 @@ export const useTimelineStore = create<TimelineStore>((set, get) => ({
   
   setCurrentMonth: (month) => {
     const state = get();
+    const newMonth = typeof month === 'function' ? month(state.currentMonth) : month;
     if (process.env.NODE_ENV === 'development') {
-      console.log('[Timeline Store] setCurrentMonth:', state.currentMonth, '->', month);
+      console.log('[Timeline Store] setCurrentMonth:', state.currentMonth, '->', newMonth);
     }
-    set({ currentMonth: month });
+    set({ currentMonth: newMonth });
   },
   
   setIsPlaying: (playing) => {
