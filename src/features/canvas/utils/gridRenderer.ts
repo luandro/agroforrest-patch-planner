@@ -1,4 +1,3 @@
-
 import { CanvasViewport } from '../types/canvas.types';
 import { Bed } from '../types/bed.types';
 
@@ -113,11 +112,11 @@ export const drawGrid = (
     const fineGridSize = 0.1; // 10cm
     const finePixelSize = pixelsPerMeter * fineGridSize;
     
-    // Enhanced visibility for fine grid
-    const fineOpacity = Math.max(0.4, Math.min(0.8, viewport.zoom * 0.25 + 0.3));
+    // Enhanced visibility for fine grid, more opaque and starts visible earlier
+    const fineOpacity = Math.max(0.6, Math.min(1.0, viewport.zoom * 0.3 + 0.3));
     
-    // Set style for fine grid
-    ctx.strokeStyle = `rgba(34, 197, 94, ${fineOpacity})`; // Green grid
+    // Set style for fine grid - darker green for better contrast
+    ctx.strokeStyle = `rgba(21, 128, 61, ${fineOpacity})`; // Darker, more visible green grid
     ctx.lineWidth = 1;
     ctx.setLineDash([]);
     
@@ -168,9 +167,9 @@ export const drawGrid = (
       }
     }
     
-    // Draw grid intersection dots for better visibility
-    if (viewport.zoom > 2) {
-      ctx.fillStyle = `rgba(34, 197, 94, ${fineOpacity * 0.8})`;
+    // Draw grid intersection dots for better visibility, now visible at lower zoom
+    if (viewport.zoom > 1.5) {
+      ctx.fillStyle = `rgba(21, 128, 61, ${fineOpacity * 0.8})`; // Darker green dots
       const dotSize = 2;
       
       for (let meterX = startFineMeterX; meterX <= endFineMeterX; meterX += fineGridSize) {
