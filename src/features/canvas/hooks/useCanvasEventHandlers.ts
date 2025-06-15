@@ -1,10 +1,12 @@
 
-import { useCallback, useState } from 'react';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useCallback } from 'react';
 import { CanvasTool } from '../types/bed.types';
 import { usePlantPlacementStore } from '../stores/plantPlacementStore';
-import { usePlantPlacement } from './usePlantPlacement';
 import { usePlantSelection } from './usePlantSelection';
+import { useCanvasPointerHandlers } from './useCanvasPointerHandlers';
+import { useCanvasHoverState } from './useCanvasHoverState';
+import { useCanvasContextMenu } from './useCanvasContextMenu';
+import { useCanvasDoubleClick } from './useCanvasDoubleClick';
 
 interface UseCanvasEventHandlersProps {
   tool: CanvasTool;
@@ -17,7 +19,6 @@ interface UseCanvasEventHandlersProps {
   updateSelection: (x: number, y: number) => void;
   finishSelection: () => void;
   handleToolChange: (tool: CanvasTool) => void;
-  // Plant placement props
   viewport?: any;
   focusedBed?: any;
   canvasRef?: React.RefObject<HTMLCanvasElement>;
@@ -38,36 +39,19 @@ export const useCanvasEventHandlers = ({
   focusedBed,
   canvasRef
 }: UseCanvasEventHandlersProps) => {
-  const isMobile = useIsMobile();
   const { isPlacing } = usePlantPlacementStore();
-  const [hoveredPlacementId, setHoveredPlacementId] = useState<string | null>(null);
-  const [contextMenuState, setContextMenuState] = useState<{
-    isOpen: boolean;
-    placementId: string | null;
-    x: number;
-    y: number;
-  }>({ isOpen: false, placementId: null, x: 0, y: 0 });
   
-  // Plant placement hook
-  const {
-    handlePlacementPreview,
-    handlePlantPlacement,
-    handleEmptyAreaClick
-  } = usePlantPlacement({
-    viewport,
-    focusedBed,
-    canvasRef
-  });
-
-  // Plant selection hook
+  // Hover state management
+  const { hoveredPlacementId, updateHoveredPlacement } = useCanvasHoverState();
+  
+  // Context menu management
+  const { contextMenuState, closeContextMenu, handleContextMenu } = useCanvasContextMenu();
+  
+  // Plant selection hook for access to utilities
   const {
     selectedPlacementIds,
-    isAreaSelecting,
     selectionArea,
     handlePlantSelection,
-    startAreaSelection,
-    updateAreaSelection,
-    finishAreaSelection,
     getPlantAtCanvasPosition
   } = usePlantSelection({
     focusedBed,
@@ -75,198 +59,69 @@ export const useCanvasEventHandlers = ({
     canvasRef
   });
 
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const isMultiSelect = e.shiftKey || e.ctrlKey;
+  // Pointer event handlers
+  const {
+    handlePointerDown,
+    handlePointerMove: baseHandlePointerMove,
+    handlePointerUp
+  } = useCanvasPointerHandlers({
+    tool,
+    isCreating,
+    focusedBed,
+    viewport,
+    canvasRef,
+    isPlacing,
+    startPreview,
+    updatePreview,
+    placeBed,
+    startSelection,
+    updateSelection,
+    finishSelection,
+    onCloseContextMenu: closeContextMenu
+  });
 
-    // Close any open context menu
-    setContextMenuState({ isOpen: false, placementId: null, x: 0, y: 0 });
-
-    // Handle focus mode interactions
-    if (focusedBed) {
-      if (isPlacing) {
-        // Plant placement mode
-        handlePlantPlacement(x, y);
-        return;
-      } else {
-        // Plant selection mode
-        const plantSelected = handlePlantSelection(x, y, isMultiSelect);
-        if (!plantSelected && !isMultiSelect) {
-          // Start area selection
-          startAreaSelection(x, y);
-        }
-        return;
-      }
-    }
-
-    // Regular bed creation/selection modes
-    if (tool === 'create-rectangle' || tool === 'create-circle') {
-      startPreview(x, y);
-    } else if (tool === 'select') {
-      startSelection(x, y, isMultiSelect);
-    }
-    
-    // Handle empty area clicks to cancel placement
-    if (tool === 'pan' && isPlacing) {
-      handleEmptyAreaClick();
-    }
-  }, [
-    tool, 
-    startPreview, 
-    startSelection, 
-    focusedBed, 
-    isPlacing, 
-    handlePlantPlacement, 
-    handlePlantSelection,
-    startAreaSelection,
-    handleEmptyAreaClick
-  ]);
-
+  // Enhanced pointer move with hover detection
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    // Handle base pointer move logic
+    baseHandlePointerMove(e);
 
-    // Handle focus mode interactions
-    if (focusedBed) {
-      if (isPlacing) {
-        // Plant placement preview
-        handlePlacementPreview(x, y);
-        return;
-      } else {
-        // Plant hover detection for visual feedback
-        const hoveredPlant = getPlantAtCanvasPosition(x, y);
-        setHoveredPlacementId(hoveredPlant?.id || null);
-        
-        // Area selection update
-        if (isAreaSelecting) {
-          updateAreaSelection(x, y);
-        }
-        return;
-      }
+    // Handle hover detection in focus mode
+    if (focusedBed && !isPlacing) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      const hoveredPlant = getPlantAtCanvasPosition(x, y);
+      updateHoveredPlacement(hoveredPlant?.id || null);
     }
+  }, [baseHandlePointerMove, focusedBed, isPlacing, getPlantAtCanvasPosition, updateHoveredPlacement]);
 
-    // Regular canvas interactions
-    if (isCreating && (tool === 'create-rectangle' || tool === 'create-circle')) {
-      updatePreview(x, y);
-    } else {
-      updateSelection(x, y);
-    }
-  }, [
-    isCreating, 
-    tool, 
-    updatePreview, 
-    updateSelection, 
-    focusedBed, 
-    isPlacing, 
-    handlePlacementPreview,
-    getPlantAtCanvasPosition,
-    isAreaSelecting,
-    updateAreaSelection
-  ]);
-
-  const handlePointerUp = useCallback(() => {
-    // Handle focus mode interactions
-    if (focusedBed) {
-      if (isPlacing) {
-        // Plant placement is handled in pointerDown
-        return;
-      } else if (isAreaSelecting) {
-        // Finish area selection
-        finishAreaSelection();
-        return;
-      }
-    }
-
-    // Regular canvas interactions
-    if (isCreating && (tool === 'create-rectangle' || tool === 'create-circle')) {
-      placeBed();
-    } else {
-      finishSelection();
-    }
-  }, [
-    isCreating, 
-    tool, 
-    placeBed, 
-    finishSelection, 
-    focusedBed, 
+  // Double click handler
+  const { handleDoubleClick } = useCanvasDoubleClick({
+    tool,
+    focusedBed,
     isPlacing,
-    isAreaSelecting,
-    finishAreaSelection
-  ]);
-
-  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    // Handle focus mode interactions
-    if (focusedBed) {
-      if (isPlacing) {
-        return; // No double-click action in planting mode
-      } else {
-        // Double-click plant to enter quick edit mode
-        const plant = getPlantAtCanvasPosition(x, y);
-        if (plant) {
-          // Select the plant and trigger edit mode
-          handlePlantSelection(x, y, false);
-          // The edit panel will appear automatically when plant is selected
-          return;
-        }
-      }
-    }
-
-    // Regular mobile double-tap to place bed
-    if (isMobile && tool === 'pan') {
-      startPreview(x, y);
-      setTimeout(() => {
-        placeBed();
-      }, 10);
-    }
-  }, [
-    isMobile, 
-    tool, 
-    startPreview, 
-    placeBed, 
-    focusedBed, 
-    isPlacing,
+    startPreview,
+    placeBed,
     getPlantAtCanvasPosition,
     handlePlantSelection
-  ]);
+  });
 
-  // Handle right-click context menu
-  const handleContextMenu = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    
-    if (!focusedBed || isPlacing) return;
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    const plant = getPlantAtCanvasPosition(x, y);
-    if (plant) {
-      setContextMenuState({
-        isOpen: true,
-        placementId: plant.id,
-        x: e.clientX,
-        y: e.clientY
-      });
-    }
-  }, [focusedBed, isPlacing, getPlantAtCanvasPosition]);
+  // Context menu handler with dependencies
+  const handleContextMenuWithDeps = useCallback((e: React.MouseEvent) => {
+    handleContextMenu(e, focusedBed, isPlacing, getPlantAtCanvasPosition);
+  }, [handleContextMenu, focusedBed, isPlacing, getPlantAtCanvasPosition]);
 
   return {
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
     handleDoubleClick,
-    handleContextMenu,
+    handleContextMenu: handleContextMenuWithDeps,
     hoveredPlacementId,
     selectedPlacementIds,
     selectionArea,
     contextMenuState,
-    setContextMenuState
+    setContextMenuState: closeContextMenu
   };
 };
