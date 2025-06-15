@@ -1,16 +1,13 @@
-import { useCallback } from 'react';
+
 import { PatchCanvasProps } from '../types/canvas.types';
-import { useCanvasViewport } from './useCanvasViewport';
-import { useAutoSave } from './useAutoSave';
-import { useBedStore } from '../stores/bedStore';
 import { useCanvasState } from './useCanvasState';
-import { useCanvasFocusMode } from './useCanvasFocusMode';
-import { useCanvasTools } from './useCanvasTools';
-import { useCanvasEventHandlers } from './useCanvasEventHandlers';
+import { useCanvasStateOrchestrator } from './useCanvasStateOrchestrator';
+import { useFocusModeIntegration } from './useFocusModeIntegration';
 import { useBedCreationOrchestrator } from './useBedCreationOrchestrator';
-import { usePlantSelectionFlow } from './usePlantSelectionFlow';
+import { useCanvasToolOrchestrator } from './useCanvasToolOrchestrator';
 import { useBedSelectionFlow } from './useBedSelectionFlow';
-import { useCanvasLayoutProps } from './useCanvasLayoutProps';
+import { useCanvasEventOrchestrator } from './useCanvasEventOrchestrator';
+import { useCanvasLayoutBuilder } from './useCanvasLayoutBuilder';
 
 export const usePatchCanvasOrchestrator = ({
   initialViewport,
@@ -22,45 +19,42 @@ export const usePatchCanvasOrchestrator = ({
 }: PatchCanvasProps) => {
   const { canvasRef, isCollapsed, onToggleCollapse } = useCanvasState();
 
-  const { viewport, pan, zoomTo, updateViewport, fitAllBeds } = useCanvasViewport({
-    initialViewport,
-    minZoom,
-    maxZoom,
-    onViewportChange,
-  });
-
-  // Get store state
-  const bedStore = useBedStore();
-  const { beds, selectedBedIds, undo, redo, canUndo, canRedo, tool, setTool } = bedStore;
-
-  // Create wrapper for fitAllBeds that doesn't require parameters
-  const handleFitAllBeds = useCallback(() => {
-    fitAllBeds(beds);
-  }, [fitAllBeds, beds]);
-
-  // Focus mode integration with stable callbacks
-  const { 
-    focusMode, 
-    isInFocusMode, 
-    focusedBedId, 
-    handleEnterFocus, 
-    handleExitFocus 
-  } = useCanvasFocusMode({
-    viewport,
-    updateViewport
-  });
-
-  // Get the focused bed directly from the beds array using the focused bed ID
-  const focusedBed = focusedBedId ? beds.find(bed => bed.id === focusedBedId) : null;
-
-  // Plant selection flow
+  // State orchestration
   const {
-    handlePlantSelectionOpen,
-    handlePlantSpeciesSelect,
-    cancelPlantPlacement
-  } = usePlantSelectionFlow({
     viewport,
+    updateViewport,
+    pan,
+    zoomTo,
+    fitAllBeds,
+    beds,
+    selectedBedIds,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    isSaving,
+    bedStore
+  } = useCanvasStateOrchestrator({
+    initialViewport,
+    onViewportChange,
+    minZoom,
+    maxZoom
+  });
+
+  // Focus mode integration
+  const {
+    focusMode,
+    isInFocusMode,
+    focusedBedId,
     focusedBed,
+    handleEnterFocus,
+    handleExitFocus,
+    handlePlantSelectionOpen,
+    handlePlantSpeciesSelect
+  } = useFocusModeIntegration({
+    viewport,
+    updateViewport,
+    beds,
     canvasRef,
     onOpenPlantSelection
   });
@@ -83,8 +77,9 @@ export const usePatchCanvasOrchestrator = ({
     placeBed,
     confirmPlacement,
     cancelPlacement,
-    cancelCreation,
-    handleToolChange: bedCreationHandleToolChange,
+    cancelCreation: cancelCreationBase,
+    clearPreview,
+    clearPlacement
   } = useBedCreationOrchestrator({
     viewport,
     gridSize,
@@ -95,23 +90,16 @@ export const usePatchCanvasOrchestrator = ({
     },
   });
 
-  // Stable tool change handler
-  const stableHandleToolChange = useCallback((newTool) => {
-    setTool(newTool);
-    bedCreationHandleToolChange(newTool);
-  }, [setTool, bedCreationHandleToolChange]);
-
-  // Tool management
-  const { tool: activeTool } = useCanvasTools({
+  // Tool orchestration
+  const { tool, handleToolChange } = useCanvasToolOrchestrator({
     isInFocusMode,
-    handleExitFocus: () => {
-      handleExitFocus();
-      cancelPlantPlacement(); // Cancel plant placement when exiting focus
-    },
-    handleToolChange: stableHandleToolChange
+    handleExitFocus,
+    clearPreview,
+    clearPlacement,
+    setTool: bedStore.setTool
   });
 
-  // Bed selection management with stable focus handlers
+  // Bed selection management
   const { startSelection, updateSelection, finishSelection, deleteSelected } = useBedSelectionFlow({ 
     viewport, 
     canvasRef,
@@ -119,14 +107,14 @@ export const usePatchCanvasOrchestrator = ({
     onExitFocus: handleExitFocus
   });
 
-  // Event handlers
+  // Event orchestration
   const {
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
     handleDoubleClick
-  } = useCanvasEventHandlers({
-    tool: activeTool,
+  } = useCanvasEventOrchestrator({
+    tool,
     isCreating,
     multiCreationMode,
     startPreview,
@@ -135,22 +123,26 @@ export const usePatchCanvasOrchestrator = ({
     startSelection,
     updateSelection,
     finishSelection,
-    handleToolChange: stableHandleToolChange,
+    handleToolChange,
     viewport,
     focusedBed,
     canvasRef
   });
 
-  const { isSaving } = useAutoSave();
+  // Enhanced cancel creation that ensures tool reset
+  const cancelCreation = () => {
+    cancelCreationBase();
+    handleToolChange('pan');
+  };
 
-  // Create layout props using the new hook
-  const layoutProps = useCanvasLayoutProps({
+  // Layout props building
+  const layoutProps = useCanvasLayoutBuilder({
     viewport,
     updateViewport,
     beds,
     selectedBedIds,
-    tool: activeTool,
-    handleToolChange: stableHandleToolChange,
+    tool,
+    handleToolChange,
     bedConfig,
     updateBedConfig,
     isCreating,
@@ -177,7 +169,7 @@ export const usePatchCanvasOrchestrator = ({
     deleteSelected,
     isSaving,
     cancelCreation,
-    fitAllBeds: handleFitAllBeds,
+    fitAllBeds,
     gridSize,
     minZoom,
     maxZoom,

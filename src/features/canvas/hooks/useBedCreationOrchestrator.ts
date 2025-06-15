@@ -116,6 +116,9 @@ export const useBedCreationOrchestrator = ({
     confirmPlacement,
     cancelPlacement,
     cancelCreation: cancelCreationEnhanced,
-    handleToolChange
+    handleToolChange,
+    // Expose these for tool orchestration
+    clearPreview,
+    clearPlacement
   };
 };
