@@ -13,21 +13,35 @@ interface UseBedSelectionProps {
   canvasRef?: React.RefObject<HTMLCanvasElement>;
   onEnterFocus?: (bedId: string) => void;
   onExitFocus?: () => void;
+  onSelectionChange?: (bedIds: string[]) => void;
+  onClearSelection?: () => void;
 }
 
-export const useBedSelection = ({ viewport, canvasRef, onEnterFocus, onExitFocus }: UseBedSelectionProps) => {
+export const useBedSelection = ({ 
+  viewport, 
+  canvasRef, 
+  onEnterFocus, 
+  onExitFocus,
+  onSelectionChange,
+  onClearSelection
+}: UseBedSelectionProps) => {
   const { removeBeds } = useBedStore();
 
   // Coordinate transformation utilities
   const { canvasToWorld } = useCoordinateTransforms({ viewport, canvasRef });
 
-  // Selection state management
+  // Selection state management - use passed handlers or internal focus handlers
   const { 
     selectedBedIds, 
     handleSelectionChange, 
     handleClearSelection, 
     toggleBedSelection 
-  } = useSelectionState({ onEnterFocus, onExitFocus });
+  } = useSelectionState({ 
+    onEnterFocus, 
+    onExitFocus,
+    onSelectionChange,
+    onClearSelection
+  });
 
   // Area selection functionality
   const {
