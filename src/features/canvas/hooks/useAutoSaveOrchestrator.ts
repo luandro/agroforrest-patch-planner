@@ -206,23 +206,27 @@ export const useAutoSaveOrchestrator = () => {
     }
   };
 
+  // Store references for direct access
+  const patchStore = usePatchStore;
+  const bedStore = useBedStore;
+  const plantStore = usePlantPlacementStore;
+
   // Auto-save on page unload
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       if (patchesDirty || bedsDirty || plantsDirty) {
         // Attempt synchronous save using localStorage as last resort
         try {
-          const { patches } = usePatchStore.getState();
-          const { beds } = useBedStore.getState();  
-          const { placements } = usePlantPlacementStore.getState();
-          
           if (patchesDirty) {
+            const { patches } = patchStore.getState();
             localStorage.setItem('agroforest_patches', JSON.stringify(patches));
           }
           if (bedsDirty) {
+            const { beds } = bedStore.getState();
             localStorage.setItem('agroforest_beds', JSON.stringify(beds));
           }
           if (plantsDirty) {
+            const { placements } = plantStore.getState();
             localStorage.setItem('agroforest_placements', JSON.stringify(placements));
           }
           
@@ -240,7 +244,7 @@ export const useAutoSaveOrchestrator = () => {
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [patchesDirty, bedsDirty, plantsDirty]);
+  }, [patchesDirty, bedsDirty, plantsDirty, patchStore, bedStore, plantStore]);
 
   // Adaptive periodic save for safety
   useEffect(() => {
