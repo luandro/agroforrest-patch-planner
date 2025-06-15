@@ -97,7 +97,7 @@ export const PatchSelector: React.FC<PatchSelectorProps> = ({ onPatchSwitch }) =
                     )}
                   </div>
                   <div className="flex items-center space-x-3 text-xs text-gray-500 mt-1">
-                    <span>{patch.size.width}×{patch.size.length}m</span>
+                    <span>{patch.size.width}×{patch.size.height}m</span>
                     <span className="flex items-center space-x-1">
                       <Calendar size={12} />
                       <span>{formatDistanceToNow(patch.createdAt, { locale: ptBR, addSuffix: true })}</span>
