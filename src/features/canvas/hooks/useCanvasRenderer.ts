@@ -1,10 +1,10 @@
-
 import { useCallback, useRef } from 'react';
 import { CanvasViewport } from '../types/canvas.types';
 import { Bed } from '../types/bed.types';
 import { usePlantPlacementStore } from '../stores/plantPlacementStore';
 import { renderCanvas } from '../utils/renderOrchestrator';
 import { useAnimationScheduler } from '../utils/animationScheduler';
+import { useTimelineStore } from '../stores/timelineStore';
 
 interface UseCanvasRendererProps {
   canvasRef?: React.RefObject<HTMLCanvasElement>;
@@ -25,6 +25,8 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedB
   // Animation scheduling
   const { scheduleRender: scheduleAnimation, cleanup } = useAnimationScheduler();
 
+  const { isTimelineActive, currentMonth } = useTimelineStore();
+
   // DEBUG: Log whenever render fires
   const render = useCallback((
     viewport: CanvasViewport, 
@@ -38,7 +40,7 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedB
   ) => {
     if (process.env.NODE_ENV === "development") {
       // eslint-disable-next-line no-console
-      console.debug("[useCanvasRenderer:render] focusedBed:", focusedBed);
+      console.debug("[useCanvasRenderer:render] focusedBed:", focusedBed, "timeline:", isTimelineActive ? currentMonth : 'off');
     }
 
     const canvas = activeCanvasRef.current;
@@ -63,9 +65,10 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedB
       focusedBed,
       getPlacementsForBed,
       selectedPlacementIds,
-      placementPreview
+      placementPreview,
+      growthMonth: isTimelineActive ? currentMonth : undefined
     });
-  }, [activeCanvasRef, gridSize, spacing, focusedBed, getPlacementsForBed, selectedPlacementIds, placementPreview]);
+  }, [activeCanvasRef, gridSize, spacing, focusedBed, getPlacementsForBed, selectedPlacementIds, placementPreview, isTimelineActive, currentMonth]);
 
   const scheduleRender = useCallback((
     viewport: CanvasViewport, 

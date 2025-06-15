@@ -1,3 +1,4 @@
+
 import { CanvasViewport } from '../types/canvas.types';
 import { Bed } from '../types/bed.types';
 import { PlantPlacement } from '../stores/plantPlacementStore';
@@ -15,7 +16,8 @@ export const drawPlantPlacements = (
   selectedPlacementIds: string[] = [],
   placementPreview?: { x: number; y: number } | null,
   hoveredPlacementId?: string | null,
-  selectionArea?: { startX: number; startY: number; endX: number; endY: number } | null
+  selectionArea?: { startX: number; startY: number; endX: number; endY: number } | null,
+  growthMonth?: number
 ) => {
   const canvas = ctx.canvas;
   const pixelsPerMeter = 50 * viewport.zoom;
@@ -32,7 +34,7 @@ export const drawPlantPlacements = (
   ctx.save();
   createBedClippingPath(ctx, bed, bedScreenX, bedScreenY, pixelsPerMeter);
 
-  // Draw existing placements with enhanced visual states
+  // Draw existing placements with growth timeline
   placements.forEach(placement => {
     const { x: plantScreenX, y: plantScreenY } = calculatePlantScreenPosition(
       bedScreenX, 
@@ -44,8 +46,17 @@ export const drawPlantPlacements = (
     const isSelected = selectedPlacementIds.includes(placement.id);
     const isHovered = hoveredPlacementId === placement.id;
     
-    // Enhanced plant drawing with better visual feedback
-    drawPlant(ctx, plantScreenX, plantScreenY, placement.species, isSelected, false, isHovered);
+    // Enhanced plant drawing with timeline growth
+    drawPlant(
+      ctx, 
+      plantScreenX, 
+      plantScreenY, 
+      placement.species, 
+      isSelected, 
+      false, 
+      isHovered,
+      growthMonth
+    );
   });
 
   // Draw bulk placement preview if active
@@ -72,7 +83,7 @@ export const drawPlantPlacements = (
       pixelsPerMeter
     );
     
-    drawPlant(ctx, previewScreenX, previewScreenY, null, false, true);
+    drawPlant(ctx, previewScreenX, previewScreenY, null, false, true, false, growthMonth);
   }
 
   ctx.restore();

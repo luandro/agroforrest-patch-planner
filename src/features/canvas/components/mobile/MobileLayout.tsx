@@ -6,6 +6,7 @@ import { MobileControls } from '../MobileControls';
 import { ViewControls } from '../ViewControls';
 import { SaveStatus } from './SaveStatus';
 import { MobilePlantEditor } from './MobilePlantEditor';
+import { GrowthTimelineSlider } from '../timeline/GrowthTimelineSlider';
 import { usePlantPlacementStore } from '../../stores/plantPlacementStore';
 
 interface MobileLayoutProps {
@@ -55,6 +56,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
 }) => {
   const { selectedPlacementIds, clearSelection } = usePlantPlacementStore();
   const [showPlantEditor, setShowPlantEditor] = React.useState(false);
+  const [showTimeline, setShowTimeline] = React.useState(false);
 
   // Show plant editor when plants are selected in focus mode
   const hasSelectedPlants = selectedPlacementIds.length > 0;
@@ -88,9 +90,27 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   // Focus mode layout
   if (isInFocusMode) {
     return (
-      <div className="fixed top-20 right-4 z-30">
-        <SaveStatus isSaving={isSaving} />
-      </div>
+      <>
+        <div className="fixed top-20 right-4 z-30">
+          <SaveStatus isSaving={isSaving} />
+        </div>
+        
+        {/* Timeline Toggle Button */}
+        <div className="fixed bottom-20 left-4 z-30">
+          <button
+            onClick={() => setShowTimeline(!showTimeline)}
+            className="bg-green-600 text-white rounded-full p-3 shadow-lg hover:bg-green-700 transition-colors"
+          >
+            📈
+          </button>
+        </div>
+
+        {/* Growth Timeline Slider */}
+        <GrowthTimelineSlider
+          isVisible={showTimeline}
+          onClose={() => setShowTimeline(false)}
+        />
+      </>
     );
   }
 

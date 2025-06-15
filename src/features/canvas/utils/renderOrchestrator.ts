@@ -1,4 +1,3 @@
-
 /**
  * Main canvas rendering orchestration
  */
@@ -10,8 +9,9 @@ import { drawBed } from './shapeRenderer';
 import { drawPlantPlacements } from './plantRenderer';
 import { clearCanvas, setCanvasBackground, getSnapHighlight } from './canvasUtils';
 import { drawCollisionIndicators } from './collisionRenderer';
+import { useTimelineStore } from '../stores/timelineStore';
 
-interface RenderParams {
+interface RenderCanvasParams {
   ctx: CanvasRenderingContext2D;
   canvas: HTMLCanvasElement;
   viewport: CanvasViewport;
@@ -28,6 +28,7 @@ interface RenderParams {
   getPlacementsForBed: (bedId: string) => any[];
   selectedPlacementIds: string[];
   placementPreview?: any;
+  growthMonth?: number;
 }
 
 export const renderCanvas = ({
@@ -46,8 +47,9 @@ export const renderCanvas = ({
   focusedBed,
   getPlacementsForBed,
   selectedPlacementIds,
-  placementPreview
-}: RenderParams) => {
+  placementPreview,
+  growthMonth
+}: RenderCanvasParams) => {
   // 1. Clear canvas
   clearCanvas(ctx, canvas);
   
@@ -73,17 +75,22 @@ export const renderCanvas = ({
     
     drawBed(ctx, bed, viewport, isSelected, false, false, bedSpacing);
     
-    // 5. Draw plant placements for this bed
-    const bedPlacements = getPlacementsForBed(bed.id);
-    if (bedPlacements.length > 0) {
-      drawPlantPlacements(
-        ctx, 
-        bed, 
-        bedPlacements, 
-        viewport, 
-        isFocused ? selectedPlacementIds : [],
-        isFocused ? placementPreview : null
-      );
+    // 5. Draw plant placements for this bed with timeline data
+    if (getPlacementsForBed) {
+      const placements = getPlacementsForBed(bed.id);
+      if (placements.length > 0) {
+        drawPlantPlacements(
+          ctx, 
+          bed, 
+          placements, 
+          viewport, 
+          isFocused ? selectedPlacementIds : [],
+          isFocused ? placementPreview : null,
+          undefined, // hoveredPlacementId
+          undefined, // selectionArea
+          growthMonth
+        );
+      }
     }
   });
 

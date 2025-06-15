@@ -8,7 +8,8 @@ export const drawPlant = (
   species: any = null,
   isSelected: boolean = false,
   isPreview: boolean = false,
-  isHovered: boolean = false
+  isHovered: boolean = false,
+  growthMonth?: number
 ) => {
   ctx.save();
 
@@ -16,7 +17,7 @@ export const drawPlant = (
     ctx.globalAlpha = 0.7;
   }
 
-  const { color, radius, symbol } = getPlantVisuals(species);
+  const { color, radius, symbol } = getPlantVisuals(species, growthMonth);
 
   // Enhanced selection glow effect
   if (isSelected) {
