@@ -1,4 +1,6 @@
+
 import React from 'react';
+import { CanvasTool } from '../types/bed.types'; // <-- Import added!
 import { CanvasLayoutProvider } from './CanvasLayoutProvider';
 import { CanvasViewport } from './CanvasViewport';
 import { CanvasOverlays } from './CanvasOverlays';
