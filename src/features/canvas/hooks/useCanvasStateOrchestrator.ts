@@ -1,4 +1,5 @@
-import { useCallback } from 'react';
+
+import { useCallback, useRef } from 'react';
 import { useBedStore } from '../stores/bedStore';
 import { useAutoSaveBeds } from './useAutoSaveBeds';
 import { useAutoSavePlants } from './useAutoSavePlants';
@@ -34,10 +35,14 @@ export const useCanvasStateOrchestrator = ({
   const { isSaving: isSavingBeds } = useAutoSaveBeds();
   const { isSaving: isSavingPlacements } = useAutoSavePlants();
 
-  // Create wrapper for fitAllBeds that doesn't require parameters
+  // Use ref to maintain stable reference to beds for fitAllBeds
+  const bedsRef = useRef(beds);
+  bedsRef.current = beds;
+
+  // Create stable wrapper for fitAllBeds that uses ref to get current beds
   const handleFitAllBeds = useCallback(() => {
-    fitAllBeds(beds);
-  }, [fitAllBeds, beds]);
+    fitAllBeds(bedsRef.current);
+  }, [fitAllBeds]);
 
   return {
     // Viewport
