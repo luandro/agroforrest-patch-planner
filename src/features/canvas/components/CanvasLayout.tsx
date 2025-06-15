@@ -44,6 +44,7 @@ interface CanvasLayoutProps {
   cancelCreation: () => void;
   gridSize?: number;
   onOpenPlantSelection?: () => void;
+  canvasRef?: React.RefObject<HTMLCanvasElement>;
 }
 
 export const CanvasLayout: React.FC<CanvasLayoutProps> = (props) => {

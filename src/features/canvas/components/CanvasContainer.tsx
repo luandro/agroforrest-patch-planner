@@ -19,6 +19,7 @@ interface CanvasContainerProps {
   placementBed?: any;
   gridSize?: number;
   bedConfig?: any;
+  canvasRef?: React.RefObject<HTMLCanvasElement>;
 }
 
 export const CanvasContainer: React.FC<CanvasContainerProps> = ({
@@ -36,11 +37,17 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
   previewBed,
   placementBed,
   gridSize = 1,
-  bedConfig
+  bedConfig,
+  canvasRef: externalCanvasRef
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const internalCanvasRef = useRef<HTMLCanvasElement>(null);
   
-  const { scheduleRender, canvasRef } = useCanvasRenderer({
+  // Use external canvas ref if provided, otherwise use internal
+  const canvasRef = externalCanvasRef || internalCanvasRef;
+  
+  const { scheduleRender } = useCanvasRenderer({
+    canvasRef,
     gridSize,
     spacing: bedConfig?.spacing || 0.4
   });

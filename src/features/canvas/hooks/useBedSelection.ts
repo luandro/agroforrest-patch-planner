@@ -6,9 +6,10 @@ import { CanvasViewport } from '../types/canvas.types';
 
 interface UseBedSelectionProps {
   viewport: CanvasViewport;
+  canvasRef?: React.RefObject<HTMLCanvasElement>;
 }
 
-export const useBedSelection = ({ viewport }: UseBedSelectionProps) => {
+export const useBedSelection = ({ viewport, canvasRef }: UseBedSelectionProps) => {
   const { 
     beds, 
     selectedBedIds, 
@@ -24,17 +25,30 @@ export const useBedSelection = ({ viewport }: UseBedSelectionProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
 
-  // Convert screen coordinates to world coordinates
+  // Convert screen coordinates to world coordinates using the same logic as rendering
   const screenToWorld = useCallback((screenX: number, screenY: number): { x: number; y: number } => {
-    const pixelsPerMeter = 50 * viewport.zoom;
-    const centerOffsetX = screenX - (viewport.width * pixelsPerMeter) / 2;
-    const centerOffsetY = screenY - (viewport.height * pixelsPerMeter) / 2;
+    const canvas = canvasRef?.current;
+    if (!canvas) return { x: 0, y: 0 };
+
+    const rect = canvas.getBoundingClientRect();
     
-    return {
-      x: viewport.centerX + centerOffsetX / pixelsPerMeter,
-      y: viewport.centerY - centerOffsetY / pixelsPerMeter
-    };
-  }, [viewport]);
+    // Convert to display coordinates (accounting for device pixel ratio)
+    const displayWidth = rect.width;
+    const displayHeight = rect.height;
+    
+    // Scale factor: pixels per meter in world space
+    const pixelsPerMeter = 50 * viewport.zoom;
+    
+    // Convert screen coordinates relative to canvas to world coordinates
+    const relativeX = screenX - rect.left;
+    const relativeY = screenY - rect.top;
+    
+    // Convert to world coordinates with proper centering (same as rendering)
+    const worldX = viewport.centerX + (relativeX - displayWidth / 2) / pixelsPerMeter;
+    const worldY = viewport.centerY - (relativeY - displayHeight / 2) / pixelsPerMeter;
+    
+    return { x: worldX, y: worldY };
+  }, [viewport, canvasRef]);
 
   // Check if a point is inside a bed
   const isPointInBed = useCallback((x: number, y: number, bed: Bed): boolean => {

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { PatchCanvasProps } from '../types/canvas.types';
 import { useCanvasViewport } from '../hooks/useCanvasViewport';
 import { useBedCreation } from '../hooks/useBedCreation';
@@ -18,6 +18,7 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
   maxZoom = 5
 }) => {
   const isMobile = useIsMobile();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Canvas viewport and rendering
   const { viewport, pan, zoomTo, updateViewport, centerOnBed, fitAllBeds } = useCanvasViewport({
@@ -68,13 +69,13 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
     }
   });
 
-  // Bed selection
+  // Bed selection with canvas ref for precise coordinate conversion
   const {
     startSelection,
     updateSelection,
     finishSelection,
     deleteSelected
-  } = useBedSelection({ viewport });
+  } = useBedSelection({ viewport, canvasRef });
 
   // Auto-save
   const { isSaving } = useAutoSave();
@@ -89,7 +90,7 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
       startPreview(x, y);
     } else if (tool === 'select') {
       const isMultiSelect = e.shiftKey || e.ctrlKey;
-      startSelection(x, y, isMultiSelect);
+      startSelection(e.clientX, e.clientY, isMultiSelect);
     }
   };
 
@@ -101,7 +102,7 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
     if (isCreating && (tool === 'create-rectangle' || tool === 'create-circle')) {
       updatePreview(x, y);
     } else {
-      updateSelection(x, y);
+      updateSelection(e.clientX, e.clientY);
     }
   };
 
@@ -190,6 +191,7 @@ export const PatchCanvas: React.FC<PatchCanvasProps> = ({
       cancelCreation={cancelCreation}
       gridSize={gridSize}
       onOpenPlantSelection={onOpenPlantSelection}
+      canvasRef={canvasRef}
     />
   );
 };
