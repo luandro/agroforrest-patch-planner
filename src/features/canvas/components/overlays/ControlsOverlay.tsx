@@ -99,7 +99,7 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
         />
       )}
 
-      {/* View Controls */}
+      {/* View Controls - positioned to avoid sidebar conflict */}
       {!isInFocusMode && (
         <ViewControls
           zoom={viewport.zoom}
@@ -110,7 +110,7 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
           activeTool={tool}
           onToolChange={setTool}
           onOpenPlantSelection={onOpenPlantSelection}
-          className="fixed bottom-4 right-4 z-30"
+          className="fixed bottom-4 right-4 z-30 md:bottom-[240px] md:right-4"
         />
       )}
     </>
