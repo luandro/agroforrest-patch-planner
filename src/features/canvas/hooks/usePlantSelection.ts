@@ -5,18 +5,23 @@ import { CanvasViewport } from '../types/canvas.types';
 import { usePlantHitTesting } from './usePlantHitTesting';
 import { usePlantAreaSelection } from './usePlantAreaSelection';
 import { usePlantSelectionActions } from './usePlantSelectionActions';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface UsePlantSelectionProps {
   focusedBed: Bed | null;
   viewport: CanvasViewport;
   canvasRef?: React.RefObject<HTMLCanvasElement>;
+  onOpenPlantSpeciesPanel?: () => void;
 }
 
 export const usePlantSelection = ({
   focusedBed,
   viewport,
-  canvasRef
+  canvasRef,
+  onOpenPlantSpeciesPanel
 }: UsePlantSelectionProps) => {
+  const isMobile = useIsMobile();
+
   // Plant hit testing
   const { getPlantAtCanvasPosition } = usePlantHitTesting({
     focusedBed,
@@ -49,11 +54,27 @@ export const usePlantSelection = ({
     focusedBed
   });
 
-  // Enhanced plant selection with canvas coordinate handling
+  // Enhanced plant selection with mobile species panel trigger
   const handlePlantSelection = useCallback((canvasX: number, canvasY: number, isMultiSelect: boolean = false) => {
     const plant = getPlantAtCanvasPosition(canvasX, canvasY);
+    
+    // On mobile, if user taps a plant and it's the only selection, open species panel
+    if (isMobile && plant && !isMultiSelect && selectedPlacementIds.length <= 1) {
+      const wasSelected = handlePlantSelectionAction(plant, isMultiSelect);
+      
+      // If the plant was just selected and it's the only one, open species panel
+      if (wasSelected && onOpenPlantSpeciesPanel) {
+        // Small delay to ensure selection state is updated
+        setTimeout(() => {
+          onOpenPlantSpeciesPanel();
+        }, 100);
+      }
+      
+      return wasSelected;
+    }
+    
     return handlePlantSelectionAction(plant, isMultiSelect);
-  }, [getPlantAtCanvasPosition, handlePlantSelectionAction]);
+  }, [getPlantAtCanvasPosition, handlePlantSelectionAction, isMobile, selectedPlacementIds.length, onOpenPlantSpeciesPanel]);
 
   return {
     selectedPlacementIds,

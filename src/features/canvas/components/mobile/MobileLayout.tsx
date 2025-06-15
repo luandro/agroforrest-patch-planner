@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { CanvasTool } from '../../types/bed.types';
@@ -9,7 +10,6 @@ import { GrowthTimelineSlider } from '../timeline/GrowthTimelineSlider';
 import { usePlantPlacementStore } from '../../stores/plantPlacementStore';
 import { Button } from '@/components/ui/button';
 import { Undo, Redo } from 'lucide-react';
-import { MinimalPlantModeIndicator } from './MinimalPlantModeIndicator';
 
 interface MobileLayoutProps {
   activeTool: CanvasTool;
@@ -122,7 +122,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
     );
   }
 
-  // Focus mode layout
+  // Focus mode layout - REMOVE TOP OVERLAY, maximizes canvas space
   if (isInFocusMode) {
     return (
       <>
@@ -132,17 +132,10 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
             <SaveStatus isSaving={isSaving} />
           </div>
         )}
-        
-        {/* Minimal Plant Mode Indicator - Top left - collapses when timeline is active */}
-        <MinimalPlantModeIndicator 
-          isTimelineActive={showTimeline}
-          selectedSpecies={selectedSpecies}
-          onOpenPlantSelection={onOpenPlantSelection}
-        />
 
         {/* Plant Tool Controls - Bottom left - hide when timeline is active */}
         {!showTimeline && (
-          <div className="fixed bottom-20 left-4 z-30 space-y-3">
+          <div className="fixed bottom-6 left-4 z-30 space-y-3">
             {/* Timeline Toggle Button */}
             <button
               onClick={() => setShowTimeline(true)}
@@ -152,7 +145,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
               📈
             </button>
 
-            {/* Change Species Button */}
+            {/* Change Species Button - Only show if species selected */}
             {selectedSpecies && (
               <button
                 onClick={onOpenPlantSelection}
@@ -163,7 +156,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
               </button>
             )}
 
-            {/* Plant Placement Undo/Redo - Now using correct functions */}
+            {/* Plant Placement Undo/Redo */}
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -199,9 +192,10 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
     );
   }
 
+  // Bed creation mode layout - Simplified controls
   return (
     <>
-      {/* Top Controls - Tool selection and zoom */}
+      {/* Simplified Tool Controls - Top left - Only 6 buttons */}
       <div className="fixed top-20 left-4 z-30">
         <ViewControls
           zoom={viewport.zoom}
@@ -211,7 +205,6 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
           bedsCount={beds.length}
           activeTool={activeTool}
           onToolChange={onToolChange}
-          onOpenPlantSelection={onOpenPlantSelection}
           className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-2"
         />
       </div>

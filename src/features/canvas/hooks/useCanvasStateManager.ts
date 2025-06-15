@@ -1,9 +1,10 @@
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useCanvasStateOrchestrator } from './useCanvasStateOrchestrator';
 import { useFocusModeIntegration } from './useFocusModeIntegration';
 import { useBedCreationOrchestrator } from './useBedCreationOrchestrator';
 import { PatchCanvasProps } from '../types/canvas.types';
+import { PlantSpecies } from '../types/species.types';
 
 interface UseCanvasStateManagerProps {
   initialViewport: PatchCanvasProps['initialViewport'];
@@ -24,6 +25,9 @@ export const useCanvasStateManager = ({
   maxZoom = 5,
   canvasRef
 }: UseCanvasStateManagerProps) => {
+  // Mobile plant species panel state
+  const [isPlantSpeciesPanelOpen, setIsPlantSpeciesPanelOpen] = useState(false);
+
   // Core state orchestration
   const stateOrchestrator = useCanvasStateOrchestrator({
     initialViewport,
@@ -32,13 +36,14 @@ export const useCanvasStateManager = ({
     maxZoom
   });
 
-  // Focus mode integration
+  // Focus mode integration with mobile species panel support
   const focusMode = useFocusModeIntegration({
     viewport: stateOrchestrator.viewport,
     updateViewport: stateOrchestrator.updateViewport,
     beds: stateOrchestrator.beds,
     canvasRef,
-    onOpenPlantSelection
+    onOpenPlantSelection,
+    onOpenPlantSpeciesPanel: () => setIsPlantSpeciesPanelOpen(true)
   });
 
   // Bed creation management
@@ -58,6 +63,16 @@ export const useCanvasStateManager = ({
     bedCreation.handleToolChange('pan');
   }, [bedCreation]);
 
+  // Mobile species panel handlers
+  const handleClosePlantSpeciesPanel = useCallback(() => {
+    setIsPlantSpeciesPanelOpen(false);
+  }, []);
+
+  const handleSelectPlantSpecies = useCallback((species: PlantSpecies) => {
+    // This will be handled by the species panel component
+    setIsPlantSpeciesPanelOpen(false);
+  }, []);
+
   return {
     // State orchestrator
     ...stateOrchestrator,
@@ -70,6 +85,11 @@ export const useCanvasStateManager = ({
     cancelCreation,
     
     // Enhanced handlers
-    handleToolChange: bedCreation.handleToolChange
+    handleToolChange: bedCreation.handleToolChange,
+
+    // Mobile plant species panel
+    isPlantSpeciesPanelOpen,
+    handleClosePlantSpeciesPanel,
+    handleSelectPlantSpecies
   };
 };
