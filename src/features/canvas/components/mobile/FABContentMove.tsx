@@ -23,7 +23,7 @@ export const FABContentMove: React.FC<FABContentMoveProps> = ({
         size="sm"
         onClick={onUndo}
         disabled={!canUndo}
-        className="flex-1 h-12 touch-manipulation bg-white/95 backdrop-blur-sm"
+        className="flex-1 h-12 touch-manipulation bg-white/95 backdrop-blur-sm active:scale-95"
         title="Desfazer"
       >
         <Undo className="w-5 h-5 mr-2" />
@@ -34,7 +34,7 @@ export const FABContentMove: React.FC<FABContentMoveProps> = ({
         size="sm"
         onClick={onRedo}
         disabled={!canRedo}
-        className="flex-1 h-12 touch-manipulation bg-white/95 backdrop-blur-sm"
+        className="flex-1 h-12 touch-manipulation bg-white/95 backdrop-blur-sm active:scale-95"
         title="Refazer"
       >
         <Redo className="w-5 h-5 mr-2" />

@@ -24,11 +24,13 @@ export const DevelopmentInfo: React.FC<DevelopmentInfoProps> = ({
 
   return (
     <div className={cn(
-      "fixed bg-black/80 text-white text-xs p-2 rounded font-mono z-20",
-      // Mobile-friendly positioning that doesn't overlap controls
-      isMobile ? "top-20 left-2 max-w-[200px]" : "bottom-4 left-4",
-      // Hide on small mobile screens to avoid clutter
-      "hidden sm:block"
+      "fixed bg-black/80 text-white text-xs p-2 rounded font-mono z-10",
+      // Mobile: Position at bottom-left to avoid all UI conflicts
+      isMobile 
+        ? "bottom-4 left-4 max-w-[180px]" 
+        : "bottom-4 left-4 max-w-[220px]",
+      // Hide on very small screens to reduce clutter
+      "hidden xs:block"
     )}>
       <div>Centro: ({viewport.centerX.toFixed(1)}m, {viewport.centerY.toFixed(1)}m)</div>
       <div>Zoom: {viewport.zoom.toFixed(2)}x</div>

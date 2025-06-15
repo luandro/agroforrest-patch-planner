@@ -84,27 +84,27 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
 
   return (
     <>
-      {/* Context-sensitive FAB - Fixed positioning for mobile */}
+      {/* Context-sensitive FAB - Mobile-optimized positioning */}
       {shouldShowFAB && (
         <div className={cn(
-          "fixed z-40 transition-all duration-200",
-          // Better mobile positioning - ensure it doesn't overlap with other controls
-          "bottom-20 right-4",
-          // Responsive adjustments
-          "sm:bottom-6 sm:right-6",
+          "fixed transition-all duration-200",
+          // Bottom-right positioning that avoids conflicts
+          "bottom-6 right-4 z-40",
+          // Responsive behavior
+          "sm:bottom-8 sm:right-6",
+          // Visibility states
           isVisible && !isFABHidden && "translate-y-0 opacity-100",
           isVisible && isFABHidden && "translate-y-0 opacity-0 pointer-events-none",
           !isVisible && !isFABHidden && "translate-y-2 opacity-90",
           !isVisible && isFABHidden && "translate-y-2 opacity-0 pointer-events-none"
         )}>
-          {/* FAB Content Panel - Improved mobile layout */}
+          {/* FAB Content Panel - Mobile-optimized sizing */}
           {isVisible && !isFABHidden && (
             <div className={cn(
               "mb-4 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl border border-gray-200",
-              // Better mobile sizing and positioning
-              "p-3 sm:p-4",
-              "min-w-[260px] max-w-[300px]",
-              "sm:min-w-[280px] sm:max-w-[320px]"
+              // Responsive panel sizing
+              "p-3 min-w-[280px] max-w-[320px]",
+              "sm:p-4 sm:min-w-[300px] sm:max-w-[340px]"
             )}>
               {getFABContent()}
             </div>
@@ -114,15 +114,16 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
           <Button
             className={cn(
               "rounded-full shadow-lg border-2 border-white transition-all duration-200",
-              // Larger touch targets for mobile
-              "w-16 h-16 sm:w-14 sm:h-14",
-              "touch-manipulation",
-              // Ensure proper tap behavior
+              // Large mobile touch targets (minimum 44px)
+              "w-16 h-16 touch-manipulation",
+              // Active state feedback
               "active:scale-95",
+              // Tool-specific colors
               activeTool === 'create-rectangle' && "bg-green-600 hover:bg-green-700 active:bg-green-800",
               activeTool === 'select' && selectedCount > 0 && "bg-orange-600 hover:bg-orange-700 active:bg-orange-800",
               activeTool === 'select' && selectedCount === 0 && "bg-gray-500 hover:bg-gray-600 active:bg-gray-700",
               activeTool === 'pan' && "bg-blue-600 hover:bg-blue-700 active:bg-blue-800",
+              // Visibility states
               isVisible && !isFABHidden && "scale-110",
               isFABHidden && "pointer-events-none"
             )}
@@ -135,12 +136,12 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
         </div>
       )}
 
-      {/* Save Status - Better mobile positioning */}
+      {/* Save Status - Positioned to avoid header overlap */}
       <div className="fixed top-20 right-4 z-30">
         <SaveStatus isSaving={isSaving} />
       </div>
 
-      {/* Backdrop - Proper z-index and mobile optimization */}
+      {/* Backdrop - Proper z-index for mobile interaction */}
       {isVisible && !isFABHidden && (
         <div 
           className="fixed inset-0 bg-black/20 z-30 touch-manipulation"

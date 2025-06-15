@@ -25,7 +25,7 @@ export const FABContentRectangle: React.FC<FABContentRectangleProps> = ({
               variant="outline"
               size="sm"
               onClick={() => onBedConfigChange({ length: Math.max(0.5, bedConfig.length - 0.5) })}
-              className="w-8 h-8 p-0"
+              className="w-9 h-9 p-0 touch-manipulation active:scale-95"
             >
               -
             </Button>
@@ -34,7 +34,7 @@ export const FABContentRectangle: React.FC<FABContentRectangleProps> = ({
               variant="outline"
               size="sm"
               onClick={() => onBedConfigChange({ length: Math.min(20, bedConfig.length + 0.5) })}
-              className="w-8 h-8 p-0"
+              className="w-9 h-9 p-0 touch-manipulation active:scale-95"
             >
               +
             </Button>
@@ -47,7 +47,7 @@ export const FABContentRectangle: React.FC<FABContentRectangleProps> = ({
               variant="outline"
               size="sm"
               onClick={() => onBedConfigChange({ width: Math.max(0.2, bedConfig.width - 0.2) })}
-              className="w-8 h-8 p-0"
+              className="w-9 h-9 p-0 touch-manipulation active:scale-95"
             >
               -
             </Button>
@@ -56,7 +56,7 @@ export const FABContentRectangle: React.FC<FABContentRectangleProps> = ({
               variant="outline"
               size="sm"
               onClick={() => onBedConfigChange({ width: Math.min(5, bedConfig.width + 0.2) })}
-              className="w-8 h-8 p-0"
+              className="w-9 h-9 p-0 touch-manipulation active:scale-95"
             >
               +
             </Button>
@@ -69,7 +69,7 @@ export const FABContentRectangle: React.FC<FABContentRectangleProps> = ({
               variant="outline"
               size="sm"
               onClick={() => onBedConfigChange({ quantity: Math.max(1, bedConfig.quantity - 1) })}
-              className="w-8 h-8 p-0"
+              className="w-9 h-9 p-0 touch-manipulation active:scale-95"
             >
               -
             </Button>
@@ -78,7 +78,7 @@ export const FABContentRectangle: React.FC<FABContentRectangleProps> = ({
               variant="outline"
               size="sm"
               onClick={() => onBedConfigChange({ quantity: Math.min(10, bedConfig.quantity + 1) })}
-              className="w-8 h-8 p-0"
+              className="w-9 h-9 p-0 touch-manipulation active:scale-95"
             >
               +
             </Button>
@@ -91,7 +91,7 @@ export const FABContentRectangle: React.FC<FABContentRectangleProps> = ({
               variant="outline"
               size="sm"
               onClick={() => onBedConfigChange({ spacing: Math.max(0, bedConfig.spacing - 0.1) })}
-              className="w-8 h-8 p-0"
+              className="w-9 h-9 p-0 touch-manipulation active:scale-95"
             >
               -
             </Button>
@@ -100,7 +100,7 @@ export const FABContentRectangle: React.FC<FABContentRectangleProps> = ({
               variant="outline"
               size="sm"
               onClick={() => onBedConfigChange({ spacing: Math.min(2, bedConfig.spacing + 0.1) })}
-              className="w-8 h-8 p-0"
+              className="w-9 h-9 p-0 touch-manipulation active:scale-95"
             >
               +
             </Button>

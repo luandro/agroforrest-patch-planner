@@ -22,7 +22,7 @@ export const FABContentSelect: React.FC<FABContentSelectProps> = ({
           variant="destructive"
           size="sm"
           onClick={onDeleteSelected}
-          className="w-full h-12 touch-manipulation"
+          className="w-full h-12 touch-manipulation active:scale-95"
         >
           <Trash2 className="w-5 h-5 mr-2" />
           Deletar ({selectedCount})

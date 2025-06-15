@@ -57,7 +57,7 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
 }) => {
   return (
     <>
-      {/* Mobile Controls - Fixed z-index and positioning */}
+      {/* Mobile Controls - Properly positioned to avoid header overlap */}
       {isMobile && !isInFocusMode && (
         <MobileControls
           activeTool={tool}
@@ -100,7 +100,7 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
         />
       )}
 
-      {/* View Controls - Better mobile positioning */}
+      {/* View Controls - Fixed mobile positioning */}
       {!isInFocusMode && (
         <ViewControls
           zoom={viewport.zoom}
@@ -112,9 +112,11 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
           onToolChange={setTool}
           onOpenPlantSelection={onOpenPlantSelection}
           className={cn(
-            "fixed transition-all duration-300 ease-in-out z-30",
-            // Mobile-first positioning that avoids conflicts
-            isMobile ? "bottom-4 left-4" : "bottom-4 right-4",
+            "fixed transition-all duration-300 ease-in-out",
+            // Mobile: Position away from FAB and header
+            isMobile 
+              ? "top-20 left-4 z-20" // Top-left on mobile, below header
+              : "bottom-4 right-4 z-30", // Bottom-right on desktop
             // Desktop adjustments for sidebar
             !isMobile && (isCollapsed ? "md:right-20" : "md:right-[21rem]")
           )}
