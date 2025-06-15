@@ -34,6 +34,11 @@ export const usePatchCanvasOrchestrator = ({
   const bedStore = useBedStore();
   const { beds, selectedBedIds, undo, redo, canUndo, canRedo, tool, setTool } = bedStore;
 
+  // Create wrapper for fitAllBeds that doesn't require parameters
+  const handleFitAllBeds = useCallback(() => {
+    fitAllBeds(beds);
+  }, [fitAllBeds, beds]);
+
   // Focus mode integration with stable callbacks
   const { 
     focusMode, 
@@ -173,7 +178,7 @@ export const usePatchCanvasOrchestrator = ({
     deleteSelected,
     isSaving,
     cancelCreation,
-    fitAllBeds,
+    fitAllBeds: handleFitAllBeds,
     gridSize,
     minZoom,
     maxZoom,
