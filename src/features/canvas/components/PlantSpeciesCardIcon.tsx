@@ -1,34 +1,50 @@
 
 import React from 'react';
+import { PlantCategory } from '../types/species.types';
+import { Trees, Shrub, Grass, Leaf } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PlantSpeciesCardIconProps {
-  category: string;
+  category: PlantCategory;
   isSelected: boolean;
+  size?: 'sm' | 'md';
 }
 
 export const PlantSpeciesCardIcon: React.FC<PlantSpeciesCardIconProps> = ({
   category,
-  isSelected
+  isSelected,
+  size = 'md'
 }) => {
-  const getCategoryEmoji = (category: string) => {
+  const getIcon = () => {
     switch (category) {
-      case 'trees': return '🌳';
-      case 'shrubs': return '🌿';
-      case 'ground-cover': return '🍃';
-      case 'herbs': return '🌱';
-      default: return '🌿';
+      case 'trees':
+        return Trees;
+      case 'shrubs':
+        return Shrub;
+      case 'ground-cover':
+        return Grass;
+      case 'herbs':
+        return Leaf;
+      default:
+        return Leaf;
     }
   };
 
+  const Icon = getIcon();
+
   return (
     <div className={cn(
-      "w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 text-2xl",
+      "rounded-full flex items-center justify-center flex-shrink-0",
+      // Size variants
+      size === 'sm' ? "w-8 h-8" : "w-10 h-10 md:w-12 md:h-12",
+      // Color variants
       isSelected 
-        ? "bg-blue-200 ring-1 ring-blue-300" 
-        : "bg-green-100"
+        ? "bg-blue-100 text-blue-600" 
+        : "bg-gray-100 text-gray-600"
     )}>
-      {getCategoryEmoji(category)}
+      <Icon className={cn(
+        size === 'sm' ? "w-4 h-4" : "w-5 h-5 md:w-6 md:h-6"
+      )} />
     </div>
   );
 };

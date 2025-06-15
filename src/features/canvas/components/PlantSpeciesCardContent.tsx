@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Check } from 'lucide-react';
 import { PlantSpecies } from '../types/species.types';
 import { PlantSpeciesCardBadges } from './PlantSpeciesCardBadges';
 import { cn } from '@/lib/utils';
@@ -10,71 +9,60 @@ interface PlantSpeciesCardContentProps {
   isSelected: boolean;
   isPlacing: boolean;
   disabled: boolean;
+  compact?: boolean;
 }
 
 export const PlantSpeciesCardContent: React.FC<PlantSpeciesCardContentProps> = ({
   species,
   isSelected,
   isPlacing,
-  disabled
+  disabled,
+  compact = false
 }) => {
   return (
     <div className="flex-1 min-w-0">
-      {/* Header with Name */}
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex-1">
-          <h4 className={cn(
-            "font-semibold text-base leading-tight mb-1",
-            isSelected ? "text-blue-900" : "text-gray-900"
-          )}>
-            {species.commonName}
-          </h4>
-          <p className={cn(
-            "text-sm italic",
-            isSelected ? "text-blue-700" : "text-gray-600"
-          )}>
-            {species.scientificName}
-          </p>
-        </div>
-      </div>
-
-      {/* Compatibility Badge */}
-      <PlantSpeciesCardBadges
-        companionCompatibility={species.companionCompatibility}
-        category={species.category}
-        isSelected={isSelected}
-      />
-
-      {/* Status/Action Text */}
-      <div className="mt-2">
-        {isSelected && isPlacing ? (
-          <p className="text-xs font-medium text-green-600 flex items-center gap-1">
-            <Check className="w-3 h-3" />
-            Clique no canteiro para plantar
-          </p>
-        ) : isSelected ? (
-          <p className="text-xs font-medium text-blue-600">
-            ✓ Selecionada - pronta para plantar
-          </p>
-        ) : (
-          <p className={cn(
-            "text-xs",
-            disabled ? "text-gray-400" : "text-gray-500"
-          )}>
-            Clique para selecionar e plantar
-          </p>
-        )}
-      </div>
-
-      {/* Size Info - Compact */}
-      <div className="mt-1">
-        <p className={cn(
-          "text-xs",
-          isSelected ? "text-blue-600" : "text-gray-500"
+      <div className="flex flex-col">
+        <h3 className={cn(
+          "font-medium text-gray-900 truncate",
+          compact ? "text-sm" : "text-sm md:text-base"
         )}>
-          {species.matureSize.height}m × {species.matureSize.width}m
+          {species.commonName}
+        </h3>
+        <p className={cn(
+          "text-gray-600 italic truncate",
+          compact ? "text-xs" : "text-xs md:text-sm"
+        )}>
+          {species.scientificName}
         </p>
       </div>
+
+      {/* Spacing info - only show on larger cards or when selected */}
+      {(!compact || isSelected) && (
+        <div className={cn(
+          "text-gray-500 mt-1",
+          compact ? "text-xs" : "text-xs md:text-sm"
+        )}>
+          Espaçamento: {species.spacing.min}-{species.spacing.max}m
+        </div>
+      )}
+
+      {/* Badges - simplified for compact mode */}
+      <div className={cn("mt-1", compact ? "mt-1" : "mt-2")}>
+        <PlantSpeciesCardBadges 
+          species={species} 
+          compact={compact}
+        />
+      </div>
+
+      {/* Status indicators */}
+      {isPlacing && isSelected && (
+        <div className={cn(
+          "text-blue-600 font-medium mt-1",
+          compact ? "text-xs" : "text-xs md:text-sm"
+        )}>
+          Clique no canteiro para plantar
+        </div>
+      )}
     </div>
   );
 };

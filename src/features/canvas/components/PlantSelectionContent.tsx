@@ -2,6 +2,7 @@
 import React from 'react';
 import { PlantSpecies, PlantCategory } from '../types/species.types';
 import { PlantSpeciesCard } from './PlantSpeciesCard';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface PlantSelectionContentProps {
   filteredSpecies: PlantSpecies[];
@@ -24,8 +25,10 @@ export const PlantSelectionContent: React.FC<PlantSelectionContentProps> = ({
   showBulkButton = false,
   onBulkSelect
 }) => {
+  const isMobile = useIsMobile();
+
   const renderSpeciesList = (species: PlantSpecies[]) => (
-    <div className="space-y-3">
+    <div className={isMobile ? "space-y-2" : "space-y-3"}>
       {species.map((plant) => (
         <PlantSpeciesCard
           key={plant.id}
@@ -35,15 +38,16 @@ export const PlantSelectionContent: React.FC<PlantSelectionContentProps> = ({
           onSelect={() => onSelectSpecies(plant)}
           showBulkButton={showBulkButton}
           onBulkSelect={onBulkSelect ? () => onBulkSelect(plant) : undefined}
+          compact={isMobile}
         />
       ))}
     </div>
   );
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 pb-4">
+    <div className="flex-1 overflow-y-auto px-3 pb-4 md:px-4">
       {selectedCategory === 'all' ? (
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           {Object.entries(speciesByCategory).map(([category, species]) => {
             if (species.length === 0) return null;
             
@@ -56,7 +60,7 @@ export const PlantSelectionContent: React.FC<PlantSelectionContentProps> = ({
 
             return (
               <div key={category}>
-                <h3 className="font-medium text-gray-900 mb-3 border-b border-gray-200 pb-1">
+                <h3 className="font-medium text-gray-900 mb-2 md:mb-3 border-b border-gray-200 pb-1 text-sm md:text-base">
                   {categoryNames[category as PlantCategory]} ({species.length})
                 </h3>
                 {renderSpeciesList(species)}

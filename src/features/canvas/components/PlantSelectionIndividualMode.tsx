@@ -5,6 +5,8 @@ import { PlantSelectionSearch } from './PlantSelectionSearch';
 import { PlantSelectionResults } from './PlantSelectionResults';
 import { PlantSelectionContent } from './PlantSelectionContent';
 import { PlantSelectionHelpText } from './PlantSelectionHelpText';
+import { Card, CardContent } from '@/components/ui/card';
+import { Grid3X3, Info } from 'lucide-react';
 
 interface PlantSelectionIndividualModeProps {
   searchTerm: string;
@@ -61,6 +63,20 @@ export const PlantSelectionIndividualMode: React.FC<PlantSelectionIndividualMode
       />
 
       <PlantSelectionResults count={filteredSpecies.length} />
+
+      {/* Bulk placement hint when available */}
+      {showBulkButton && (
+        <div className="px-4 pb-2">
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="p-3">
+              <div className="flex items-center gap-2 text-sm text-green-700">
+                <Grid3X3 className="w-4 h-4 flex-shrink-0" />
+                <span>Clique no botão verde <Grid3X3 className="w-3 h-3 inline mx-1" /> para plantio em massa</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <PlantSelectionContent
         filteredSpecies={filteredSpecies}

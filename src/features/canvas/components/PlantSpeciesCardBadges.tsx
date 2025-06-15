@@ -1,78 +1,65 @@
 
 import React from 'react';
-import { CompatibilityLevel } from '../types/species.types';
+import { Badge } from '@/components/ui/badge';
+import { PlantSpecies } from '../types/species.types';
 import { cn } from '@/lib/utils';
 
 interface PlantSpeciesCardBadgesProps {
-  companionCompatibility: CompatibilityLevel;
-  category: string;
-  isSelected: boolean;
+  species: PlantSpecies;
+  compact?: boolean;
 }
 
 export const PlantSpeciesCardBadges: React.FC<PlantSpeciesCardBadgesProps> = ({
-  companionCompatibility,
-  category,
-  isSelected
+  species,
+  compact = false
 }) => {
-  const getCompatibilityInfo = (level: CompatibilityLevel) => {
-    switch (level) {
-      case 'high': 
-        return { 
-          color: 'bg-emerald-500', 
-          label: 'Alta compatibilidade',
-          icon: '🟢'
-        };
-      case 'medium': 
-        return { 
-          color: 'bg-yellow-500', 
-          label: 'Compatibilidade média',
-          icon: '🟡'
-        };
-      case 'low': 
-        return { 
-          color: 'bg-red-500', 
-          label: 'Baixa compatibilidade',
-          icon: '🔴'
-        };
-      default: 
-        return { 
-          color: 'bg-gray-500', 
-          label: 'Compatibilidade desconhecida',
-          icon: '⚪'
-        };
-    }
-  };
-
-  const getCategoryLabel = (category: string) => {
-    switch (category) {
-      case 'trees': return 'Árvore';
-      case 'shrubs': return 'Arbusto';
-      case 'ground-cover': return 'Cobertura';
-      case 'herbs': return 'Erva';
-      default: return category;
-    }
-  };
-
-  const compatibility = getCompatibilityInfo(companionCompatibility);
+  const badgeSize = compact ? "text-xs px-1.5 py-0.5" : "text-xs px-2 py-1";
 
   return (
-    <div className="flex items-center gap-1 mb-2">
-      <span className="text-sm">{compatibility.icon}</span>
-      <span className={cn(
-        "text-xs font-medium",
-        isSelected ? "text-blue-700" : "text-gray-600"
-      )}>
-        {companionCompatibility === 'high' ? 'Alta' : 
-         companionCompatibility === 'medium' ? 'Média' : 'Baixa'}
-      </span>
-      <span className={cn(
-        "text-xs px-2 py-0.5 rounded-full",
-        isSelected 
-          ? "text-blue-700 bg-blue-200" 
-          : "text-gray-500 bg-gray-100"
-      )}>
-        {getCategoryLabel(category)}
-      </span>
+    <div className={cn("flex flex-wrap gap-1", compact && "gap-0.5")}>
+      {/* Growth speed - only show in non-compact mode or for selected items */}
+      {!compact && (
+        <Badge 
+          variant="secondary" 
+          className={cn(badgeSize, "bg-green-100 text-green-700")}
+        >
+          {species.growthSpeed === 'fast' && 'Rápido'}
+          {species.growthSpeed === 'medium' && 'Médio'}
+          {species.growthSpeed === 'slow' && 'Lento'}
+        </Badge>
+      )}
+
+      {/* Sun requirements */}
+      <Badge 
+        variant="secondary" 
+        className={cn(badgeSize, "bg-yellow-100 text-yellow-700")}
+      >
+        {species.sunRequirements === 'full-sun' && (compact ? 'Sol' : 'Sol Pleno')}
+        {species.sunRequirements === 'partial-shade' && (compact ? 'Meia' : 'Meia Sombra')}
+        {species.sunRequirements === 'full-shade' && 'Sombra'}
+      </Badge>
+
+      {/* Water needs - only show in non-compact mode */}
+      {!compact && (
+        <Badge 
+          variant="secondary" 
+          className={cn(badgeSize, "bg-blue-100 text-blue-700")}
+        >
+          {species.waterNeeds === 'low' && 'Pouca Água'}
+          {species.waterNeeds === 'medium' && 'Água Média'}
+          {species.waterNeeds === 'high' && 'Muita Água'}
+        </Badge>
+      )}
+
+      {/* Edible - priority badge, always show */}
+      {species.isEdible && (
+        <Badge 
+          variant="secondary" 
+          className={cn(badgeSize, "bg-orange-100 text-orange-700")}
+        >
+          {compact ? 'Comest.' : 'Comestível'}
+        </Badge>
+      )}
     </div>
   );
 };

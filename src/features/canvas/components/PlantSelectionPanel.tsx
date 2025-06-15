@@ -3,6 +3,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { PlantSpecies } from '../types/species.types';
 import { usePlantPlacementStore } from '../stores/plantPlacementStore';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { PlantSelectionHeader } from './PlantSelectionHeader';
 import { PlantSelectionPanelContent } from './PlantSelectionPanelContent';
 
@@ -20,6 +21,7 @@ export const PlantSelectionPanel: React.FC<PlantSelectionPanelProps> = ({
   selectedBedId
 }) => {
   const { selectedSpecies, isPlacing } = usePlantPlacementStore();
+  const isMobile = useIsMobile();
 
   // Don't render anything if not open
   if (!isOpen) {
@@ -34,12 +36,20 @@ export const PlantSelectionPanel: React.FC<PlantSelectionPanelProps> = ({
         onClick={onClose}
       />
 
-      {/* Panel */}
+      {/* Panel - Mobile responsive */}
       <div className={cn(
-        "fixed top-16 right-0 h-[calc(100vh-4rem)] w-96 bg-white/95 backdrop-blur-sm shadow-xl border-l border-gray-200 z-50",
-        "flex flex-col",
-        "transition-transform duration-300 ease-in-out",
-        "translate-x-0" // Always visible when rendered
+        "fixed z-50 bg-white/95 backdrop-blur-sm shadow-xl border border-gray-200",
+        "flex flex-col transition-transform duration-300 ease-in-out",
+        // Mobile: Bottom sheet style
+        isMobile && [
+          "bottom-0 left-0 right-0 h-[75vh] rounded-t-2xl border-t",
+          "translate-y-0" // Always visible when rendered
+        ],
+        // Desktop: Right sidebar
+        !isMobile && [
+          "top-16 right-0 h-[calc(100vh-4rem)] w-96 border-l",
+          "translate-x-0" // Always visible when rendered
+        ]
       )}>
         <PlantSelectionHeader
           onClose={onClose}

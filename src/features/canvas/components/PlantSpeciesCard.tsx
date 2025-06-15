@@ -17,6 +17,7 @@ interface PlantSpeciesCardProps {
   disabled?: boolean;
   showBulkButton?: boolean;
   onBulkSelect?: () => void;
+  compact?: boolean;
 }
 
 export const PlantSpeciesCard: React.FC<PlantSpeciesCardProps> = ({
@@ -26,7 +27,8 @@ export const PlantSpeciesCard: React.FC<PlantSpeciesCardProps> = ({
   isPlacing = false,
   disabled = false,
   showBulkButton = false,
-  onBulkSelect
+  onBulkSelect,
+  compact = false
 }) => {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -49,7 +51,9 @@ export const PlantSpeciesCard: React.FC<PlantSpeciesCardProps> = ({
   return (
     <Card 
       className={cn(
-        "cursor-pointer transition-all duration-200 min-h-[110px] touch-manipulation",
+        "cursor-pointer transition-all duration-200 touch-manipulation",
+        // Responsive sizing
+        compact ? "min-h-[80px]" : "min-h-[110px]",
         // Base state
         "border border-gray-200 bg-white hover:bg-blue-50",
         // Selected state
@@ -63,12 +67,13 @@ export const PlantSpeciesCard: React.FC<PlantSpeciesCardProps> = ({
       )}
       onClick={handleSelect}
     >
-      <CardContent className="p-4">
-        <div className="flex gap-3 items-start">
+      <CardContent className={cn("p-3", !compact && "md:p-4")}>
+        <div className="flex gap-2 md:gap-3 items-start">
           {/* Plant Icon */}
           <PlantSpeciesCardIcon
             category={species.category}
             isSelected={isSelected}
+            size={compact ? "sm" : "md"}
           />
 
           {/* Main Content */}
@@ -77,14 +82,16 @@ export const PlantSpeciesCard: React.FC<PlantSpeciesCardProps> = ({
             isSelected={isSelected}
             isPlacing={isPlacing}
             disabled={disabled}
+            compact={compact}
           />
 
           {/* Action Indicators */}
-          <div className="ml-2 flex-shrink-0 flex flex-col gap-1">
+          <div className="ml-1 md:ml-2 flex-shrink-0 flex flex-col gap-1">
             <PlantSpeciesCardAction
               isSelected={isSelected}
               isPlacing={isPlacing}
               isLoading={isLoading}
+              size={compact ? "sm" : "md"}
             />
             
             {/* Bulk Placement Button */}
@@ -92,14 +99,17 @@ export const PlantSpeciesCard: React.FC<PlantSpeciesCardProps> = ({
               <Button
                 size="sm"
                 variant="outline"
-                className="h-8 w-8 p-0 border-green-300 hover:bg-green-50 hover:border-green-400"
+                className={cn(
+                  "border-green-300 hover:bg-green-50 hover:border-green-400",
+                  compact ? "h-6 w-6 p-0" : "h-8 w-8 p-0"
+                )}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleBulkSelect();
                 }}
                 title="Plantio em massa"
               >
-                <Grid3X3 className="w-3 h-3 text-green-600" />
+                <Grid3X3 className={cn("text-green-600", compact ? "w-2.5 h-2.5" : "w-3 h-3")} />
               </Button>
             )}
           </div>
