@@ -133,18 +133,19 @@ export const mockSpecies: PlantSpecies[] = [
 
   // ÁRVORES DE CRESCIMENTO RÁPIDO
   {
-    id: 'eucalipto',
+    id: 'eucalyptus',
     commonName: 'Eucalipto',
-    scientificName: 'Eucalyptus spp.',
+    scientificName: 'Eucalyptus globulus',
     category: 'trees',
-    companionCompatibility: 'low',
-    matureSize: { height: 30, width: 8 },
-    spacing: { min: 4, max: 6 },
-    description: 'Árvore de crescimento rápido para madeira',
+    image: '/placeholder.svg',
+    companionCompatibility: 'medium',
+    matureSize: { height: 25, width: 8 },
+    spacing: { min: 4, max: 8 },
+    description: 'Árvore de crescimento rápido, muito utilizada para quebra-ventos e produção de madeira.',
     growthRate: 'fast',
     sunRequirement: 'full',
     waterRequirement: 'medium',
-    isEdible: false
+    isEdible: false,
   },
 
   // ARBUSTOS
@@ -152,28 +153,31 @@ export const mockSpecies: PlantSpecies[] = [
     id: 'acacia',
     commonName: 'Acácia',
     scientificName: 'Acacia mangium',
-    category: 'shrubs',
+    category: 'trees',
+    image: '/placeholder.svg',
     companionCompatibility: 'high',
-    matureSize: { height: 6, width: 4 },
-    spacing: { min: 2, max: 4 },
-    description: 'Arbusto fixador de nitrogênio',
+    matureSize: { height: 15, width: 6 },
+    spacing: { min: 3, max: 6 },
+    description: 'Leguminosa fixadora de nitrogênio, excelente para recuperação de solos degradados.',
     growthRate: 'fast',
     sunRequirement: 'full',
-    waterRequirement: 'low'
+    waterRequirement: 'low',
+    isEdible: false,
   },
   {
-    id: 'cafe',
+    id: 'coffee',
     commonName: 'Café',
     scientificName: 'Coffea arabica',
     category: 'shrubs',
+    image: '/placeholder.svg',
     companionCompatibility: 'high',
     matureSize: { height: 3, width: 2 },
     spacing: { min: 1.5, max: 2.5 },
-    description: 'Arbusto produtor de café',
+    description: 'Arbusto produtor de café, requer sombra parcial para melhor qualidade dos grãos.',
     growthRate: 'medium',
     sunRequirement: 'partial',
     waterRequirement: 'medium',
-    isEdible: true
+    isEdible: true,
   },
 
   // PLANTAS RASTEIRAS
