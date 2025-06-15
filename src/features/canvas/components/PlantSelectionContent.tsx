@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { PlantSpecies, PlantCategory } from '../types/species.types';
 import { PlantSpeciesCard } from './PlantSpeciesCard';
@@ -34,7 +33,7 @@ export const PlantSelectionContent: React.FC<PlantSelectionContentProps> = ({
             species={plant}
             isSelected={selectedSpecies?.id === plant.id}
             isPlacing={isPlacing && selectedSpecies?.id === plant.id}
-            onClick={() => onSelectSpecies(plant)}
+            onSelect={() => onSelectSpecies(plant)}
           />
           
           {/* Bulk Placement Button */}
