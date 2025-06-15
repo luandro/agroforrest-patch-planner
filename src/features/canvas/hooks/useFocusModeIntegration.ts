@@ -13,6 +13,7 @@ interface UseFocusModeIntegrationProps {
   beds: any[];
   canvasRef?: React.RefObject<HTMLCanvasElement>;
   onOpenPlantSelection?: () => void;
+  onOpenPlantSpeciesPanel?: () => void;
 }
 
 export const useFocusModeIntegration = ({
@@ -20,7 +21,8 @@ export const useFocusModeIntegration = ({
   updateViewport,
   beds,
   canvasRef,
-  onOpenPlantSelection
+  onOpenPlantSelection,
+  onOpenPlantSpeciesPanel
 }: UseFocusModeIntegrationProps) => {
   const { clearSelection: clearPlantSelection, selectedSpecies, setSelectedSpecies } = usePlantPlacementStore();
   const { setTimelineActive, resetTimeline } = useTimelineStore();
@@ -60,7 +62,8 @@ export const useFocusModeIntegration = ({
   const plantSelection = usePlantSelection({
     focusedBed,
     viewport,
-    canvasRef
+    canvasRef,
+    onOpenPlantSpeciesPanel
   });
 
   // Plant placement management
