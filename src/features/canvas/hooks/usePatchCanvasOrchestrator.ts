@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { PatchCanvasProps } from '../types/canvas.types';
 import { useCanvasViewport } from './useCanvasViewport';
@@ -8,7 +7,7 @@ import { useCanvasState } from './useCanvasState';
 import { useCanvasFocusMode } from './useCanvasFocusMode';
 import { useCanvasTools } from './useCanvasTools';
 import { useCanvasEventHandlers } from './useCanvasEventHandlers';
-import { useBedCreationFlow } from './useBedCreationFlow';
+import { useBedCreationOrchestrator } from './useBedCreationOrchestrator';
 import { usePlantSelectionFlow } from './usePlantSelectionFlow';
 import { useBedSelectionFlow } from './useBedSelectionFlow';
 import { useCanvasLayoutProps } from './useCanvasLayoutProps';
@@ -86,7 +85,7 @@ export const usePatchCanvasOrchestrator = ({
     cancelPlacement,
     cancelCreation,
     handleToolChange: bedCreationHandleToolChange,
-  } = useBedCreationFlow({
+  } = useBedCreationOrchestrator({
     viewport,
     gridSize,
     onBedCreated: (bedId) => {

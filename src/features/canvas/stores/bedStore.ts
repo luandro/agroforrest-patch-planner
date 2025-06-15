@@ -1,8 +1,9 @@
 
+import { useEffect } from 'react';
 import { useBedState } from './bedState';
 import { useFocusModeStore } from './focusModeStore';
 import { useHistoryStore } from './historyStore';
-import { Bed, CanvasTool } from '../types/bed.types';
+import { Bed } from '../types/bed.types';
 
 // Re-export the combined store interface for backward compatibility
 export const useBedStore = () => {
@@ -10,15 +11,30 @@ export const useBedStore = () => {
   const focusModeStore = useFocusModeStore();
   const historyStore = useHistoryStore();
 
-  // Enhanced actions that include history tracking
+  // Centralized history management for undo/redo
+  // This ensures that any change to `beds` is captured.
+  useEffect(() => {
+    const unsubscribe = useBedState.subscribe(
+      state => state.beds,
+      (beds, prevBeds) => {
+        // Prevent adding duplicate states, which can happen with some actions.
+        if (JSON.stringify(beds) !== JSON.stringify(prevBeds)) {
+          historyStore.addToHistory(beds);
+        }
+      },
+      { fireImmediately: false } // Don't add history on component mount
+    );
+    return unsubscribe;
+  }, [historyStore]);
+
+
+  // Enhanced actions that no longer need to manually manage history
   const addBed = (bed: Bed) => {
     bedState.addBed(bed);
-    historyStore.addToHistory(bedState.beds);
   };
 
   const updateBed = (id: string, updates: Partial<Bed>) => {
     bedState.updateBed(id, updates);
-    historyStore.addToHistory(bedState.beds);
   };
 
   const removeBeds = (ids: string[]) => {
@@ -28,11 +44,11 @@ export const useBedStore = () => {
     }
     
     bedState.removeBeds(ids);
-    historyStore.addToHistory(bedState.beds);
   };
 
   const loadBeds = (beds: Bed[]) => {
     bedState.loadBeds(beds);
+    // `loadBeds` is a special case that resets the history to a new baseline.
     historyStore.addToHistory(beds);
   };
 
@@ -50,7 +66,7 @@ export const useBedStore = () => {
     history: historyStore.history,
     historyIndex: historyStore.historyIndex,
     
-    // Enhanced bed actions (with history)
+    // Enhanced bed actions (with history now managed by useEffect)
     addBed,
     updateBed,
     removeBeds,
