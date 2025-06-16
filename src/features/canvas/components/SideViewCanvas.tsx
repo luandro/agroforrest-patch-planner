@@ -46,7 +46,7 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
     maxMonths
   } = useGrowthTimeline();
 
-  // Convert placements to side view data with proper distribution
+  // Convert placements to side view data with improved plant distribution
   const convertToSideViewBed = (bedId: string): SideViewBed | null => {
     const bed = beds.find(b => b.id === bedId);
     if (!bed) return null;
@@ -64,24 +64,33 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
       const species = getSpeciesById(speciesId);
       const heightProfile = getSpeciesHeightProfile(speciesId);
       
-      let currentHeight = 1; // Default height
-      let canopyRadius = 0.5; // Default canopy
+      let currentHeight = 0.3; // Start with seedling height
+      let canopyRadius = 0.2; // Start with seedling canopy
       let canopyLayer: any = 'understory';
 
-      if (heightProfile && isTimelineActive) {
-        currentHeight = calculateHeightAtMonth(heightProfile, timelineMonth);
-        canopyRadius = currentHeight * 0.3; // Canopy radius proportional to height
+      // Use timeline month for proper growth calculation
+      const effectiveMonth = isTimelineActive ? timelineMonth : 0;
+
+      if (heightProfile && effectiveMonth >= 0) {
+        currentHeight = calculateHeightAtMonth(heightProfile, effectiveMonth);
+        canopyRadius = Math.max(0.2, currentHeight * 0.25); // Proportional canopy
         canopyLayer = heightProfile.canopyLayer;
-      } else if (species) {
-        // Use species mature height if no timeline active
+        
+        console.log('[Side View Plant]', {
+          species: species?.commonName,
+          month: effectiveMonth,
+          height: currentHeight,
+          canopyRadius
+        });
+      } else if (species && !isTimelineActive) {
+        // Use species mature height only if timeline is not active
         currentHeight = species.matureSize?.height || 2;
         canopyRadius = species.matureSize?.width ? species.matureSize.width / 2 : 0.5;
         canopyLayer = species.category === 'trees' ? 'canopy' : 
                       species.category === 'shrubs' ? 'understory' : 'ground';
       }
 
-      // Improved position calculation
-      // If plants are clustered, distribute them more evenly
+      // Improved position calculation with better distribution
       let xPosition: number;
       
       if (bedPlacements.length > 1) {
@@ -108,11 +117,11 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
         speciesId: speciesId,
         position: {
           x: xPosition,
-          height: currentHeight
+          height: Math.max(0.2, currentHeight) // Ensure minimum height
         },
-        canopyRadius,
+        canopyRadius: Math.max(0.1, canopyRadius), // Ensure minimum canopy
         canopyLayer,
-        age: timelineMonth
+        age: effectiveMonth
       };
     });
 
@@ -123,7 +132,7 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
     };
   };
 
-  // Handle canvas resize
+  // Handle canvas resize with improved scaling
   useEffect(() => {
     const resizeCanvas = () => {
       const canvas = canvasRef.current;
@@ -133,23 +142,31 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
       const rect = container.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
 
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      canvas.style.width = `${rect.width}px`;
-      canvas.style.height = `${rect.height}px`;
+      // Ensure minimum canvas size for mobile
+      const minWidth = isMobile ? 320 : 600;
+      const minHeight = isMobile ? 200 : 400;
+      
+      const width = Math.max(minWidth, rect.width);
+      const height = Math.max(minHeight, rect.height);
+
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
 
       const ctx = canvas.getContext('2d');
       if (ctx) {
         ctx.scale(dpr, dpr);
+        console.log('[Side View] Canvas resized:', { width, height, dpr });
       }
     };
 
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
     return () => window.removeEventListener('resize', resizeCanvas);
-  }, []);
+  }, [isMobile]);
 
-  // Render side view
+  // Enhanced render side view with proper timeline integration
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -163,6 +180,18 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
     const sideViewBed = convertToSideViewBed(bedId);
     if (!sideViewBed) return;
 
+    console.log('[Side View Render]', {
+      bedId,
+      plantsCount: sideViewBed.plants.length,
+      timelineActive: isTimelineActive,
+      currentMonth: timelineMonth,
+      plants: sideViewBed.plants.map(p => ({ 
+        id: p.id, 
+        height: p.position.height.toFixed(2),
+        canopy: p.canopyRadius.toFixed(2)
+      }))
+    });
+
     renderSideView({
       ctx,
       canvas,
@@ -170,7 +199,7 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
       viewport,
       currentMonth: isTimelineActive ? timelineMonth : 0
     });
-  }, [beds, placements, timelineMonth, isTimelineActive, focusedBedId, viewport]);
+  }, [beds, placements, timelineMonth, isTimelineActive, focusedBedId, viewport, isMobile]);
 
   const toggleTimeline = () => {
     setShowTimeline(!showTimeline);
@@ -178,7 +207,7 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
 
   return (
     <div ref={containerRef} className={`relative w-full h-full bg-gradient-to-b from-blue-50 to-green-50 ${className} overflow-hidden`}>
-      {/* Timeline Toggle Button - Fixed positioning with proper z-index */}
+      {/* Timeline Toggle Button - Enhanced positioning */}
       <div className="absolute top-4 right-4 z-50">
         <Button
           onClick={toggleTimeline}
@@ -191,18 +220,19 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
         </Button>
       </div>
 
-      {/* Canvas - Ensure it doesn't overflow */}
+      {/* Canvas - Enhanced styling and scaling */}
       <canvas
         ref={canvasRef}
         className="block w-full h-full"
         style={{ 
           touchAction: 'none',
           maxWidth: '100vw',
-          maxHeight: '100vh'
+          maxHeight: '100vh',
+          minHeight: isMobile ? '200px' : '400px'
         }}
       />
 
-      {/* Timeline Controls - Enhanced z-index and mobile optimization */}
+      {/* Timeline Controls - Enhanced positioning and mobile optimization */}
       {showTimeline && (
         <div className="absolute inset-0 pointer-events-none z-[100]">
           <div className="pointer-events-auto">

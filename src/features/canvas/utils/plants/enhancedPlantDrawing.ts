@@ -15,32 +15,36 @@ export const drawEnhancedPlant = (
 ) => {
   ctx.save();
 
-  // Use provided growth month (don't access store directly in renderer)
-  const currentMonth = growthMonth || 0;
+  // Use provided growth month with improved initialization
+  const currentMonth = growthMonth !== undefined ? growthMonth : 0;
 
-  // Calculate dynamic plant size based on species and time
-  const baseRadius = species ? getSpeciesBaseRadius(species) : 6;
-  const maxRadius = species ? getSpeciesMaxRadius(species) : 18;
+  // Calculate dynamic plant size based on species and time with better scaling
+  const baseRadius = species ? getSpeciesBaseRadius(species) : 4; // Smaller initial size
+  const maxRadius = species ? getSpeciesMaxRadius(species) : 20;
   const growthProgress = calculateGrowthProgress(species, currentMonth);
   const currentRadius = baseRadius + (maxRadius - baseRadius) * growthProgress;
 
   // Apply environmental stress
   const stressMultiplier = 1 - (environmentalStress * 0.3);
-  const finalRadius = Math.max(3, currentRadius * stressMultiplier);
+  const finalRadius = Math.max(2, currentRadius * stressMultiplier); // Ensure minimum visibility
 
-  // Debug logging for plant rendering
-  if (process.env.NODE_ENV === 'development' && currentMonth > 0 && species) {
+  // Enhanced debug logging for plant rendering
+  if (process.env.NODE_ENV === 'development' && species) {
     console.debug('[Plant Render]', {
       species: species.commonName,
       month: currentMonth,
       baseRadius,
       maxRadius,
-      growthProgress,
-      finalRadius
+      growthProgress: growthProgress.toFixed(2),
+      finalRadius: finalRadius.toFixed(1),
+      isVisible: finalRadius > 2
     });
   }
 
-  // Plant colors based on species and health
+  // Ensure plants are always visible with minimum size
+  const visibleRadius = Math.max(3, finalRadius);
+
+  // Plant colors based on species and health with better contrast
   const healthColor = environmentalStress > 0.5 ? '#8B4513' : '#228B22';
   const plantColor = species?.category === 'trees' ? '#2D5B3D' : 
                     species?.category === 'shrubs' ? '#4A7C59' : '#6B8E5A';
@@ -48,14 +52,14 @@ export const drawEnhancedPlant = (
   // Draw shadow if needed
   if (shadowIntensity > 0) {
     ctx.beginPath();
-    ctx.arc(screenX + 2, screenY + 2, finalRadius, 0, 2 * Math.PI);
+    ctx.arc(screenX + 1, screenY + 1, visibleRadius, 0, 2 * Math.PI);
     ctx.fillStyle = `rgba(0, 0, 0, ${shadowIntensity * 0.3})`;
     ctx.fill();
   }
 
-  // Main plant circle
+  // Main plant circle with enhanced visibility
   ctx.beginPath();
-  ctx.arc(screenX, screenY, finalRadius, 0, 2 * Math.PI);
+  ctx.arc(screenX, screenY, visibleRadius, 0, 2 * Math.PI);
   
   if (isPreview) {
     ctx.strokeStyle = '#4F46E5';
@@ -65,46 +69,56 @@ export const drawEnhancedPlant = (
     ctx.fillStyle = 'rgba(79, 70, 229, 0.2)';
     ctx.fill();
   } else {
-    // Apply growth-based color changes
-    const growthColorAdjustment = Math.min(0.3, growthProgress * 0.3);
+    // Apply growth-based color changes with better progression
+    const growthColorAdjustment = Math.min(0.4, growthProgress * 0.4);
     const adjustedColor = adjustColorBrightness(plantColor, growthColorAdjustment);
     
     ctx.fillStyle = isSelected ? '#3B82F6' : adjustedColor;
     ctx.fill();
     
+    // Enhanced outline for better visibility
     if (isSelected || isHovered) {
       ctx.strokeStyle = isSelected ? '#1D4ED8' : '#374151';
       ctx.lineWidth = isSelected ? 3 : 2;
       ctx.stroke();
+    } else {
+      // Always show a subtle outline for visibility
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
     }
 
-    // Add growth rings for older trees
-    if (currentMonth > 24 && species?.category === 'trees' && finalRadius > 12) {
+    // Add growth rings for older trees with better visibility
+    if (currentMonth > 24 && species?.category === 'trees' && visibleRadius > 10) {
       const ringCount = Math.floor(currentMonth / 12);
       for (let i = 1; i <= Math.min(ringCount, 4); i++) {
         ctx.beginPath();
-        ctx.arc(screenX, screenY, finalRadius * (0.2 + i * 0.15), 0, 2 * Math.PI);
-        ctx.strokeStyle = `rgba(139, 69, 19, ${0.4 - i * 0.08})`;
+        ctx.arc(screenX, screenY, visibleRadius * (0.2 + i * 0.15), 0, 2 * Math.PI);
+        ctx.strokeStyle = `rgba(139, 69, 19, ${0.5 - i * 0.1})`;
         ctx.lineWidth = 1;
         ctx.stroke();
       }
     }
   }
 
-  // Add trunk for mature trees
-  if (currentMonth > 36 && species?.category === 'trees' && finalRadius > 15) {
+  // Add trunk for mature trees with better scaling
+  if (currentMonth > 24 && species?.category === 'trees' && visibleRadius > 8) {
+    const trunkRadius = Math.max(2, visibleRadius * 0.15);
     ctx.beginPath();
-    ctx.arc(screenX, screenY, finalRadius * 0.2, 0, 2 * Math.PI);
+    ctx.arc(screenX, screenY, trunkRadius, 0, 2 * Math.PI);
     ctx.fillStyle = '#8B4513'; // Tree trunk color
     ctx.fill();
   }
 
-  // Development label with timeline info
-  if (process.env.NODE_ENV === 'development' && species && finalRadius > 10) {
+  // Development label with timeline info - improved visibility
+  if (process.env.NODE_ENV === 'development' && species && visibleRadius > 6) {
     ctx.fillStyle = '#000';
-    ctx.font = '10px Arial';
+    ctx.font = 'bold 10px Arial';
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
     ctx.textAlign = 'center';
-    const label = `${species.commonName.substring(0, 4)} ${currentMonth}m`;
+    const label = `${currentMonth.toFixed(0)}m`;
+    ctx.strokeText(label, screenX, screenY + 2);
     ctx.fillText(label, screenX, screenY + 2);
   }
 
@@ -114,21 +128,21 @@ export const drawEnhancedPlant = (
 // Enhanced helper functions for species-specific growth
 const getSpeciesBaseRadius = (species: PlantSpecies): number => {
   switch (species.category) {
-    case 'trees': return 6;
-    case 'shrubs': return 4;
-    case 'ground-cover': return 3;
-    case 'herbs': return 3.5;
-    default: return 4;
+    case 'trees': return 3; // Start smaller for better growth effect
+    case 'shrubs': return 2.5;
+    case 'ground-cover': return 2;
+    case 'herbs': return 2.5;
+    default: return 2.5;
   }
 };
 
 const getSpeciesMaxRadius = (species: PlantSpecies): number => {
   switch (species.category) {
-    case 'trees': return 45; // Much larger for dramatic timeline effect
-    case 'shrubs': return 28;
-    case 'ground-cover': return 12;
-    case 'herbs': return 16;
-    default: return 20;
+    case 'trees': return 50; // Larger for dramatic timeline effect
+    case 'shrubs': return 32;
+    case 'ground-cover': return 15;
+    case 'herbs': return 20;
+    default: return 25;
   }
 };
 
@@ -153,11 +167,11 @@ const calculateGrowthProgress = (species: PlantSpecies | null, currentMonth: num
   const adjustedMaturity = maturityMonths * rateMultiplier;
   const progress = Math.min(currentMonth / adjustedMaturity, 1);
 
-  // Enhanced sigmoid curve with earlier visible changes
-  const sigmoidProgress = 1 / (1 + Math.exp(-10 * (progress - 0.2)));
+  // Enhanced sigmoid curve with more dramatic early growth
+  const sigmoidProgress = 1 / (1 + Math.exp(-8 * (progress - 0.3))); // Earlier visible changes
   
-  // Ensure some visible growth even in early months
-  return Math.max(progress * 0.2, sigmoidProgress);
+  // Ensure visible growth starts immediately but progresses naturally
+  return Math.max(progress * 0.1, sigmoidProgress);
 };
 
 // Helper function to adjust color brightness
