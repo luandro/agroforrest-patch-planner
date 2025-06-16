@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { CanvasContainer } from './CanvasContainer';
 import { SideViewCanvas } from './SideViewCanvas';
@@ -6,6 +5,7 @@ import { DevelopmentInfo } from './DevelopmentInfo';
 import { ViewModeToggle } from './ViewModeToggle';
 import { useSideViewStore } from '../stores/sideViewStore';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 interface CanvasViewportProps {
   viewport: any;
