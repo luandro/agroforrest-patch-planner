@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useBedStore } from '../stores/bedStore';
 import { usePatchStore } from '../stores/patchStore';
+import { Bed } from '../types/bed.types';
 import {
   openDB,
   saveToLocalStorageFallback,
@@ -65,7 +66,7 @@ export const useAutoSave = ({ debounceMs = 3000 }: UseAutoSaveProps = {}) => {
 
       // Use optimized patch data loading
       const { beds: patchBeds } = await loadPatchData(currentPatchId);
-      loadBeds(patchBeds);
+      loadBeds(patchBeds as Bed[]);
       console.log('✅ Beds loaded successfully for patch:', currentPatchId, 'count:', patchBeds.length);
     } catch (error) {
       console.error('❌ Failed to load beds:', error);

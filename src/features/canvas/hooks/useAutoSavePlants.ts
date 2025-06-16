@@ -58,7 +58,7 @@ export const useAutoSavePlants = ({ debounceMs = 5000 }: UseAutoSavePlantsProps 
 
       // Use optimized patch data loading
       const { placements: patchPlacements } = await loadPatchData(currentPatchId);
-      loadPlacements(patchPlacements);
+      loadPlacements(patchPlacements as PlantPlacement[]);
       console.log('✅ Plant placements loaded successfully for patch:', currentPatchId, 'count:', patchPlacements.length);
     } catch (error) {
       console.error('❌ Failed to load plant placements:', error);

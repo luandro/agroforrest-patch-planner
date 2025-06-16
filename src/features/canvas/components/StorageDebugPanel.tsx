@@ -1,3 +1,4 @@
+
 /**
  * Debug panel for testing storage functionality
  * This component can be temporarily added to test bed persistence
@@ -133,7 +134,6 @@ export const StorageDebugPanel: React.FC = () => {
 
       <div className="mt-3 text-xs text-gray-500">
         <div>Last Save: {storage.lastSaveTime ? new Date(storage.lastSaveTime).toLocaleTimeString() : 'Never'}</div>
-        <div>Save Counts: P:{storage.saveCounts?.patches || 0} B:{storage.saveCounts?.beds || 0} Pl:{storage.saveCounts?.plants || 0}</div>
       </div>
     </div>
   );
