@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from 'react';
 import { usePlantPlacementStore } from '../stores/plantPlacementStore';
 import { useBedStore } from '../stores/bedStore';
