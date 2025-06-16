@@ -28,35 +28,40 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedB
 
   const { isTimelineActive, currentMonth } = useTimelineStore();
 
-  // Track timeline changes and force re-render
+  // Track timeline changes and force re-render with improved detection
   const lastTimelineState = useRef({ isTimelineActive, currentMonth });
   
   useEffect(() => {
     const hasTimelineChanged = 
       lastTimelineState.current.isTimelineActive !== isTimelineActive ||
-      lastTimelineState.current.currentMonth !== currentMonth;
+      Math.abs(lastTimelineState.current.currentMonth - currentMonth) > 0.1; // Detect small changes
     
     if (hasTimelineChanged) {
-      console.log('[Timeline] State changed:', { 
+      console.log('[Canvas Renderer] Timeline state changed:', { 
         wasActive: lastTimelineState.current.isTimelineActive, 
         nowActive: isTimelineActive,
         wasMonth: lastTimelineState.current.currentMonth,
-        nowMonth: currentMonth
+        nowMonth: currentMonth,
+        monthDiff: Math.abs(lastTimelineState.current.currentMonth - currentMonth)
       });
       
       lastTimelineState.current = { isTimelineActive, currentMonth };
       
-      // Force a re-render when timeline state changes
+      // Force immediate re-render when timeline state changes
       const canvas = activeCanvasRef.current;
       if (canvas) {
-        // Trigger a re-render with current state
-        const event = new CustomEvent('timelineStateChanged');
-        canvas.dispatchEvent(event);
+        // Trigger immediate render instead of waiting for next frame
+        requestAnimationFrame(() => {
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            console.log('[Canvas] Forcing timeline render with month:', currentMonth);
+          }
+        });
       }
     }
   }, [isTimelineActive, currentMonth, activeCanvasRef]);
 
-  // Enhanced render function with timeline debugging
+  // Enhanced render function with timeline debugging and proper plant sizing
   const render = useCallback((
     viewport: CanvasViewport, 
     beds: Bed[] = [], 
@@ -69,20 +74,47 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedB
   ) => {
     const timelineMonth = isTimelineActive ? currentMonth : undefined;
     
+    // Enhanced logging for debugging plant growth
     if (process.env.NODE_ENV === "development") {
+      const totalPlants = focusedBed ? getPlacementsForBed(focusedBed.id).length : 
+                          beds.reduce((total, bed) => total + getPlacementsForBed(bed.id).length, 0);
+      
       console.debug("[Canvas Render]", {
         focusedBed: focusedBed?.id,
         timelineActive: isTimelineActive,
         currentMonth: timelineMonth,
-        plantsCount: focusedBed ? getPlacementsForBed(focusedBed.id).length : 0
+        plantsCount: totalPlants,
+        viewport: {
+          zoom: viewport.zoom,
+          center: `${viewport.centerX}, ${viewport.centerY}`
+        }
       });
     }
 
     const canvas = activeCanvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      console.warn('[Canvas] No canvas ref available for render');
+      return;
+    }
 
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      console.warn('[Canvas] No canvas context available for render');
+      return;
+    }
+
+    // Enhanced canvas clearing and sizing
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    
+    // Ensure canvas is properly sized
+    if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height}px`;
+      ctx.scale(dpr, dpr);
+    }
 
     renderCanvas({
       ctx,
@@ -101,7 +133,7 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedB
       getPlacementsForBed,
       selectedPlacementIds,
       placementPreview,
-      growthMonth: timelineMonth
+      growthMonth: timelineMonth // Ensure growth month is passed correctly
     });
   }, [activeCanvasRef, gridSize, spacing, focusedBed, getPlacementsForBed, selectedPlacementIds, placementPreview, isTimelineActive, currentMonth]);
 

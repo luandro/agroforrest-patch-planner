@@ -43,26 +43,29 @@ export const GrowthTimelineSlider: React.FC<GrowthTimelineSliderProps> = ({
     isPlaying
   });
 
-  // Ensure timeline is active when component is visible
+  // Initialize timeline at year 0 when activated
   useEffect(() => {
     if (isVisible) {
+      console.log('[Timeline] Activating timeline - resetting to month 0');
       setTimelineActive(true);
-      console.log('[Timeline Slider] Activated timeline - View mode:', viewMode);
+      // Force start at year 0 to show seedlings
+      setCurrentMonth(0);
     } else {
       setTimelineActive(false);
-      console.log('[Timeline Slider] Deactivated timeline');
+      console.log('[Timeline] Deactivating timeline');
     }
-  }, [isVisible, setTimelineActive, viewMode]);
+  }, [isVisible, setTimelineActive, setCurrentMonth]);
 
-  // Enhanced auto-play effect with debugging
+  // Enhanced auto-play with proper month increments for visibility
   useEffect(() => {
     if (!isPlaying) return;
 
-    console.log('[Timeline] Auto-play active, speed:', playbackSpeed, 'view:', viewMode);
+    console.log('[Timeline] Auto-play active, speed:', playbackSpeed, 'current:', currentMonth);
 
     const interval = setInterval(() => {
       setCurrentMonth(prev => {
-        const increment = playbackSpeed * 2;
+        // Smaller increments for smoother growth animation
+        const increment = playbackSpeed * 0.5; // Slower increment for better visual feedback
         const next = prev + increment;
         
         if (next >= maxMonths) {
@@ -71,13 +74,14 @@ export const GrowthTimelineSlider: React.FC<GrowthTimelineSliderProps> = ({
           return maxMonths;
         }
         
-        console.log('[Timeline] Auto-increment:', prev, '->', next, `(${viewMode} view)`);
+        // Force re-render by ensuring state change is detected
+        console.log('[Timeline] Month increment:', prev, '->', next);
         return next;
       });
-    }, 200);
+    }, 100); // Faster interval for smoother animation
 
     return () => clearInterval(interval);
-  }, [isPlaying, playbackSpeed, maxMonths, setCurrentMonth, stopPlayback, viewMode]);
+  }, [isPlaying, playbackSpeed, maxMonths, setCurrentMonth, stopPlayback, currentMonth]);
 
   if (!isVisible) return null;
 
