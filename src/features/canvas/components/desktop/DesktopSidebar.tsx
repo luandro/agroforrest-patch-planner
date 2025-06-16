@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -83,16 +84,16 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
   return (
     <div className={cn(
-      "fixed top-16 right-0 h-[calc(100vh-4rem)] bg-white/95 backdrop-blur-sm border-l border-gray-200 shadow-xl z-40",
-      "transition-all duration-300 ease-in-out",
+      "fixed top-16 right-0 h-[calc(100vh-4rem)] bg-white/95 backdrop-blur-sm border-l border-gray-200 shadow-xl",
+      "transition-all duration-300 ease-in-out z-[200]", // Enhanced z-index
       isCollapsed ? "w-16" : "w-80"
     )}>
-      {/* Collapse Toggle */}
+      {/* Collapse Toggle - Enhanced positioning */}
       <Button
         variant="ghost"
         size="sm"
         onClick={() => onToggleCollapse(!isCollapsed)}
-        className="absolute -left-8 top-4 w-8 h-8 p-0 bg-white border border-gray-200 shadow-sm rounded-l-md"
+        className="absolute -left-8 top-4 w-8 h-8 p-0 bg-white border border-gray-200 shadow-sm rounded-l-md z-[201] hover:bg-gray-50"
       >
         {isCollapsed ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
       </Button>
@@ -105,8 +106,8 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           </div>
         </div>
       ) : (
-        /* Expanded State - Full Controls */
-        <div className="p-6 space-y-6 overflow-y-auto h-full">
+        /* Expanded State - Full Controls with proper scrolling */
+        <div className="p-6 space-y-6 overflow-y-auto h-full scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
@@ -146,8 +147,8 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
           {/* Save Status */}
           {isSaving && (
-            <div className="flex items-center text-sm text-gray-600">
-              <div className="animate-spin w-3 h-3 border border-gray-400 border-t-transparent rounded-full mr-2" />
+            <div className="flex items-center text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
+              <div className="animate-spin w-3 h-3 border border-blue-400 border-t-transparent rounded-full mr-2" />
               Salvando automaticamente...
             </div>
           )}

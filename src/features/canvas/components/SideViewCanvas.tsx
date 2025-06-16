@@ -12,6 +12,7 @@ import { getSpeciesById } from '../data/mockSpecies';
 import { SideViewTimelineControls } from './timeline/SideViewTimelineControls';
 import { Button } from '@/components/ui/button';
 import { Clock, X } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface SideViewCanvasProps {
   focusedBedId?: string;
@@ -25,6 +26,7 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [showTimeline, setShowTimeline] = useState(true);
+  const isMobile = useIsMobile();
   
   const { placements, getPlacementsForBed } = usePlantPlacementStore();
   const { beds } = useBedStore();
@@ -175,41 +177,49 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
   };
 
   return (
-    <div ref={containerRef} className={`relative w-full h-full bg-gradient-to-b from-blue-50 to-green-50 ${className}`}>
-      {/* Timeline Toggle Button */}
-      <div className="absolute top-4 right-4 z-40">
+    <div ref={containerRef} className={`relative w-full h-full bg-gradient-to-b from-blue-50 to-green-50 ${className} overflow-hidden`}>
+      {/* Timeline Toggle Button - Fixed positioning with proper z-index */}
+      <div className="absolute top-4 right-4 z-50">
         <Button
           onClick={toggleTimeline}
           variant="outline"
-          size="sm"
-          className="bg-white/90 backdrop-blur-sm shadow-md"
+          size={isMobile ? "sm" : "default"}
+          className="bg-white/95 backdrop-blur-sm shadow-lg border-gray-300 hover:bg-white min-h-[44px] min-w-[44px]"
         >
           {showTimeline ? <X className="w-4 h-4 mr-1" /> : <Clock className="w-4 h-4 mr-1" />}
-          {showTimeline ? 'Fechar' : 'Linha do Tempo'}
+          {!isMobile && (showTimeline ? 'Fechar' : 'Linha do Tempo')}
         </Button>
       </div>
 
-      {/* Canvas */}
+      {/* Canvas - Ensure it doesn't overflow */}
       <canvas
         ref={canvasRef}
         className="block w-full h-full"
-        style={{ touchAction: 'none' }}
+        style={{ 
+          touchAction: 'none',
+          maxWidth: '100vw',
+          maxHeight: '100vh'
+        }}
       />
 
-      {/* Timeline Controls */}
+      {/* Timeline Controls - Enhanced z-index and mobile optimization */}
       {showTimeline && (
-        <SideViewTimelineControls
-          currentMonth={timelineMonth}
-          setCurrentMonth={setCurrentMonth}
-          isPlaying={isPlaying}
-          playbackSpeed={playbackSpeed}
-          setPlaybackSpeed={setPlaybackSpeed}
-          startPlayback={startPlayback}
-          stopPlayback={stopPlayback}
-          resetTimeline={resetTimeline}
-          maxMonths={maxMonths}
-          onClose={() => setShowTimeline(false)}
-        />
+        <div className="absolute inset-0 pointer-events-none z-[100]">
+          <div className="pointer-events-auto">
+            <SideViewTimelineControls
+              currentMonth={timelineMonth}
+              setCurrentMonth={setCurrentMonth}
+              isPlaying={isPlaying}
+              playbackSpeed={playbackSpeed}
+              setPlaybackSpeed={setPlaybackSpeed}
+              startPlayback={startPlayback}
+              stopPlayback={stopPlayback}
+              resetTimeline={resetTimeline}
+              maxMonths={maxMonths}
+              onClose={() => setShowTimeline(false)}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
