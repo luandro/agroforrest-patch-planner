@@ -9,7 +9,8 @@ import {
   Pause, 
   RotateCcw, 
   Clock,
-  FastForward
+  FastForward,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -81,16 +82,17 @@ export const SideViewTimelineControls: React.FC<SideViewTimelineControlsProps> =
   if (isMobile) {
     return (
       <div className={cn(
-        "fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-lg",
+        "fixed bottom-0 left-0 right-0 z-[100] bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-xl",
+        "safe-area-inset-bottom pb-safe",
         className
       )}>
-        <div className="p-4 space-y-3">
-          {/* Mobile Header */}
+        <div className="p-4 space-y-4 max-w-full">
+          {/* Mobile Header with Close Button */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-green-600" />
-              <span className="font-medium text-sm">Linha do Tempo</span>
-              <Badge variant="secondary" className="text-xs">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Clock className="w-4 h-4 text-green-600 flex-shrink-0" />
+              <span className="font-medium text-sm truncate">Linha do Tempo</span>
+              <Badge variant="secondary" className="text-xs flex-shrink-0">
                 {formatTime(currentMonth)}
               </Badge>
             </div>
@@ -99,80 +101,99 @@ export const SideViewTimelineControls: React.FC<SideViewTimelineControlsProps> =
                 size="sm"
                 variant="ghost"
                 onClick={onClose}
-                className="h-8 w-8 p-0"
+                className="h-11 w-11 p-0 flex-shrink-0 touch-manipulation"
               >
-                ×
+                <X className="w-4 h-4" />
               </Button>
             )}
           </div>
 
-          {/* Mobile Timeline Slider */}
-          <div className="space-y-2">
-            <Slider
-              value={[currentMonth]}
-              onValueChange={handleSliderChange}
-              max={maxMonths}
-              min={0}
-              step={1}
-              className="w-full [&_.slider-thumb]:h-6 [&_.slider-thumb]:w-6"
-            />
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>0</span>
-              <span>{Math.round(progressPercentage)}%</span>
+          {/* Mobile Timeline Slider - Enhanced for touch */}
+          <div className="space-y-3">
+            <div className="px-2">
+              <Slider
+                value={[currentMonth]}
+                onValueChange={handleSliderChange}
+                max={maxMonths}
+                min={0}
+                step={1}
+                className="w-full [&_.slider-thumb]:h-7 [&_.slider-thumb]:w-7 [&_.slider-track]:h-3"
+              />
+            </div>
+            <div className="flex justify-between text-xs text-gray-500 px-2">
+              <span>Início</span>
+              <span className="font-medium">{Math.round(progressPercentage)}%</span>
               <span>{formatTime(maxMonths)}</span>
             </div>
           </div>
 
-          {/* Mobile Controls */}
-          <div className="flex items-center justify-between gap-2">
+          {/* Mobile Controls - Larger touch targets */}
+          <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Button
-                size="sm"
+                size="default"
                 onClick={togglePlayback}
-                className="h-10 px-4 touch-manipulation"
+                className="h-12 px-6 touch-manipulation font-medium"
               >
-                {isPlaying ? <Pause className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
-                {isPlaying ? 'Pausar' : 'Play'}
+                {isPlaying ? <Pause className="w-5 h-5 mr-2" /> : <Play className="w-5 h-5 mr-2" />}
+                {isPlaying ? 'Pausar' : 'Iniciar'}
               </Button>
               
               <Button
-                size="sm"
+                size="default"
                 variant="outline"
                 onClick={handleReset}
-                className="h-10 px-3 touch-manipulation"
+                className="h-12 w-12 p-0 touch-manipulation"
               >
-                <RotateCcw className="w-4 h-4" />
+                <RotateCcw className="w-5 h-5" />
               </Button>
             </div>
 
             <Button
-              size="sm"
+              size="default"
               variant="outline"
               onClick={cycleSpeed}
-              className="h-10 px-3 touch-manipulation flex items-center gap-1"
+              className="h-12 px-4 touch-manipulation flex items-center gap-2 min-w-[80px]"
             >
-              <FastForward className="w-3 h-3" />
-              {playbackSpeed}x
+              <FastForward className="w-4 h-4" />
+              <span className="font-medium">{playbackSpeed}x</span>
             </Button>
           </div>
 
-          {/* Progress Bar */}
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          {/* Progress Bar - More prominent */}
+          <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
             <div 
-              className="bg-green-500 h-2 rounded-full transition-all duration-200"
+              className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all duration-300 shadow-sm"
               style={{ width: `${progressPercentage}%` }}
             />
+          </div>
+
+          {/* Current Stage Info - Compact for mobile */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+            <div className="text-center">
+              <div className="font-medium text-green-800 text-sm">
+                {currentMonth < 12 ? 'Estabelecimento' : 
+                 currentMonth < 60 ? 'Crescimento Ativo' : 
+                 'Maturidade'}
+              </div>
+              <div className="text-xs text-green-600 mt-1">
+                {currentMonth < 12 ? 'Plantas se estabelecendo' :
+                 currentMonth < 60 ? 'Crescimento acelerado' :
+                 'Plantas maduras'}
+              </div>
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
-  // Desktop Layout
+  // Desktop Layout - Enhanced positioning and z-index
   return (
     <Card className={cn(
-      "fixed bottom-4 left-4 right-4 z-50 max-w-2xl mx-auto",
-      "md:left-1/2 md:right-auto md:transform md:-translate-x-1/2 md:w-[700px]",
+      "fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[100]",
+      "w-[min(700px,calc(100vw-3rem))] max-w-full",
+      "shadow-2xl border-gray-300",
       className
     )}>
       <CardContent className="p-6">
@@ -190,9 +211,9 @@ export const SideViewTimelineControls: React.FC<SideViewTimelineControlsProps> =
               size="sm"
               variant="ghost"
               onClick={onClose}
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 hover:bg-gray-100"
             >
-              ×
+              <X className="w-4 h-4" />
             </Button>
           )}
         </div>

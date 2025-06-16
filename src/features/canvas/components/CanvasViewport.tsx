@@ -62,14 +62,17 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
   }
 
   return (
-    <div className="relative w-full h-screen pt-16">
-      {/* View Mode Toggle - Positioned prominently */}
-      <div className={`absolute ${isMobile ? 'top-2 left-2' : 'top-4 left-4'} z-30`}>
+    <div className="relative w-full h-screen pt-16 overflow-hidden">
+      {/* View Mode Toggle - Enhanced positioning with safe z-index */}
+      <div className={cn(
+        "absolute z-[200]",
+        isMobile ? "top-2 left-2" : "top-4 left-4"
+      )}>
         <ViewModeToggle />
       </div>
 
       {/* Conditional Canvas Rendering with smooth transitions */}
-      <div className="w-full h-full transition-opacity duration-300">
+      <div className="w-full h-full transition-opacity duration-300 relative">
         {viewMode === 'top' ? (
           <CanvasContainer
             viewport={viewport}
@@ -101,15 +104,17 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
         )}
       </div>
 
-      {/* Development Info */}
+      {/* Development Info - Positioned safely */}
       {process.env.NODE_ENV === 'development' && (
-        <DevelopmentInfo
-          beds={beds}
-          selectedBedIds={selectedBedIds}
-          viewport={viewport}
-          tool={tool}
-          isMobile={isMobile}
-        />
+        <div className="absolute bottom-4 left-4 z-[50] max-w-xs">
+          <DevelopmentInfo
+            beds={beds}
+            selectedBedIds={selectedBedIds}
+            viewport={viewport}
+            tool={tool}
+            isMobile={isMobile}
+          />
+        </div>
       )}
     </div>
   );

@@ -6,6 +6,7 @@ import { useTimelineStore } from '../../stores/timelineStore';
 import { useSideViewStore } from '../../stores/sideViewStore';
 import { MinimalTimelineSlider } from './MinimalTimelineSlider';
 import { FullTimelineSlider } from './FullTimelineSlider';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface GrowthTimelineSliderProps {
   isVisible: boolean;
@@ -20,6 +21,7 @@ export const GrowthTimelineSlider: React.FC<GrowthTimelineSliderProps> = ({
   className,
   isMinimal = false
 }) => {
+  const isMobile = useIsMobile();
   const {
     currentMonth,
     setCurrentMonth,
@@ -79,41 +81,48 @@ export const GrowthTimelineSlider: React.FC<GrowthTimelineSliderProps> = ({
 
   if (!isVisible) return null;
 
-  // Render minimal mobile UI when isMinimal is true
-  if (isMinimal) {
+  // Force minimal mode on mobile devices or when explicitly requested
+  const shouldUseMinimal = isMinimal || isMobile;
+
+  // Render minimal mobile UI when shouldUseMinimal is true
+  if (shouldUseMinimal) {
     return (
-      <MinimalTimelineSlider
+      <div className="z-[100]">
+        <MinimalTimelineSlider
+          currentMonth={currentMonth}
+          setCurrentMonth={setCurrentMonth}
+          isPlaying={isPlaying}
+          startPlayback={startPlayback}
+          stopPlayback={stopPlayback}
+          resetTimeline={resetTimeline}
+          maxMonths={maxMonths}
+          currentStage={currentStage}
+          onClose={onClose}
+          onActivity={handleActivity}
+          isInactive={isInactive}
+          className={className}
+        />
+      </div>
+    );
+  }
+
+  // Render full desktop/tablet UI
+  return (
+    <div className="z-[100]">
+      <FullTimelineSlider
         currentMonth={currentMonth}
         setCurrentMonth={setCurrentMonth}
         isPlaying={isPlaying}
+        playbackSpeed={playbackSpeed}
+        setPlaybackSpeed={setPlaybackSpeed}
         startPlayback={startPlayback}
         stopPlayback={stopPlayback}
         resetTimeline={resetTimeline}
         maxMonths={maxMonths}
         currentStage={currentStage}
         onClose={onClose}
-        onActivity={handleActivity}
-        isInactive={isInactive}
         className={className}
       />
-    );
-  }
-
-  // Render full desktop/tablet UI
-  return (
-    <FullTimelineSlider
-      currentMonth={currentMonth}
-      setCurrentMonth={setCurrentMonth}
-      isPlaying={isPlaying}
-      playbackSpeed={playbackSpeed}
-      setPlaybackSpeed={setPlaybackSpeed}
-      startPlayback={startPlayback}
-      stopPlayback={stopPlayback}
-      resetTimeline={resetTimeline}
-      maxMonths={maxMonths}
-      currentStage={currentStage}
-      onClose={onClose}
-      className={className}
-    />
+    </div>
   );
 };

@@ -5,6 +5,7 @@ import { Eye, Mountain } from 'lucide-react';
 import { useSideViewStore } from '../stores/sideViewStore';
 import { ViewMode } from '../types/sideView.types';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ViewModeToggleProps {
   className?: string;
@@ -12,6 +13,7 @@ interface ViewModeToggleProps {
 
 export const ViewModeToggle: React.FC<ViewModeToggleProps> = ({ className }) => {
   const { viewMode, setViewMode } = useSideViewStore();
+  const isMobile = useIsMobile();
 
   const handleToggle = () => {
     const newMode: ViewMode = viewMode === 'top' ? 'side' : 'top';
@@ -20,36 +22,39 @@ export const ViewModeToggle: React.FC<ViewModeToggleProps> = ({ className }) => 
 
   return (
     <div className={cn(
-      "flex items-center bg-white/95 backdrop-blur-sm rounded-lg border border-gray-200 shadow-md p-1",
+      "flex items-center bg-white/95 backdrop-blur-sm rounded-lg border border-gray-200 shadow-lg p-1",
+      "z-[200]", // Higher z-index to appear above other elements
       className
     )}>
       <Button
         variant={viewMode === 'top' ? 'default' : 'ghost'}
-        size="sm"
+        size={isMobile ? "sm" : "default"}
         onClick={() => setViewMode('top')}
         className={cn(
-          "h-10 px-4 transition-all touch-manipulation",
+          "transition-all touch-manipulation",
+          isMobile ? "h-10 px-3 text-sm" : "h-11 px-4",
           viewMode === 'top' 
-            ? "bg-blue-600 text-white shadow-sm" 
+            ? "bg-blue-600 text-white shadow-sm hover:bg-blue-700" 
             : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
         )}
       >
-        <Eye className="w-4 h-4 mr-2" />
-        Vista Superior
+        <Eye className={cn("mr-2", isMobile ? "w-3 h-3" : "w-4 h-4")} />
+        {isMobile ? "Superior" : "Vista Superior"}
       </Button>
       <Button
         variant={viewMode === 'side' ? 'default' : 'ghost'}
-        size="sm"
+        size={isMobile ? "sm" : "default"}
         onClick={() => setViewMode('side')}
         className={cn(
-          "h-10 px-4 transition-all touch-manipulation",
+          "transition-all touch-manipulation",
+          isMobile ? "h-10 px-3 text-sm" : "h-11 px-4",
           viewMode === 'side' 
-            ? "bg-green-600 text-white shadow-sm" 
+            ? "bg-green-600 text-white shadow-sm hover:bg-green-700" 
             : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
         )}
       >
-        <Mountain className="w-4 h-4 mr-2" />
-        Vista Lateral
+        <Mountain className={cn("mr-2", isMobile ? "w-3 h-3" : "w-4 h-4")} />
+        {isMobile ? "Lateral" : "Vista Lateral"}
       </Button>
     </div>
   );
