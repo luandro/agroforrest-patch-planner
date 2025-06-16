@@ -1,12 +1,17 @@
-import React, { useRef, useEffect } from 'react';
+
+import React, { useRef, useEffect, useState } from 'react';
 import { usePlantPlacementStore } from '../stores/plantPlacementStore';
 import { useBedStore } from '../stores/bedStore';
 import { useTimelineStore } from '../stores/timelineStore';
 import { useSideViewStore } from '../stores/sideViewStore';
+import { useGrowthTimeline } from '../hooks/useGrowthTimeline';
 import { renderSideView } from '../utils/sideViewRenderer';
 import { getSpeciesHeightProfile, calculateHeightAtMonth } from '../data/heightGrowthData';
 import { SideViewBed, SideViewPlant } from '../types/sideView.types';
 import { getSpeciesById } from '../data/mockSpecies';
+import { SideViewTimelineControls } from './timeline/SideViewTimelineControls';
+import { Button } from '@/components/ui/button';
+import { Clock, X } from 'lucide-react';
 
 interface SideViewCanvasProps {
   focusedBedId?: string;
@@ -19,13 +24,27 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [showTimeline, setShowTimeline] = useState(true);
   
   const { placements, getPlacementsForBed } = usePlantPlacementStore();
   const { beds } = useBedStore();
   const { currentMonth, isTimelineActive } = useTimelineStore();
   const { viewport } = useSideViewStore();
 
-  // Convert placements to side view data
+  // Timeline controls
+  const {
+    currentMonth: timelineMonth,
+    setCurrentMonth,
+    isPlaying,
+    playbackSpeed,
+    setPlaybackSpeed,
+    startPlayback,
+    stopPlayback,
+    resetTimeline,
+    maxMonths
+  } = useGrowthTimeline();
+
+  // Convert placements to side view data with proper distribution
   const convertToSideViewBed = (bedId: string): SideViewBed | null => {
     const bed = beds.find(b => b.id === bedId);
     if (!bed) return null;
@@ -33,7 +52,10 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
     const bedPlacements = getPlacementsForBed(bedId);
     const bedLength = bed.shape === 'rectangle' ? bed.dimensions.length || 10 : bed.dimensions.radius ? bed.dimensions.radius * 2 : 10;
 
-    const sideViewPlants: SideViewPlant[] = bedPlacements.map(placement => {
+    // Sort plants by X position to maintain order
+    const sortedPlacements = [...bedPlacements].sort((a, b) => a.position.x - b.position.x);
+
+    const sideViewPlants: SideViewPlant[] = sortedPlacements.map((placement, index) => {
       // Extract species ID - handle both string and object cases
       const speciesId = typeof placement.species === 'string' ? placement.species : placement.species.id;
       
@@ -45,7 +67,7 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
       let canopyLayer: any = 'understory';
 
       if (heightProfile && isTimelineActive) {
-        currentHeight = calculateHeightAtMonth(heightProfile, currentMonth);
+        currentHeight = calculateHeightAtMonth(heightProfile, timelineMonth);
         canopyRadius = currentHeight * 0.3; // Canopy radius proportional to height
         canopyLayer = heightProfile.canopyLayer;
       } else if (species) {
@@ -56,16 +78,39 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
                       species.category === 'shrubs' ? 'understory' : 'ground';
       }
 
+      // Improved position calculation
+      // If plants are clustered, distribute them more evenly
+      let xPosition: number;
+      
+      if (bedPlacements.length > 1) {
+        // Calculate spread across bed length
+        const minX = Math.min(...bedPlacements.map(p => p.position.x));
+        const maxX = Math.max(...bedPlacements.map(p => p.position.x));
+        const range = maxX - minX;
+        
+        if (range < 0.2) {
+          // Plants are clustered, distribute evenly
+          xPosition = (index / Math.max(1, bedPlacements.length - 1)) * bedLength;
+        } else {
+          // Use actual positions but scale to bed length
+          const normalizedX = (placement.position.x - minX) / range;
+          xPosition = normalizedX * bedLength;
+        }
+      } else {
+        // Single plant, place in center
+        xPosition = bedLength / 2;
+      }
+
       return {
         id: placement.id,
         speciesId: speciesId,
         position: {
-          x: (placement.position.x / 100) * bedLength, // Convert percentage to meters
+          x: xPosition,
           height: currentHeight
         },
         canopyRadius,
         canopyLayer,
-        age: currentMonth
+        age: timelineMonth
       };
     });
 
@@ -121,17 +166,51 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
       canvas,
       bed: sideViewBed,
       viewport,
-      currentMonth: isTimelineActive ? currentMonth : 0
+      currentMonth: isTimelineActive ? timelineMonth : 0
     });
-  }, [beds, placements, currentMonth, isTimelineActive, focusedBedId, viewport]);
+  }, [beds, placements, timelineMonth, isTimelineActive, focusedBedId, viewport]);
+
+  const toggleTimeline = () => {
+    setShowTimeline(!showTimeline);
+  };
 
   return (
-    <div ref={containerRef} className={`w-full h-full bg-gray-50 ${className}`}>
+    <div ref={containerRef} className={`relative w-full h-full bg-gradient-to-b from-blue-50 to-green-50 ${className}`}>
+      {/* Timeline Toggle Button */}
+      <div className="absolute top-4 right-4 z-40">
+        <Button
+          onClick={toggleTimeline}
+          variant="outline"
+          size="sm"
+          className="bg-white/90 backdrop-blur-sm shadow-md"
+        >
+          {showTimeline ? <X className="w-4 h-4 mr-1" /> : <Clock className="w-4 h-4 mr-1" />}
+          {showTimeline ? 'Fechar' : 'Linha do Tempo'}
+        </Button>
+      </div>
+
+      {/* Canvas */}
       <canvas
         ref={canvasRef}
         className="block w-full h-full"
         style={{ touchAction: 'none' }}
       />
+
+      {/* Timeline Controls */}
+      {showTimeline && (
+        <SideViewTimelineControls
+          currentMonth={timelineMonth}
+          setCurrentMonth={setCurrentMonth}
+          isPlaying={isPlaying}
+          playbackSpeed={playbackSpeed}
+          setPlaybackSpeed={setPlaybackSpeed}
+          startPlayback={startPlayback}
+          stopPlayback={stopPlayback}
+          resetTimeline={resetTimeline}
+          maxMonths={maxMonths}
+          onClose={() => setShowTimeline(false)}
+        />
+      )}
     </div>
   );
 };
