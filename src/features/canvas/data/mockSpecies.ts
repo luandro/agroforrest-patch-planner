@@ -1,3 +1,4 @@
+
 import { PlantSpecies } from '../types/species.types';
 
 export const mockSpecies: PlantSpecies[] = [
@@ -182,7 +183,7 @@ export const mockSpecies: PlantSpecies[] = [
 
   // PLANTAS RASTEIRAS
   {
-    id: 'ervas-nativas',
+    id: 'native-herbs',
     commonName: 'Ervas Nativas',
     scientificName: 'Mix de espécies',
     category: 'herbs',
@@ -195,7 +196,7 @@ export const mockSpecies: PlantSpecies[] = [
     waterRequirement: 'medium'
   },
   {
-    id: 'cobertura-solo',
+    id: 'ground-cover',
     commonName: 'Cobertura do Solo',
     scientificName: 'Mix de gramíneas',
     category: 'ground-cover',
@@ -208,3 +209,8 @@ export const mockSpecies: PlantSpecies[] = [
     waterRequirement: 'low'
   }
 ];
+
+// Helper function to get species by ID
+export const getSpeciesById = (id: string): PlantSpecies | null => {
+  return mockSpecies.find(species => species.id === id) || null;
+};

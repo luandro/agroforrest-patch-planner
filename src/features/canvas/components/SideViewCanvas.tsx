@@ -35,8 +35,8 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
     const bedLength = bed.shape === 'rectangle' ? bed.dimensions.length || 10 : bed.dimensions.radius ? bed.dimensions.radius * 2 : 10;
 
     const sideViewPlants: SideViewPlant[] = bedPlacements.map(placement => {
-      const species = getSpeciesById(placement.speciesId);
-      const heightProfile = getSpeciesHeightProfile(placement.speciesId);
+      const species = getSpeciesById(placement.species);
+      const heightProfile = getSpeciesHeightProfile(placement.species);
       
       let currentHeight = 1; // Default height
       let canopyRadius = 0.5; // Default canopy
@@ -56,7 +56,7 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
 
       return {
         id: placement.id,
-        speciesId: placement.speciesId,
+        speciesId: placement.species,
         position: {
           x: (placement.position.x / 100) * bedLength, // Convert percentage to meters
           height: currentHeight
