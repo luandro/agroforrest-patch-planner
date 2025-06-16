@@ -1,7 +1,10 @@
 
 import React from 'react';
 import { CanvasContainer } from './CanvasContainer';
+import { SideViewCanvas } from './SideViewCanvas';
 import { DevelopmentInfo } from './DevelopmentInfo';
+import { ViewModeToggle } from './ViewModeToggle';
+import { useSideViewStore } from '../stores/sideViewStore';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CanvasViewportProps {
@@ -50,6 +53,7 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
   focusedBed
 }) => {
   const isMobile = useIsMobile();
+  const { viewMode } = useSideViewStore();
 
   // DEBUG: Log focusedBed as received
   if (process.env.NODE_ENV === "development") {
@@ -59,29 +63,42 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
 
   return (
     <div className="relative w-full h-screen pt-16">
-      {/* Main Canvas */}
-      <CanvasContainer
-        viewport={viewport}
-        tool={tool}
-        isCreating={isCreating}
-        handlePointerDown={handlePointerDown}
-        handlePointerMove={handlePointerMove}
-        handlePointerUp={handlePointerUp}
-        handleDoubleClick={handleDoubleClick}
-        pan={pan}
-        zoomTo={zoomTo}
-        beds={beds}
-        selectedBedIds={selectedBedIds}
-        previewBed={previewBed}
-        placementBed={placementBed}
-        previewBeds={previewBeds}
-        placementBeds={placementBeds}
-        hasCollision={hasCollision}
-        gridSize={gridSize}
-        bedConfig={bedConfig}
-        canvasRef={canvasRef}
-        focusedBed={focusedBed}
-      />
+      {/* View Mode Toggle */}
+      <div className="absolute top-4 left-4 z-30">
+        <ViewModeToggle />
+      </div>
+
+      {/* Conditional Canvas Rendering */}
+      {viewMode === 'top' ? (
+        <CanvasContainer
+          viewport={viewport}
+          tool={tool}
+          isCreating={isCreating}
+          handlePointerDown={handlePointerDown}
+          handlePointerMove={handlePointerMove}
+          handlePointerUp={handlePointerUp}
+          handleDoubleClick={handleDoubleClick}
+          pan={pan}
+          zoomTo={zoomTo}
+          beds={beds}
+          selectedBedIds={selectedBedIds}
+          previewBed={previewBed}
+          placementBed={placementBed}
+          previewBeds={previewBeds}
+          placementBeds={placementBeds}
+          hasCollision={hasCollision}
+          gridSize={gridSize}
+          bedConfig={bedConfig}
+          canvasRef={canvasRef}
+          focusedBed={focusedBed}
+        />
+      ) : (
+        <SideViewCanvas 
+          focusedBedId={focusedBed?.id}
+          className="w-full h-full"
+        />
+      )}
+
       {/* Development Info */}
       {process.env.NODE_ENV === 'development' && (
         <DevelopmentInfo
