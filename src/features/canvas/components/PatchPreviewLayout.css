@@ -1,0 +1,237 @@
+/* Print-specific styles for patch preview */
+@media print {
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
+  
+  /* Hide non-essential elements */
+  .print\\:hidden {
+    display: none !important;
+  }
+  
+  /* Show print-only elements */
+  .print\\:block {
+    display: block !important;
+  }
+  
+  .print\\:bg-white {
+    background-color: white !important;
+  }
+  
+  .print\\:border-none {
+    border: none !important;
+  }
+  
+  .print\\:w-full {
+    width: 100% !important;
+  }
+  
+  .print\\:min-h-0 {
+    min-height: 0 !important;
+  }
+  
+  .print\\:space-y-6 > * + * {
+    margin-top: 1.5rem !important;
+  }
+  
+  .print\\:bg-gray-100 {
+    background-color: #f3f4f6 !important;
+  }
+  
+  .print\\:border-gray-300 {
+    border-color: #d1d5db !important;
+  }
+  
+  /* Ensure good contrast for print */
+  .text-gray-500 {
+    color: #6b7280 !important;
+  }
+  
+  .text-gray-600 {
+    color: #4b5563 !important;
+  }
+  
+  .text-gray-700 {
+    color: #374151 !important;
+  }
+  
+  .text-gray-900 {
+    color: #111827 !important;
+  }
+  
+  /* Make sure the canvas prints well */
+  canvas {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+  
+  /* Optimize layout for print */
+  .lg\\:flex-row {
+    flex-direction: column !important;
+  }
+  
+  .lg\\:w-80,
+  .xl\\:w-96 {
+    width: 100% !important;
+  }
+  
+  /* Ensure sidebar content is visible */
+  .bg-gray-50 {
+    background-color: white !important;
+  }
+  
+  .border-l {
+    border-left: none !important;
+  }
+}
+
+/* Mobile responsiveness improvements */
+@media (max-width: 768px) {
+  .patch-preview-header {
+    padding: 0.5rem 1rem;
+  }
+  
+  .patch-preview-header h1 {
+    font-size: 1rem;
+  }
+  
+  .patch-preview-sidebar {
+    padding: 1rem;
+  }
+  
+  .patch-preview-canvas {
+    min-height: 300px;
+  }
+}
+
+/* Custom timeline positioning for preview */
+.patch-preview-timeline {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 600px;
+  z-index: 1000;
+}
+
+@media (max-width: 1024px) {
+  .patch-preview-timeline {
+    display: none;
+  }
+}
+
+/* Smooth transitions for interactive elements */
+.patch-preview-toggle-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.patch-preview-toggle-button:hover {
+  background-color: #f3f4f6;
+}
+
+/* Species legend improvements */
+.species-legend-category {
+  page-break-inside: avoid;
+}
+
+.species-legend-item {
+  page-break-inside: avoid;
+  margin-bottom: 0.5rem;
+}
+
+/* Statistics panel print optimization */
+.statistics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media print {
+  .statistics-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+}
+
+/* Share dialog improvements */
+.share-dialog-content {
+  max-width: 28rem;
+  width: 90vw;
+}
+
+/* Canvas container improvements */
+.patch-preview-canvas-container {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+}
+
+@media print {
+  .patch-preview-canvas-container {
+    background: white !important;
+    page-break-inside: avoid;
+  }
+}
+
+/* Better loading states */
+.patch-preview-loading {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+}
+
+.patch-preview-loading .loading-spinner {
+  border-color: #e5e7eb;
+  border-top-color: #10b981;
+}
+
+/* Enhanced mobile controls */
+@media (max-width: 1024px) {
+  .mobile-timeline-info {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+  }
+}
+
+/* Accessibility improvements */
+.focus\\:ring-2:focus {
+  ring-width: 2px;
+  ring-color: #10b981;
+  ring-opacity: 0.5;
+}
+
+.focus\\:outline-none:focus {
+  outline: none;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .bg-gray-50 {
+    background-color: white;
+    border: 1px solid #000;
+  }
+  
+  .text-gray-600 {
+    color: #000;
+  }
+  
+  .text-gray-500 {
+    color: #333;
+  }
+  
+  .border-gray-200 {
+    border-color: #000;
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .transition-all,
+  .animate-spin,
+  .animate-pulse {
+    animation: none !important;
+    transition: none !important;
+  }
+}

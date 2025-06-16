@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ChevronDown, Plus, Copy, MapPin, Calendar } from 'lucide-react';
+import { ChevronDown, Plus, Copy, MapPin, Calendar, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -60,6 +60,10 @@ export const PatchSelector: React.FC<PatchSelectorProps> = ({ onPatchSwitch }) =
     setIsCreationDialogOpen(true);
   };
 
+  const handlePreviewPatch = (patchId: string) => {
+    window.open(`/patch/${patchId}/preview`, '_blank');
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -108,17 +112,33 @@ export const PatchSelector: React.FC<PatchSelectorProps> = ({ onPatchSwitch }) =
                   )}
                 </div>
                 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="ml-2 h-6 w-6 p-0 flex-shrink-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDuplicatePatch(patch.id);
-                  }}
-                >
-                  <Copy size={12} />
-                </Button>
+                <div className="flex items-center space-x-1 ml-2 flex-shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePreviewPatch(patch.id);
+                    }}
+                    title="Visualizar patch"
+                  >
+                    <Eye size={12} />
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDuplicatePatch(patch.id);
+                    }}
+                    title="Duplicar patch"
+                  >
+                    <Copy size={12} />
+                  </Button>
+                </div>
               </div>
             </DropdownMenuItem>
           ))}

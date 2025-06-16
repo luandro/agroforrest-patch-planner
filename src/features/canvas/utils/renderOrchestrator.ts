@@ -111,3 +111,42 @@ export const renderCanvas = ({
     drawCollisionIndicators(ctx, viewport, finalPreviewBeds.concat(finalPlacementBeds));
   }
 };
+
+// Export a render orchestrator object for preview mode
+export const renderOrchestrator = {
+  renderFrame: (ctx: CanvasRenderingContext2D, params: {
+    beds: Bed[];
+    placements: any[];
+    selectedBedIds: string[];
+    tool: string;
+    isCreating: boolean;
+    previewBed: any;
+    placementBed: any;
+    hasCollision: boolean;
+    viewport: CanvasViewport;
+    gridSize: number;
+    showGrid?: boolean;
+    focusedBed?: any;
+    currentMonth?: number;
+  }) => {
+    // Use the existing renderCanvas function
+    renderCanvas({
+      ctx,
+      canvas: ctx.canvas,
+      viewport: params.viewport,
+      beds: params.beds,
+      selectedBedIds: params.selectedBedIds,
+      previewBed: params.previewBed,
+      placementBed: params.placementBed,
+      hasCollision: params.hasCollision,
+      gridSize: params.gridSize,
+      spacing: 0.5, // Default spacing
+      focusedBed: params.focusedBed,
+      getPlacementsForBed: (bedId: string) => 
+        params.placements.filter(p => p.bedId === bedId),
+      selectedPlacementIds: [],
+      placementPreview: null,
+      growthMonth: params.currentMonth
+    });
+  }
+};
