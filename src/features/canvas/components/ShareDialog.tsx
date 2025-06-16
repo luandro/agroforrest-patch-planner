@@ -9,10 +9,11 @@ import { Patch } from '../types/patch.types';
 
 interface ShareDialogProps {
   patch: Patch;
+  open: boolean;
   onClose: () => void;
 }
 
-export const ShareDialog: React.FC<ShareDialogProps> = ({ patch, onClose }) => {
+export const ShareDialog: React.FC<ShareDialogProps> = ({ patch, open, onClose }) => {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
@@ -87,7 +88,7 @@ Visualize aqui: ${previewUrl}
   };
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">

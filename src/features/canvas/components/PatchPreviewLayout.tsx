@@ -243,12 +243,11 @@ export const PatchPreviewLayout: React.FC<PatchPreviewLayoutProps> = ({
       </div>
 
       {/* Share Dialog */}
-      {showShareDialog && (
-        <ShareDialog
-          patch={patch}
-          onClose={() => setShowShareDialog(false)}
-        />
-      )}
+      <ShareDialog
+        patch={patch}
+        open={showShareDialog}
+        onClose={() => setShowShareDialog(false)}
+      />
     </div>
   );
 };
