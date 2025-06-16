@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { useGrowthTimeline } from '../../hooks/useGrowthTimeline';
 import { useTimelineAutoHide } from '../../hooks/useTimelineAutoHide';
 import { useTimelineStore } from '../../stores/timelineStore';
+import { useSideViewStore } from '../../stores/sideViewStore';
 import { MinimalTimelineSlider } from './MinimalTimelineSlider';
 import { FullTimelineSlider } from './FullTimelineSlider';
 
@@ -33,6 +34,7 @@ export const GrowthTimelineSlider: React.FC<GrowthTimelineSliderProps> = ({
   } = useGrowthTimeline();
 
   const { setTimelineActive } = useTimelineStore();
+  const { viewMode } = useSideViewStore();
 
   const { isInactive, handleActivity } = useTimelineAutoHide({
     isMinimal,
@@ -43,18 +45,18 @@ export const GrowthTimelineSlider: React.FC<GrowthTimelineSliderProps> = ({
   useEffect(() => {
     if (isVisible) {
       setTimelineActive(true);
-      console.log('[Timeline Slider] Activated timeline');
+      console.log('[Timeline Slider] Activated timeline - View mode:', viewMode);
     } else {
       setTimelineActive(false);
       console.log('[Timeline Slider] Deactivated timeline');
     }
-  }, [isVisible, setTimelineActive]);
+  }, [isVisible, setTimelineActive, viewMode]);
 
   // Enhanced auto-play effect with debugging
   useEffect(() => {
     if (!isPlaying) return;
 
-    console.log('[Timeline] Auto-play active, speed:', playbackSpeed);
+    console.log('[Timeline] Auto-play active, speed:', playbackSpeed, 'view:', viewMode);
 
     const interval = setInterval(() => {
       setCurrentMonth(prev => {
@@ -67,13 +69,13 @@ export const GrowthTimelineSlider: React.FC<GrowthTimelineSliderProps> = ({
           return maxMonths;
         }
         
-        console.log('[Timeline] Auto-increment:', prev, '->', next);
+        console.log('[Timeline] Auto-increment:', prev, '->', next, `(${viewMode} view)`);
         return next;
       });
     }, 200);
 
     return () => clearInterval(interval);
-  }, [isPlaying, playbackSpeed, maxMonths, setCurrentMonth, stopPlayback]);
+  }, [isPlaying, playbackSpeed, maxMonths, setCurrentMonth, stopPlayback, viewMode]);
 
   if (!isVisible) return null;
 
