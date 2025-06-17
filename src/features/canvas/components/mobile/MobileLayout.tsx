@@ -2,13 +2,16 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { CanvasTool } from '../../types/bed.types';
-import { ViewControls } from '../ViewControls';
 import { SaveStatus } from './SaveStatus';
 import { MobilePlantEditor } from './MobilePlantEditor';
 import { GrowthTimelineSlider } from '../timeline/GrowthTimelineSlider';
+import { MobileBottomToolbar } from './MobileBottomToolbar';
+import { MobileFloatingZoom } from './MobileFloatingZoom';
+import { MobileBedConfigSheet } from './MobileBedConfigSheet';
+import { MobileDebugDrawer } from './MobileDebugDrawer';
 import { usePlantPlacementStore } from '../../stores/plantPlacementStore';
 import { Button } from '@/components/ui/button';
-import { Undo, Redo, Square, Move } from 'lucide-react';
+import { Undo, Redo } from 'lucide-react';
 
 interface MobileLayoutProps {
   activeTool: CanvasTool;
@@ -31,6 +34,8 @@ interface MobileLayoutProps {
   onFitAll: () => void;
   onOpenPlantSelection?: () => void;
   focusedBedId?: string;
+  isCreating: boolean;
+  cancelCreation: () => void;
 }
 
 export const MobileLayout: React.FC<MobileLayoutProps> = ({
@@ -53,7 +58,9 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   onZoomOut,
   onFitAll,
   onOpenPlantSelection,
-  focusedBedId
+  focusedBedId,
+  isCreating,
+  cancelCreation
 }) => {
   const { 
     selectedPlacementIds, 
@@ -67,6 +74,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   
   const [showPlantEditor, setShowPlantEditor] = React.useState(false);
   const [showTimeline, setShowTimeline] = React.useState(false);
+  const [showBedConfig, setShowBedConfig] = React.useState(false);
 
   // Show plant editor when plants are selected in focus mode
   const hasSelectedPlants = selectedPlacementIds.length > 0;
@@ -80,6 +88,15 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
     }
   }, [isInFocusMode, hasSelectedPlants, showPlantEditor]);
 
+  // Show bed config when creating rectangle
+  React.useEffect(() => {
+    if (activeTool === 'create-rectangle' && isCreating && !showBedConfig) {
+      setShowBedConfig(true);
+    } else if (activeTool !== 'create-rectangle' && showBedConfig) {
+      setShowBedConfig(false);
+    }
+  }, [activeTool, isCreating, showBedConfig]);
+
   const handleClosePlantEditor = () => {
     setShowPlantEditor(false);
     clearSelection();
@@ -87,6 +104,11 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
 
   const handleCloseTimeline = () => {
     setShowTimeline(false);
+  };
+
+  const handleCloseBedConfig = () => {
+    setShowBedConfig(false);
+    cancelCreation();
   };
 
   // Plant editor modal for focus mode
@@ -185,95 +207,27 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
         <SaveStatus isSaving={isSaving} />
       </div>
 
-      {/* Primary Tool Strip - Top left - Essential tools only */}
-      <div className="fixed top-20 left-4 z-30">
-        <div className="bg-white/95 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 p-2 flex gap-2">
-          {/* Pan Tool */}
-          <Button
-            variant={activeTool === 'pan' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => onToolChange('pan')}
-            className={cn(
-              "w-12 h-12 p-0 rounded-full transition-all",
-              activeTool === 'pan' && "bg-blue-600 hover:bg-blue-700 text-white"
-            )}
-            title="Mover"
-          >
-            <Move className="w-5 h-5" />
-          </Button>
+      {/* Debug Drawer - Development only */}
+      <MobileDebugDrawer />
 
-          {/* Create Rectangle Tool */}
-          <Button
-            variant={activeTool === 'create-rectangle' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => onToolChange('create-rectangle')}
-            className={cn(
-              "w-12 h-12 p-0 rounded-full transition-all",
-              activeTool === 'create-rectangle' && "bg-green-600 hover:bg-green-700 text-white"
-            )}
-            title="Criar Canteiro"
-          >
-            <Square className="w-5 h-5" />
-          </Button>
+      {/* Bottom Toolbar - Primary controls */}
+      <MobileBottomToolbar
+        activeTool={activeTool}
+        onToolChange={onToolChange}
+      />
 
-          {/* Select Tool */}
-          <Button
-            variant={activeTool === 'select' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => onToolChange('select')}
-            className={cn(
-              "w-12 h-12 p-0 rounded-full transition-all",
-              activeTool === 'select' && "bg-orange-600 hover:bg-orange-700 text-white"
-            )}
-            title="Selecionar"
-          >
-            <span className="text-lg">🎯</span>
-          </Button>
-        </div>
-      </div>
+      {/* Floating Zoom Controls */}
+      <MobileFloatingZoom
+        zoom={viewport.zoom}
+        onZoomIn={onZoomIn}
+        onZoomOut={onZoomOut}
+        onFitAll={onFitAll}
+        bedsCount={beds.length}
+      />
 
-      {/* Zoom Controls - Bottom left - Compact vertical stack */}
-      <div className="fixed bottom-6 left-4 z-30">
-        <div className="bg-white/95 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 p-2 flex flex-col gap-2">
-          {/* Zoom In */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onZoomIn}
-            className="w-12 h-12 p-0 rounded-full hover:bg-green-50 hover:border-green-300"
-            title="Aumentar Zoom"
-          >
-            <span className="text-lg font-bold text-green-600">+</span>
-          </Button>
-          
-          {/* Zoom Out */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onZoomOut}
-            className="w-12 h-12 p-0 rounded-full hover:bg-red-50 hover:border-red-300"
-            title="Diminuir Zoom"
-          >
-            <span className="text-lg font-bold text-red-600">−</span>
-          </Button>
-          
-          {/* Fit All */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onFitAll}
-            disabled={beds.length === 0}
-            className="w-12 h-12 p-0 rounded-full hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50"
-            title="Ver Tudo"
-          >
-            <span className="text-sm text-blue-600">📐</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* Context Actions - Bottom right - Only show when needed */}
+      {/* Context Actions - Only show when needed */}
       {(canUndo || canRedo || selectedCount > 0) && (
-        <div className="fixed bottom-6 right-4 z-30">
+        <div className="fixed bottom-20 left-4 z-30">
           <div className="bg-white/95 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 p-2 flex gap-2">
             {/* Undo */}
             {canUndo && (
@@ -281,7 +235,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={onUndo}
-                className="w-12 h-12 p-0 rounded-full"
+                className="w-10 h-10 p-0 rounded-full"
                 title="Desfazer"
               >
                 <Undo className="w-4 h-4" />
@@ -294,7 +248,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={onRedo}
-                className="w-12 h-12 p-0 rounded-full"
+                className="w-10 h-10 p-0 rounded-full"
                 title="Refazer"
               >
                 <Redo className="w-4 h-4" />
@@ -307,7 +261,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={onDeleteSelected}
-                className="w-12 h-12 p-0 rounded-full hover:bg-red-50 hover:border-red-300"
+                className="w-10 h-10 p-0 rounded-full hover:bg-red-50 hover:border-red-300"
                 title={`Excluir ${selectedCount} canteiro${selectedCount > 1 ? 's' : ''}`}
               >
                 <span className="text-lg text-red-600">🗑️</span>
@@ -316,6 +270,15 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
           </div>
         </div>
       )}
+
+      {/* Bed Configuration Bottom Sheet */}
+      <MobileBedConfigSheet
+        isOpen={showBedConfig}
+        onClose={handleCloseBedConfig}
+        tool={activeTool}
+        bedConfig={bedConfig}
+        onConfigChange={onBedConfigChange}
+      />
     </>
   );
 };

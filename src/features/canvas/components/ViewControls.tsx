@@ -8,6 +8,7 @@ import {
   Move,
   Sprout
 } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ViewControlsProps {
   zoom: number;
@@ -34,6 +35,13 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
   className,
   hideZoomControls = false
 }) => {
+  const isMobile = useIsMobile();
+
+  // Don't render on mobile - use mobile-specific components instead
+  if (isMobile) {
+    return null;
+  }
+
   const tools = [
     {
       id: 'pan' as CanvasTool,
@@ -57,7 +65,7 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      {/* Tool Selection - Mobile optimized with larger touch targets */}
+      {/* Tool Selection */}
       <div className="flex gap-1">
         {tools.map((tool) => {
           const isActive = activeTool === tool.id;
@@ -69,7 +77,7 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
               size="sm"
               onClick={() => onToolChange(tool.id)}
               className={cn(
-                "min-w-[48px] min-h-[48px] p-0 touch-manipulation active:scale-95 transition-all rounded-xl",
+                "min-w-[48px] min-h-[48px] p-0 transition-all rounded-xl",
                 isActive && "bg-blue-600 hover:bg-blue-700 ring-2 ring-blue-500 ring-offset-1",
                 !isActive && "hover:bg-gray-50"
               )}
@@ -86,14 +94,14 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
         })}
       </div>
 
-      {/* Zoom Controls - Mobile optimized */}
+      {/* Zoom Controls */}
       {!hideZoomControls && (
         <div className="flex gap-1">
           <Button
             variant="outline"
             size="sm"
             onClick={onZoomIn}
-            className="min-w-[48px] min-h-[48px] p-0 touch-manipulation hover:bg-green-50 hover:border-green-300 active:scale-95 rounded-xl"
+            className="min-w-[48px] min-h-[48px] p-0 hover:bg-green-50 hover:border-green-300 rounded-xl"
             aria-label="Aumentar zoom"
             title="Aumentar zoom"
           >
@@ -104,7 +112,7 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
             variant="outline"
             size="sm"
             onClick={onZoomOut}
-            className="min-w-[48px] min-h-[48px] p-0 touch-manipulation hover:bg-red-50 hover:border-red-300 active:scale-95 rounded-xl"
+            className="min-w-[48px] min-h-[48px] p-0 hover:bg-red-50 hover:border-red-300 rounded-xl"
             aria-label="Diminuir zoom"
             title="Diminuir zoom"
           >
@@ -116,7 +124,7 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
             size="sm"
             onClick={onFitAll}
             disabled={bedsCount === 0}
-            className="min-w-[48px] min-h-[48px] p-0 text-xs touch-manipulation hover:bg-blue-50 hover:border-blue-300 active:scale-95 disabled:opacity-50 rounded-xl"
+            className="min-w-[48px] min-h-[48px] p-0 text-xs hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50 rounded-xl"
             aria-label="Ajustar visualização"
             title="Ver todos os canteiros"
           >
@@ -125,13 +133,13 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
         </div>
       )}
 
-      {/* Plant Selection Button - Mobile optimized */}
+      {/* Plant Selection Button */}
       {onOpenPlantSelection && (
         <Button
           variant="outline"
           size="sm"
           onClick={onOpenPlantSelection}
-          className="min-w-[48px] min-h-[48px] p-0 touch-manipulation hover:bg-green-50 hover:border-green-300 active:scale-95 rounded-xl"
+          className="min-w-[48px] min-h-[48px] p-0 hover:bg-green-50 hover:border-green-300 rounded-xl"
           title="Selecionar plantas"
           aria-label="Abrir seleção de plantas"
         >
@@ -139,7 +147,7 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
         </Button>
       )}
 
-      {/* Zoom Level Indicator - Compact for mobile */}
+      {/* Zoom Level Indicator */}
       {!hideZoomControls && (
         <div className="text-xs text-gray-600 text-center px-2 py-1 bg-gray-50 rounded-lg font-mono">
           {zoom.toFixed(1)}x
