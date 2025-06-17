@@ -43,52 +43,59 @@ export const GrowthTimelineSlider: React.FC<GrowthTimelineSliderProps> = ({
     isPlaying
   });
 
-  // Initialize timeline at year 0 when activated
+  // Proper timeline activation/deactivation
   useEffect(() => {
+    console.log('[Timeline Slider] Visibility changed:', isVisible);
+    
     if (isVisible) {
-      console.log('[Timeline] Activating timeline - resetting to month 0');
       setTimelineActive(true);
-      // Force start at year 0 to show seedlings
+      // Start at month 0 to show seedlings
       setCurrentMonth(0);
     } else {
       setTimelineActive(false);
-      console.log('[Timeline] Deactivating timeline');
+      // Stop playback when closing
+      if (isPlaying) {
+        stopPlayback();
+      }
     }
-  }, [isVisible, setTimelineActive, setCurrentMonth]);
+    
+    return () => {
+      // Cleanup on unmount
+      if (isVisible) {
+        setTimelineActive(false);
+      }
+    };
+  }, [isVisible, setTimelineActive, setCurrentMonth, isPlaying, stopPlayback]);
 
-  // Enhanced auto-play with proper month increments for visibility
+  // Enhanced auto-play with proper month increments
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!isPlaying || !isVisible) return;
 
-    console.log('[Timeline] Auto-play active, speed:', playbackSpeed, 'current:', currentMonth);
+    console.log('[Timeline Slider] Auto-play active:', { playbackSpeed, currentMonth });
 
     const interval = setInterval(() => {
       setCurrentMonth(prev => {
-        // Smaller increments for smoother growth animation
-        const increment = playbackSpeed * 0.5; // Slower increment for better visual feedback
+        const increment = playbackSpeed * 0.5;
         const next = prev + increment;
         
         if (next >= maxMonths) {
-          console.log('[Timeline] Reached end, stopping playback');
+          console.log('[Timeline Slider] Reached end, stopping');
           stopPlayback();
           return maxMonths;
         }
         
-        // Force re-render by ensuring state change is detected
-        console.log('[Timeline] Month increment:', prev, '->', next);
         return next;
       });
-    }, 100); // Faster interval for smoother animation
+    }, 100);
 
     return () => clearInterval(interval);
-  }, [isPlaying, playbackSpeed, maxMonths, setCurrentMonth, stopPlayback, currentMonth]);
+  }, [isPlaying, playbackSpeed, maxMonths, setCurrentMonth, stopPlayback, currentMonth, isVisible]);
 
   if (!isVisible) return null;
 
-  // Force minimal mode on mobile devices or when explicitly requested
+  // Use minimal mode on mobile or when explicitly requested
   const shouldUseMinimal = isMinimal || isMobile;
 
-  // Render minimal mobile UI when shouldUseMinimal is true
   if (shouldUseMinimal) {
     return (
       <div className="z-[100]">
@@ -110,7 +117,6 @@ export const GrowthTimelineSlider: React.FC<GrowthTimelineSliderProps> = ({
     );
   }
 
-  // Render full desktop/tablet UI
   return (
     <div className="z-[100]">
       <FullTimelineSlider

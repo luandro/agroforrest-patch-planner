@@ -16,8 +16,6 @@ interface UseCanvasRendererProps {
 
 export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedBed }: UseCanvasRendererProps) => {
   const internalCanvasRef = useRef<HTMLCanvasElement>(null);
-  
-  // Use provided canvasRef or internal one
   const activeCanvasRef = canvasRef || internalCanvasRef;
 
   // Get plant placement data
@@ -28,40 +26,39 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedB
 
   const { isTimelineActive, currentMonth } = useTimelineStore();
 
-  // Track timeline changes and force re-render with improved detection
-  const lastTimelineState = useRef({ isTimelineActive, currentMonth });
+  // Track timeline changes for forced re-renders
+  const lastRenderData = useRef({ 
+    isTimelineActive, 
+    currentMonth,
+    timestamp: Date.now()
+  });
   
   useEffect(() => {
     const hasTimelineChanged = 
-      lastTimelineState.current.isTimelineActive !== isTimelineActive ||
-      Math.abs(lastTimelineState.current.currentMonth - currentMonth) > 0.1; // Detect small changes
+      lastRenderData.current.isTimelineActive !== isTimelineActive ||
+      Math.abs(lastRenderData.current.currentMonth - currentMonth) > 0.01;
     
     if (hasTimelineChanged) {
-      console.log('[Canvas Renderer] Timeline state changed:', { 
-        wasActive: lastTimelineState.current.isTimelineActive, 
+      console.log('[Canvas Renderer] Timeline changed, forcing render:', { 
+        wasActive: lastRenderData.current.isTimelineActive, 
         nowActive: isTimelineActive,
-        wasMonth: lastTimelineState.current.currentMonth,
-        nowMonth: currentMonth,
-        monthDiff: Math.abs(lastTimelineState.current.currentMonth - currentMonth)
+        wasMonth: lastRenderData.current.currentMonth.toFixed(2),
+        nowMonth: currentMonth.toFixed(2)
       });
       
-      lastTimelineState.current = { isTimelineActive, currentMonth };
+      lastRenderData.current = { isTimelineActive, currentMonth, timestamp: Date.now() };
       
-      // Force immediate re-render when timeline state changes
-      const canvas = activeCanvasRef.current;
-      if (canvas) {
-        // Trigger immediate render instead of waiting for next frame
-        requestAnimationFrame(() => {
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            console.log('[Canvas] Forcing timeline render with month:', currentMonth);
-          }
-        });
-      }
+      // Force immediate re-render
+      requestAnimationFrame(() => {
+        const canvas = activeCanvasRef.current;
+        if (canvas) {
+          console.log('[Canvas] Immediate timeline render triggered');
+        }
+      });
     }
   }, [isTimelineActive, currentMonth, activeCanvasRef]);
 
-  // Enhanced render function with timeline debugging and proper plant sizing
+  // Enhanced render function with proper timeline integration
   const render = useCallback((
     viewport: CanvasViewport, 
     beds: Bed[] = [], 
@@ -72,42 +69,32 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedB
     placementBeds?: any[],
     hasCollision?: boolean
   ) => {
-    const timelineMonth = isTimelineActive ? currentMonth : undefined;
+    // Always pass current timeline data to renderer
+    const growthMonth = isTimelineActive ? currentMonth : undefined;
     
-    // Enhanced logging for debugging plant growth
-    if (process.env.NODE_ENV === "development") {
-      const totalPlants = focusedBed ? getPlacementsForBed(focusedBed.id).length : 
-                          beds.reduce((total, bed) => total + getPlacementsForBed(bed.id).length, 0);
-      
-      console.debug("[Canvas Render]", {
-        focusedBed: focusedBed?.id,
-        timelineActive: isTimelineActive,
-        currentMonth: timelineMonth,
-        plantsCount: totalPlants,
-        viewport: {
-          zoom: viewport.zoom,
-          center: `${viewport.centerX}, ${viewport.centerY}`
-        }
-      });
-    }
+    console.log('[Canvas Render] Rendering with timeline data:', {
+      isTimelineActive,
+      growthMonth,
+      bedsCount: beds.length,
+      focusedBed: focusedBed?.id
+    });
 
     const canvas = activeCanvasRef.current;
     if (!canvas) {
-      console.warn('[Canvas] No canvas ref available for render');
+      console.warn('[Canvas] No canvas ref available');
       return;
     }
 
     const ctx = canvas.getContext('2d');
     if (!ctx) {
-      console.warn('[Canvas] No canvas context available for render');
+      console.warn('[Canvas] No canvas context available');
       return;
     }
 
-    // Enhanced canvas clearing and sizing
+    // Ensure proper canvas sizing
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
     
-    // Ensure canvas is properly sized
     if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
@@ -116,6 +103,7 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedB
       ctx.scale(dpr, dpr);
     }
 
+    // Render with timeline data
     renderCanvas({
       ctx,
       canvas,
@@ -133,7 +121,7 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedB
       getPlacementsForBed,
       selectedPlacementIds,
       placementPreview,
-      growthMonth: timelineMonth // Ensure growth month is passed correctly
+      growthMonth // Critical: pass growth month to renderer
     });
   }, [activeCanvasRef, gridSize, spacing, focusedBed, getPlacementsForBed, selectedPlacementIds, placementPreview, isTimelineActive, currentMonth]);
 
