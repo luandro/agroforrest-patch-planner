@@ -18,6 +18,7 @@ export interface CanvasGesture {
   lastPanPoint?: CanvasPoint;
   initialDistance?: number;
   initialZoom?: number;
+  zoomCenter?: CanvasPoint;
 }
 
 export interface PatchCanvasProps {
