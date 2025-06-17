@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -56,7 +57,7 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      {/* Tool Selection - Primary controls */}
+      {/* Tool Selection - Mobile optimized with larger touch targets */}
       <div className="flex gap-1">
         {tools.map((tool) => {
           const isActive = activeTool === tool.id;
@@ -68,7 +69,7 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
               size="sm"
               onClick={() => onToolChange(tool.id)}
               className={cn(
-                "w-12 h-12 p-0 touch-manipulation active:scale-95 transition-all",
+                "min-w-[48px] min-h-[48px] p-0 touch-manipulation active:scale-95 transition-all rounded-xl",
                 isActive && "bg-blue-600 hover:bg-blue-700 ring-2 ring-blue-500 ring-offset-1",
                 !isActive && "hover:bg-gray-50"
               )}
@@ -85,29 +86,29 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
         })}
       </div>
 
-      {/* Zoom Controls - Secondary controls */}
+      {/* Zoom Controls - Mobile optimized */}
       {!hideZoomControls && (
         <div className="flex gap-1">
           <Button
             variant="outline"
             size="sm"
             onClick={onZoomIn}
-            className="w-12 h-12 p-0 touch-manipulation hover:bg-green-50 hover:border-green-300 active:scale-95"
+            className="min-w-[48px] min-h-[48px] p-0 touch-manipulation hover:bg-green-50 hover:border-green-300 active:scale-95 rounded-xl"
             aria-label="Aumentar zoom"
             title="Aumentar zoom"
           >
-            <span className="text-lg font-bold text-green-600">+</span>
+            <span className="text-xl font-bold text-green-600">+</span>
           </Button>
           
           <Button
             variant="outline"
             size="sm"
             onClick={onZoomOut}
-            className="w-12 h-12 p-0 touch-manipulation hover:bg-red-50 hover:border-red-300 active:scale-95"
+            className="min-w-[48px] min-h-[48px] p-0 touch-manipulation hover:bg-red-50 hover:border-red-300 active:scale-95 rounded-xl"
             aria-label="Diminuir zoom"
             title="Diminuir zoom"
           >
-            <span className="text-lg font-bold text-red-600">−</span>
+            <span className="text-xl font-bold text-red-600">−</span>
           </Button>
           
           <Button
@@ -115,22 +116,22 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
             size="sm"
             onClick={onFitAll}
             disabled={bedsCount === 0}
-            className="w-12 h-12 p-0 text-xs touch-manipulation hover:bg-blue-50 hover:border-blue-300 active:scale-95 disabled:opacity-50"
+            className="min-w-[48px] min-h-[48px] p-0 text-xs touch-manipulation hover:bg-blue-50 hover:border-blue-300 active:scale-95 disabled:opacity-50 rounded-xl"
             aria-label="Ajustar visualização"
             title="Ver todos os canteiros"
           >
-            <span className="text-blue-600">📐</span>
+            <span className="text-lg text-blue-600">📐</span>
           </Button>
         </div>
       )}
 
-      {/* Plant Selection Button */}
+      {/* Plant Selection Button - Mobile optimized */}
       {onOpenPlantSelection && (
         <Button
           variant="outline"
           size="sm"
           onClick={onOpenPlantSelection}
-          className="w-12 h-12 p-0 touch-manipulation hover:bg-green-50 hover:border-green-300 active:scale-95"
+          className="min-w-[48px] min-h-[48px] p-0 touch-manipulation hover:bg-green-50 hover:border-green-300 active:scale-95 rounded-xl"
           title="Selecionar plantas"
           aria-label="Abrir seleção de plantas"
         >
@@ -138,9 +139,9 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
         </Button>
       )}
 
-      {/* Zoom Level Indicator */}
+      {/* Zoom Level Indicator - Compact for mobile */}
       {!hideZoomControls && (
-        <div className="text-xs text-gray-600 text-center px-2 py-1 bg-gray-50 rounded">
+        <div className="text-xs text-gray-600 text-center px-2 py-1 bg-gray-50 rounded-lg font-mono">
           {zoom.toFixed(1)}x
         </div>
       )}

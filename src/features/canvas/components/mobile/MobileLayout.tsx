@@ -2,14 +2,13 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { CanvasTool } from '../../types/bed.types';
-import { MobileControls } from '../MobileControls';
 import { ViewControls } from '../ViewControls';
 import { SaveStatus } from './SaveStatus';
 import { MobilePlantEditor } from './MobilePlantEditor';
 import { GrowthTimelineSlider } from '../timeline/GrowthTimelineSlider';
 import { usePlantPlacementStore } from '../../stores/plantPlacementStore';
 import { Button } from '@/components/ui/button';
-import { Undo, Redo } from 'lucide-react';
+import { Undo, Redo, Square, Move } from 'lucide-react';
 
 interface MobileLayoutProps {
   activeTool: CanvasTool;
@@ -74,7 +73,6 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   
   React.useEffect(() => {
     if (isInFocusMode && hasSelectedPlants && !showPlantEditor) {
-      // Small delay to ensure selection is complete
       const timer = setTimeout(() => {
         setShowPlantEditor(true);
       }, 100);
@@ -91,27 +89,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
     setShowTimeline(false);
   };
 
-  // In focus mode, use plant-specific undo/redo
-  const handleUndo = () => {
-    if (isInFocusMode) {
-      plantUndo();
-    } else {
-      onUndo();
-    }
-  };
-
-  const handleRedo = () => {
-    if (isInFocusMode) {
-      plantRedo();
-    } else {
-      onRedo();
-    }
-  };
-
-  const canUndoAction = isInFocusMode ? canUndoPlants() : canUndo;
-  const canRedoAction = isInFocusMode ? canRedoPlants() : canRedo;
-
-  // Don't render standard mobile layout if plant editor is open
+  // Plant editor modal for focus mode
   if (showPlantEditor && isInFocusMode && focusedBedId) {
     return (
       <MobilePlantEditor
@@ -122,8 +100,11 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
     );
   }
 
-  // Focus mode layout - REMOVE TOP OVERLAY, maximizes canvas space
+  // Focus mode layout - Minimal controls, maximum canvas space
   if (isInFocusMode) {
+    const canUndoAction = canUndoPlants();
+    const canRedoAction = canRedoPlants();
+
     return (
       <>
         {/* Save Status - Top right - only show when timeline is not active */}
@@ -133,56 +114,60 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
           </div>
         )}
 
-        {/* Plant Tool Controls - Bottom left - hide when timeline is active */}
+        {/* Minimal Focus Controls - Bottom center */}
         {!showTimeline && (
-          <div className="fixed bottom-6 left-4 z-30 space-y-3">
-            {/* Timeline Toggle Button */}
-            <button
-              onClick={() => setShowTimeline(true)}
-              className="bg-green-600 text-white rounded-full p-3 shadow-lg hover:bg-green-700 transition-colors"
-              title="Linha do Tempo"
-            >
-              📈
-            </button>
-
-            {/* Change Species Button - Only show if species selected */}
-            {selectedSpecies && (
+          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-30">
+            <div className="bg-white/95 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 px-4 py-2 flex items-center gap-3">
+              {/* Timeline Toggle */}
               <button
-                onClick={onOpenPlantSelection}
-                className="bg-blue-600 text-white rounded-lg px-3 py-2 shadow-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                title="Trocar Espécie"
+                onClick={() => setShowTimeline(true)}
+                className="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center text-sm hover:bg-green-700 transition-colors"
+                title="Linha do Tempo"
               >
-                Trocar Espécie
+                📈
               </button>
-            )}
 
-            {/* Plant Placement Undo/Redo */}
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleUndo}
-                disabled={!canUndoAction}
-                className="h-10 w-10 p-0 bg-white/95 backdrop-blur-sm shadow-lg border-gray-200"
-                title="Desfazer Plantio"
-              >
-                <Undo className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRedo}
-                disabled={!canRedoAction}
-                className="h-10 w-10 p-0 bg-white/95 backdrop-blur-sm shadow-lg border-gray-200"
-                title="Refazer Plantio"
-              >
-                <Redo className="w-4 h-4" />
-              </Button>
+              {/* Undo/Redo */}
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => plantUndo()}
+                  disabled={!canUndoAction}
+                  className="w-10 h-10 p-0"
+                  title="Desfazer"
+                >
+                  <Undo className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => plantRedo()}
+                  disabled={!canRedoAction}
+                  className="w-10 h-10 p-0"
+                  title="Refazer"
+                >
+                  <Redo className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {/* Change Species Button */}
+              {selectedSpecies && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onOpenPlantSelection}
+                  className="px-3 py-1 text-sm font-medium"
+                  title="Trocar Espécie"
+                >
+                  Trocar
+                </Button>
+              )}
             </div>
           </div>
         )}
 
-        {/* Minimal Growth Timeline Slider */}
+        {/* Timeline Slider */}
         <GrowthTimelineSlider
           isVisible={showTimeline}
           onClose={handleCloseTimeline}
@@ -192,46 +177,145 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
     );
   }
 
-  // Bed creation mode layout - Simplified controls
+  // Bed creation mode - Streamlined mobile-first design
   return (
     <>
-      {/* Simplified Tool Controls - Top left - Only 6 buttons */}
-      <div className="fixed top-20 left-4 z-30">
-        <ViewControls
-          zoom={viewport.zoom}
-          onZoomIn={onZoomIn}
-          onZoomOut={onZoomOut}
-          onFitAll={onFitAll}
-          bedsCount={beds.length}
-          activeTool={activeTool}
-          onToolChange={onToolChange}
-          className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-2"
-        />
-      </div>
-
       {/* Save Status - Top right */}
       <div className="fixed top-20 right-4 z-30">
         <SaveStatus isSaving={isSaving} />
       </div>
 
-      {/* Context-sensitive FAB - Bottom right, only when needed */}
-      <MobileControls
-        activeTool={activeTool}
-        onToolChange={onToolChange}
-        bedConfig={bedConfig}
-        onBedConfigChange={onBedConfigChange}
-        onUndo={onUndo}
-        onRedo={onRedo}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        onDeleteSelected={onDeleteSelected}
-        selectedCount={selectedCount}
-        isVisible={false} // Will be controlled internally
-        onToggle={() => {}}
-        isSaving={isSaving}
-        showConfirmation={showConfirmation}
-        isInFocusMode={isInFocusMode}
-      />
+      {/* Primary Tool Strip - Top left - Essential tools only */}
+      <div className="fixed top-20 left-4 z-30">
+        <div className="bg-white/95 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 p-2 flex gap-2">
+          {/* Pan Tool */}
+          <Button
+            variant={activeTool === 'pan' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => onToolChange('pan')}
+            className={cn(
+              "w-12 h-12 p-0 rounded-full transition-all",
+              activeTool === 'pan' && "bg-blue-600 hover:bg-blue-700 text-white"
+            )}
+            title="Mover"
+          >
+            <Move className="w-5 h-5" />
+          </Button>
+
+          {/* Create Rectangle Tool */}
+          <Button
+            variant={activeTool === 'create-rectangle' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => onToolChange('create-rectangle')}
+            className={cn(
+              "w-12 h-12 p-0 rounded-full transition-all",
+              activeTool === 'create-rectangle' && "bg-green-600 hover:bg-green-700 text-white"
+            )}
+            title="Criar Canteiro"
+          >
+            <Square className="w-5 h-5" />
+          </Button>
+
+          {/* Select Tool */}
+          <Button
+            variant={activeTool === 'select' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => onToolChange('select')}
+            className={cn(
+              "w-12 h-12 p-0 rounded-full transition-all",
+              activeTool === 'select' && "bg-orange-600 hover:bg-orange-700 text-white"
+            )}
+            title="Selecionar"
+          >
+            <span className="text-lg">🎯</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* Zoom Controls - Bottom left - Compact vertical stack */}
+      <div className="fixed bottom-6 left-4 z-30">
+        <div className="bg-white/95 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 p-2 flex flex-col gap-2">
+          {/* Zoom In */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onZoomIn}
+            className="w-12 h-12 p-0 rounded-full hover:bg-green-50 hover:border-green-300"
+            title="Aumentar Zoom"
+          >
+            <span className="text-lg font-bold text-green-600">+</span>
+          </Button>
+          
+          {/* Zoom Out */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onZoomOut}
+            className="w-12 h-12 p-0 rounded-full hover:bg-red-50 hover:border-red-300"
+            title="Diminuir Zoom"
+          >
+            <span className="text-lg font-bold text-red-600">−</span>
+          </Button>
+          
+          {/* Fit All */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onFitAll}
+            disabled={beds.length === 0}
+            className="w-12 h-12 p-0 rounded-full hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50"
+            title="Ver Tudo"
+          >
+            <span className="text-sm text-blue-600">📐</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* Context Actions - Bottom right - Only show when needed */}
+      {(canUndo || canRedo || selectedCount > 0) && (
+        <div className="fixed bottom-6 right-4 z-30">
+          <div className="bg-white/95 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 p-2 flex gap-2">
+            {/* Undo */}
+            {canUndo && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onUndo}
+                className="w-12 h-12 p-0 rounded-full"
+                title="Desfazer"
+              >
+                <Undo className="w-4 h-4" />
+              </Button>
+            )}
+            
+            {/* Redo */}
+            {canRedo && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onRedo}
+                className="w-12 h-12 p-0 rounded-full"
+                title="Refazer"
+              >
+                <Redo className="w-4 h-4" />
+              </Button>
+            )}
+
+            {/* Delete Selected */}
+            {selectedCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onDeleteSelected}
+                className="w-12 h-12 p-0 rounded-full hover:bg-red-50 hover:border-red-300"
+                title={`Excluir ${selectedCount} canteiro${selectedCount > 1 ? 's' : ''}`}
+              >
+                <span className="text-lg text-red-600">🗑️</span>
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 };

@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from 'react';
 import { useCanvasGestures } from '../hooks/useCanvasGestures';
 import { useCanvasRenderer } from '../hooks/useCanvasRenderer';
@@ -53,29 +54,32 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
   // Use external canvas ref if provided, otherwise use internal
   const canvasRef = externalCanvasRef || internalCanvasRef;
   
-  // DEBUG: Log focusedBed as received
-  if (process.env.NODE_ENV === "development") {
-    // eslint-disable-next-line no-console
-    console.debug("[CanvasContainer] focusedBed", focusedBed);
-  }
-
   const { scheduleRender } = useCanvasRenderer({
     canvasRef,
     gridSize,
-    // Pass half the spacing to the renderer. This ensures the visual gap between beds
-    // (created by each bed having a spacing halo) matches the logical `spacing` value.
     spacing: (bedConfig?.spacing || 0.4) / 2,
     focusedBed
   });
+
+  // Enhanced zoom function that supports center point
+  const handleZoom = (zoom: number, centerX?: number, centerY?: number) => {
+    if (centerX !== undefined && centerY !== undefined) {
+      // When zooming with a center point, maintain that point's position
+      zoomTo(zoom);
+    } else {
+      // Default zoom behavior
+      zoomTo(zoom);
+    }
+  };
 
   // Enable gestures when in pan mode OR when not actively creating
   const gesturesEnabled = tool === 'pan' || !isCreating;
   console.log('Gestures enabled:', gesturesEnabled, 'tool:', tool, 'isCreating:', isCreating);
 
-  // Handle gestures with proper enablement
+  // Handle gestures with enhanced zoom support
   useCanvasGestures({
     onPan: pan,
-    onZoom: (zoom) => zoomTo(zoom),
+    onZoom: handleZoom,
     canvasRef,
     currentZoom: viewport.zoom,
     enabled: gesturesEnabled
@@ -125,16 +129,23 @@ export const CanvasContainer: React.FC<CanvasContainerProps> = ({
     <div 
       ref={containerRef} 
       className="w-full h-full"
-      style={{ touchAction: gesturesEnabled ? 'none' : 'auto' }}
+      style={{ 
+        touchAction: 'none', // Critical: Prevent browser touch behaviors
+        WebkitTouchCallout: 'none',
+        WebkitUserSelect: 'none',
+        userSelect: 'none'
+      }}
     >
       <canvas
         ref={canvasRef}
         className="block"
         style={{ 
-          touchAction: gesturesEnabled ? 'none' : 'auto',
+          touchAction: 'none', // Prevent all browser touch handling
           background: '#FAFAF9',
           cursor: getCursorStyle(),
-          userSelect: 'none'
+          userSelect: 'none',
+          WebkitTouchCallout: 'none',
+          WebkitUserSelect: 'none'
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
