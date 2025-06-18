@@ -50,7 +50,6 @@ export const MobileBedConfigSheet: React.FC<MobileBedConfigSheetProps> = ({
             config={bedConfig}
             onConfigChange={onConfigChange}
             onClose={onClose}
-            isMobile={true}
           />
         </div>
       </DrawerContent>
