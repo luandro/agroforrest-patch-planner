@@ -19,19 +19,13 @@ export const MiniMapOverlay: React.FC<MiniMapOverlayProps> = ({
 }) => {
   const isMobile = useIsMobile();
 
-  if (!isVisible) {
-    return null;
+  // Always show minimap on mobile - it's handled in MobileLayout
+  if (isMobile) {
+    return null; // Handled by MobileLayout
   }
 
-  if (isMobile) {
-    return (
-      <MobileMiniMap
-        viewport={viewport}
-        beds={beds}
-        onNavigate={onNavigate}
-        className="fixed bottom-6 left-4 z-30"
-      />
-    );
+  if (!isVisible) {
+    return null;
   }
 
   return (

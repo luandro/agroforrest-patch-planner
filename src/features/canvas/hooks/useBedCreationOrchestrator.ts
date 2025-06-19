@@ -75,9 +75,9 @@ export const useBedCreationOrchestrator = ({
     tool
   );
 
-  // Pass getters for latest previewBed and cursorPosition!!
+  // Enhanced placement manager that directly places beds without configuration
   const {
-    placeBed,
+    placeBed: placeBedEnhanced,
     confirmPlacement,
     cancelPlacement,
     cancelCreation
@@ -87,9 +87,17 @@ export const useBedCreationOrchestrator = ({
     cancelPlacementBase,
     clearPreview,
     clearPlacement,
-    () => previewBed,           // getter for the latest preview bed
-    () => cursorPosition        // getter for latest cursor pos
+    () => previewBed,           
+    () => cursorPosition        
   );
+
+  // Modified placeBed that directly places without showing configuration
+  const placeBed = useCallback(() => {
+    if (previewBed) {
+      // On mobile, directly place the bed using current configuration
+      placeBedEnhanced();
+    }
+  }, [previewBed, placeBedEnhanced]);
 
   // Enhanced cancel creation that clears all states
   const cancelCreationEnhanced = useCallback(() => {

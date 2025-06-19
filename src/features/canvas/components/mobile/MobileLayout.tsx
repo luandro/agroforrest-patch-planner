@@ -9,6 +9,8 @@ import { MobileBottomToolbar } from './MobileBottomToolbar';
 import { MobileFloatingZoom } from './MobileFloatingZoom';
 import { MobileBedConfigSheet } from './MobileBedConfigSheet';
 import { MobileDebugDrawer } from './MobileDebugDrawer';
+import { MobileMiniMap } from './MobileMiniMap';
+import { MobileBedConfigButton } from './MobileBedConfigButton';
 import { usePlantPlacementStore } from '../../stores/plantPlacementStore';
 import { Button } from '@/components/ui/button';
 import { Undo, Redo } from 'lucide-react';
@@ -88,15 +90,6 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
     }
   }, [isInFocusMode, hasSelectedPlants, showPlantEditor]);
 
-  // Show bed config when creating rectangle
-  React.useEffect(() => {
-    if (activeTool === 'create-rectangle' && isCreating && !showBedConfig) {
-      setShowBedConfig(true);
-    } else if (activeTool !== 'create-rectangle' && showBedConfig) {
-      setShowBedConfig(false);
-    }
-  }, [activeTool, isCreating, showBedConfig]);
-
   const handleClosePlantEditor = () => {
     setShowPlantEditor(false);
     clearSelection();
@@ -106,9 +99,17 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
     setShowTimeline(false);
   };
 
+  const handleOpenBedConfig = () => {
+    setShowBedConfig(true);
+  };
+
   const handleCloseBedConfig = () => {
     setShowBedConfig(false);
-    cancelCreation();
+  };
+
+  const handleNavigateTo = (x: number, y: number) => {
+    // Navigation will be handled by the minimap component
+    console.log('Navigate to:', x, y);
   };
 
   // Plant editor modal for focus mode
@@ -207,6 +208,15 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
         <SaveStatus isSaving={isSaving} />
       </div>
 
+      {/* Minimap - Top left */}
+      <div className="fixed top-20 left-4 z-30">
+        <MobileMiniMap
+          viewport={viewport}
+          beds={beds}
+          onNavigate={handleNavigateTo}
+        />
+      </div>
+
       {/* Debug Drawer - Development only */}
       <MobileDebugDrawer />
 
@@ -224,6 +234,14 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
         onFitAll={onFitAll}
         bedsCount={beds.length}
       />
+
+      {/* Bed Configuration Button - Only show when Canteiro tool is selected */}
+      {activeTool === 'create-rectangle' && (
+        <MobileBedConfigButton
+          onOpenConfig={handleOpenBedConfig}
+          bedConfig={bedConfig}
+        />
+      )}
 
       {/* Context Actions - Only show when needed */}
       {(canUndo || canRedo || selectedCount > 0) && (

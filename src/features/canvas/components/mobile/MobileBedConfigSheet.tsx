@@ -46,6 +46,13 @@ export const MobileBedConfigSheet: React.FC<MobileBedConfigSheetProps> = ({
         </DrawerHeader>
         
         <div className="px-4 pb-6 overflow-y-auto">
+          <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <p className="text-sm text-blue-800">
+              Configure as dimensões do canteiro antes de posicioná-lo no terreno. 
+              Após fechar esta janela, toque no local desejado para criar o canteiro.
+            </p>
+          </div>
+          
           <BedConfigPanel
             config={bedConfig}
             onConfigChange={onConfigChange}
