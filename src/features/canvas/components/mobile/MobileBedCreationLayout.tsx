@@ -1,11 +1,9 @@
 
 import React from 'react';
 import { CanvasTool } from '../../types/bed.types';
-import { SaveStatus } from './SaveStatus';
+import { BedCreationStatusBar } from './BedCreationStatusBar';
+import { BedCreationFloatingControls } from './BedCreationFloatingControls';
 import { MobileBottomToolbar } from './MobileBottomToolbar';
-import { MobileFloatingZoom } from './MobileFloatingZoom';
-import { MobileMiniMap } from './MobileMiniMap';
-import { MobileBedConfigButton } from './MobileBedConfigButton';
 import { MobileBedConfigSheet } from './MobileBedConfigSheet';
 import { MobileDebugDrawer } from './MobileDebugDrawer';
 import { MobileContextActions } from './MobileContextActions';
@@ -64,19 +62,13 @@ export const MobileBedCreationLayout: React.FC<MobileBedCreationLayoutProps> = (
 
   return (
     <>
-      {/* Save Status - Top right */}
-      <div className="fixed top-20 right-4 z-30">
-        <SaveStatus isSaving={isSaving} />
-      </div>
-
-      {/* Minimap - Top left */}
-      <div className="fixed top-20 left-4 z-30">
-        <MobileMiniMap
-          viewport={viewport}
-          beds={beds}
-          onNavigate={handleNavigateTo}
-        />
-      </div>
+      {/* Status Bar Components */}
+      <BedCreationStatusBar
+        isSaving={isSaving}
+        viewport={viewport}
+        beds={beds}
+        onNavigate={handleNavigateTo}
+      />
 
       {/* Debug Drawer - Development only */}
       <MobileDebugDrawer />
@@ -87,22 +79,17 @@ export const MobileBedCreationLayout: React.FC<MobileBedCreationLayoutProps> = (
         onToolChange={onToolChange}
       />
 
-      {/* Floating Zoom Controls */}
-      <MobileFloatingZoom
-        zoom={viewport.zoom}
+      {/* Floating Controls */}
+      <BedCreationFloatingControls
+        activeTool={activeTool}
+        bedConfig={bedConfig}
+        viewport={viewport}
+        beds={beds}
         onZoomIn={onZoomIn}
         onZoomOut={onZoomOut}
         onFitAll={onFitAll}
-        bedsCount={beds.length}
+        onOpenBedConfig={handleOpenBedConfig}
       />
-
-      {/* Bed Configuration Button - Only show when Canteiro tool is selected */}
-      {activeTool === 'create-rectangle' && (
-        <MobileBedConfigButton
-          onOpenConfig={handleOpenBedConfig}
-          bedConfig={bedConfig}
-        />
-      )}
 
       {/* Context Actions - Only show when needed */}
       <MobileContextActions
