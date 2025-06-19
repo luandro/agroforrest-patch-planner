@@ -17,7 +17,7 @@ export const MobileBedConfigButton: React.FC<MobileBedConfigButtonProps> = ({
 }) => {
   return (
     <div className={cn(
-      "fixed bottom-32 right-4 z-30",
+      "fixed bottom-64 right-4 z-30",
       className
     )}>
       <Button

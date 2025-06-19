@@ -23,8 +23,8 @@ export const BedCreationStatusBar: React.FC<BedCreationStatusBarProps> = ({
         <SaveStatus isSaving={isSaving} />
       </div>
 
-      {/* Minimap - Top left */}
-      <div className="fixed top-20 left-4 z-30">
+      {/* Minimap - Top right, below save status */}
+      <div className="fixed top-32 right-4 z-30">
         <MobileMiniMap
           viewport={viewport}
           beds={beds}
