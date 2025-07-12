@@ -28,6 +28,9 @@ export const useCanvasStateManager = ({
   // Mobile plant species panel state
   const [isPlantSpeciesPanelOpen, setIsPlantSpeciesPanelOpen] = useState(false);
 
+  // State for editing dimensions from confirmation panel
+  const [isEditingDimensions, setIsEditingDimensions] = useState(false);
+
   // Core state orchestration
   const stateOrchestrator = useCanvasStateOrchestrator({
     initialViewport,
@@ -55,13 +58,15 @@ export const useCanvasStateManager = ({
         // centerOnBed is a placeholder in useCanvasViewport and doesn't have access to beds.
       }, 100);
     },
+    setIsEditingDimensions, // Pass it here
   });
 
   // Enhanced cancel creation that ensures tool reset
   const cancelCreation = useCallback(() => {
     bedCreation.cancelCreation();
     bedCreation.handleToolChange('pan');
-  }, [bedCreation]);
+    setIsEditingDimensions(false); // Reset editing state
+  }, [bedCreation, setIsEditingDimensions]);
 
   // Mobile species panel handlers
   const handleClosePlantSpeciesPanel = useCallback(() => {
@@ -90,6 +95,10 @@ export const useCanvasStateManager = ({
     // Mobile plant species panel
     isPlantSpeciesPanelOpen,
     handleClosePlantSpeciesPanel,
-    handleSelectPlantSpecies
+    handleSelectPlantSpecies,
+
+    // Dimension editing state
+    isEditingDimensions,
+    setIsEditingDimensions
   };
 };

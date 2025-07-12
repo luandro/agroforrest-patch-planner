@@ -54,6 +54,8 @@ interface CanvasLayoutProps {
   onExitFocus?: () => void;
   onSelectPlantSpecies?: (species: any) => void;
   onCancelPlantPlacement?: () => void;
+  isEditingDimensions?: boolean;
+  setIsEditingDimensions?: (isEditing: boolean) => void;
 }
 
 export const CanvasLayout: React.FC<CanvasLayoutProps> = (props) => {

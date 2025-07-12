@@ -15,6 +15,8 @@ interface BedConfirmationPanelProps {
   onCancel: () => void;
   hasCollision?: boolean;
   className?: string;
+  isEditingDimensions?: boolean;
+  setIsEditingDimensions?: (isEditing: boolean) => void;
 }
 
 export const BedConfirmationPanel: React.FC<BedConfirmationPanelProps> = (props) => {

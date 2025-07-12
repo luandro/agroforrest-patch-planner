@@ -15,12 +15,14 @@ interface UseBedCreationOrchestratorProps {
   viewport: CanvasViewport;
   gridSize?: number;
   onBedCreated?: (bedId: string) => void;
+  setIsEditingDimensions?: (isEditing: boolean) => void; // Added prop
 }
 
 export const useBedCreationOrchestrator = ({ 
   viewport, 
   gridSize = 1, 
-  onBedCreated 
+  onBedCreated,
+  setIsEditingDimensions // Destructure prop
 }: UseBedCreationOrchestratorProps) => {
   const { tool, setTool } = useBedStore();
 
@@ -87,8 +89,9 @@ export const useBedCreationOrchestrator = ({
     cancelPlacementBase,
     clearPreview,
     clearPlacement,
-    () => previewBed,           
-    () => cursorPosition        
+    () => previewBed,
+    () => cursorPosition,
+    setIsEditingDimensions // Pass it here
   );
 
   // Modified placeBed that directly places without showing configuration

@@ -45,6 +45,8 @@ interface OverlayContainerProps {
   onSelectPlantSpecies?: (species: any) => void;
   onCancelPlantPlacement?: () => void;
   isMobile?: boolean;
+  isEditingDimensions?: boolean;
+  setIsEditingDimensions?: (isEditing: boolean) => void;
 }
 
 export const OverlayContainer: React.FC<OverlayContainerProps> = (props) => {

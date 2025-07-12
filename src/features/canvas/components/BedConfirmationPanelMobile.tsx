@@ -15,6 +15,8 @@ interface BedConfirmationPanelProps {
   onCancel: () => void;
   hasCollision?: boolean;
   className?: string;
+  isEditingDimensions?: boolean;
+  setIsEditingDimensions?: (isEditing: boolean) => void;
 }
 
 export const BedConfirmationPanelMobile: React.FC<BedConfirmationPanelProps> = ({
@@ -26,7 +28,8 @@ export const BedConfirmationPanelMobile: React.FC<BedConfirmationPanelProps> = (
   onConfirm,
   onCancel,
   hasCollision = false,
-  className
+  className,
+  setIsEditingDimensions
 }) => {
   const formatDimensions = () => {
     if (bed.shape === 'rectangle') {
@@ -74,7 +77,17 @@ export const BedConfirmationPanelMobile: React.FC<BedConfirmationPanelProps> = (
             )}
 
             <div className="bg-gray-50 rounded-lg p-3">
-              <div className="flex justify-between items-center">
+              <div
+                className="flex justify-between items-center cursor-pointer hover:bg-gray-100 p-1 -m-1 rounded"
+                onClick={() => setIsEditingDimensions && setIsEditingDimensions(true)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    setIsEditingDimensions && setIsEditingDimensions(true);
+                  }
+                }}
+              >
                 <span className="text-sm font-medium text-gray-700">Dimensões:</span>
                 <span className="text-sm text-gray-900">{formatDimensions()}</span>
               </div>

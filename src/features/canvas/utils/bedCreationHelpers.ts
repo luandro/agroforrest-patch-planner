@@ -46,7 +46,8 @@ export const createPlacementManager = (
   clearPreview: () => void,
   clearPlacement: () => void,
   getPreviewBed: () => Bed | null,  // <-- instead of stale previewBed
-  getCursorPosition: () => { x: number; y: number } | null
+  getCursorPosition: () => { x: number; y: number } | null,
+  setIsEditingDimensions?: (isEditing: boolean) => void
 ) => {
   /**
    * On placeBed, fetches the latest preview bed and passes it to placement.
@@ -62,6 +63,7 @@ export const createPlacementManager = (
     if (shouldExitCreation) {
       // The canvas will exit creation mode.
     }
+    setIsEditingDimensions && setIsEditingDimensions(false);
   };
 
   const cancelPlacement = () => {
@@ -72,11 +74,15 @@ export const createPlacementManager = (
     } else {
       clearPreview();
     }
+    // We don't necessarily reset isEditingDimensions on simple cancel of placement,
+    // as the user might want to adjust and re-confirm.
+    // It's reset when closing BedConfigPanel or full cancelCreation.
   };
 
   const cancelCreation = () => {
     clearPreview();
     clearPlacement();
+    setIsEditingDimensions && setIsEditingDimensions(false);
   };
 
   return {

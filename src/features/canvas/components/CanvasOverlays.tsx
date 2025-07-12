@@ -43,6 +43,8 @@ interface CanvasOverlaysProps {
   onSelectPlantSpecies?: (species: any) => void;
   onCancelPlantPlacement?: () => void;
   isMobile?: boolean;
+  isEditingDimensions?: boolean;
+  setIsEditingDimensions?: (isEditing: boolean) => void;
 }
 
 export const CanvasOverlays: React.FC<CanvasOverlaysProps> = (props) => {
