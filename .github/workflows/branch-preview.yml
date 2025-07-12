@@ -1,0 +1,190 @@
+name: Deploy Branch Preview
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - master
+      # Add any other branches you don't want to automatically deploy as previews
+
+jobs:
+  deploy_preview:
+    name: Build and Deploy Preview
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # Allow checkout
+      pull-requests: write # Allow commenting on PRs
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ------------------------------------------------------------------
+      # Step 1: Setup Environment (Adjust to your project's needs)
+      # ------------------------------------------------------------------
+      - name: Setup Node.js # Common for many web projects
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Specify your project's Node.js version
+          cache: 'npm' # or 'yarn'
+
+      # If not a Node.js project, you might setup Python, Ruby, Go, Java, etc.
+      # - name: Setup Python
+      #   uses: actions/setup-python@v4
+      #   with:
+      #     python-version: '3.x'
+
+      # ------------------------------------------------------------------
+      # Step 2: Install Dependencies (Adjust to your project's needs)
+      # ------------------------------------------------------------------
+      - name: Install Dependencies (npm) # Common for Node.js projects
+        run: npm ci # 'ci' is generally preferred in CI for cleaner installs
+      # Or for yarn:
+      # run: yarn install --frozen-lockfile
+      # Or for Python:
+      # run: pip install -r requirements.txt
+      # Or for Ruby:
+      # run: bundle install
+
+      # ------------------------------------------------------------------
+      # Step 3: Build Project (If applicable)
+      # ------------------------------------------------------------------
+      - name: Build Project (npm) # Common for Node.js frontend projects
+        run: npm run build # Replace with your actual build command
+        env:
+          # Add any build-time environment variables here if needed
+          # EXAMPLE_VAR: ${{ secrets.EXAMPLE_BUILD_SECRET }}
+          # For Vercel, often PUBLIC_ variables are set in Vercel project settings
+          # For Next.js, Vercel automatically provides system environment variables.
+          # If deploying to Vercel, you might not need to set VERCEL_URL here,
+          # but if your build script needs to know its future public URL:
+          VERCEL_URL: ${{ steps.deploy_vercel.outputs.url }} # Example if using Vercel CLI output
+
+      # If no build step, you can remove this.
+      # For simple static sites, the "build" might just be the source files themselves.
+
+      # ------------------------------------------------------------------
+      # Step 4: Deploy to Hosting Service (Choose ONE option or adapt)
+      # ------------------------------------------------------------------
+
+      # --- Option A: Vercel CLI (Recommended for Next.js, Remix, Astro, etc.) ---
+      # Assumes you have Vercel project linked to this Git repo.
+      # Secrets needed: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID (get from Vercel project settings)
+      - name: Deploy to Vercel
+        id: deploy_vercel
+        # You might not even need this explicit step if your Vercel project is configured
+        # for automatic deployments from all branches (often the default and lowest friction).
+        # This CLI step gives more control if needed or if you want to pass specific metadata.
+        # The `vercel deploy --prebuilt` command is used if you've built your project in a previous step.
+        # If Vercel should do the build, you'd omit `--prebuilt` and the build step above.
+        run: |
+          npm install -g vercel
+          echo "Deploying branch ${{ github.ref_name }} to Vercel..."
+          # For PRs, Vercel automatically creates a preview deployment.
+          # For direct branch pushes not associated with a PR, this explicitly creates a preview.
+          # The output of `vercel deploy` will be the preview URL.
+          VERCEL_DEPLOYMENT_URL=$(vercel deploy --token=${{ secrets.VERCEL_TOKEN }} --scope=${{ secrets.VERCEL_ORG_ID }} --prodIfUnlocked=false --prebuilt --yes --no-wait --name=${{ github.event.repository.name }}-${{ github.ref_name }} --regions=auto .)
+          echo "VERCEL_DEPLOYMENT_URL=$VERCEL_DEPLOYMENT_URL"
+          echo "url=$VERCEL_DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+
+
+      # --- Option B: Netlify CLI ---
+      # Secrets needed: NETLIFY_AUTH_TOKEN, NETLIFY_SITE_ID
+      # - name: Deploy to Netlify
+      #   id: deploy_netlify
+      #   env:
+      #     NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      #     NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      #   run: |
+      #     npm install -g netlify-cli
+      #     # Deploy to a preview (draft) URL. Netlify typically handles PR previews automatically.
+      #     # For branch deploys, you might use --alias or let Netlify generate a unique URL.
+      #     # The output can be captured if needed.
+      #     netlify deploy --dir=./build --message "Deploying ${{ github.ref_name }} from GitHub Actions"
+      #     # To get the URL, you might need to parse output or use other Netlify features.
+      #     # For PRs, Netlify usually comments the URL automatically.
+      #     # echo "url=YOUR_NETLIFY_PREVIEW_URL" >> $GITHUB_OUTPUT # Replace with actual URL
+
+      # --- Option C: GitHub Pages (for static sites) ---
+      # Needs your build output to be in a directory like 'build', 'dist', or '_site'.
+      # - name: Deploy to GitHub Pages
+      #   id: deploy_gh_pages
+      #   uses: peaceiris/actions-gh-pages@v3
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     publish_dir: ./build # Or your static output folder (e.g., ./dist, ./_site)
+      #     # To create a unique URL per branch, you could deploy to a subdirectory on gh-pages:
+      #     # destination_dir: ./${{ github.ref_name }}
+      #     user_name: 'github-actions[bot]'
+      #     user_email: 'github-actions[bot]@users.noreply.github.com'
+      #     # The output URL will be something like:
+      #     # https://<username>.github.io/<repository-name>/${{ github.ref_name }}/ (if destination_dir is used)
+      #     # Or if deploying to root of gh-pages for a specific branch:
+      #     # publish_branch: preview-${{ github.ref_name }} # Deploys to a new branch
+      #     # Then enable Pages for that branch pattern (more complex setup).
+      #     # For simplicity, deploying to a subfolder on the default gh-pages branch is often easiest.
+      # - name: Set GitHub Pages URL
+      #   id: gh_pages_url
+      #   if: steps.deploy_gh_pages.outputs.deployment_status == 'success'
+      #   run: |
+      #     # Construct the URL based on your GitHub Pages setup and destination_dir
+      #     # This is an example assuming deployment to a subdirectory named after the branch
+      #     pages_url="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ github.ref_name }}/"
+      #     echo "GitHub Pages Preview URL: $pages_url"
+      #     echo "url=$pages_url" >> $GITHUB_OUTPUT
+
+      # --- Option D: Custom Script (e.g., AWS S3) ---
+      # Secrets needed: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET, AWS_REGION
+      # - name: Configure AWS Credentials
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: ${{ secrets.AWS_REGION }} # e.g., us-east-1
+      # - name: Deploy to AWS S3
+      #   id: deploy_s3
+      #   run: |
+      #     # Sanitize branch name for S3 path (optional, but good practice)
+      #     BRANCH_NAME_SLUG=$(echo "${{ github.ref_name }}" | tr '/' '-')
+      #     aws s3 sync ./build s3://${{ secrets.AWS_S3_BUCKET }}/previews/$BRANCH_NAME_SLUG --delete
+      #     # Construct the S3 website URL (ensure your bucket is configured for static website hosting)
+      #     S3_URL="http://${{ secrets.AWS_S3_BUCKET }}.s3-website-${{ secrets.AWS_REGION }}.amazonaws.com/previews/$BRANCH_NAME_SLUG/"
+      #     echo "S3 Preview URL: $S3_URL"
+      #     echo "url=$S3_URL" >> $GITHUB_OUTPUT
+
+      # ------------------------------------------------------------------
+      # Step 5: (Optional) Post Preview URL to Pull Request
+      # ------------------------------------------------------------------
+      - name: Comment PR with Preview URL
+        if: github.event_name == 'pull_request' && success() # Only run for PRs and if deploy succeeded
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issue_number = context.issue.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Determine which deployment step ran and get its URL output
+            let previewUrl = '';
+            if ('${{ steps.deploy_vercel.outputs.url }}') {
+              previewUrl = '${{ steps.deploy_vercel.outputs.url }}';
+            } else if ('${{ steps.deploy_netlify.outputs.url }}') { // Assuming you set this output
+              previewUrl = '${{ steps.deploy_netlify.outputs.url }}';
+            } else if ('${{ steps.gh_pages_url.outputs.url }}') {
+              previewUrl = '${{ steps.gh_pages_url.outputs.url }}';
+            } else if ('${{ steps.deploy_s3.outputs.url }}') {
+              previewUrl = '${{ steps.deploy_s3.outputs.url }}';
+            }
+
+            if (previewUrl) {
+              const commentBody = `🚀 Branch preview deployed successfully!\n\nPreview URL: **${previewUrl}**`;
+              await github.rest.issues.createComment({
+                owner: owner,
+                repo: repo,
+                issue_number: issue_number,
+                body: commentBody
+              });
+            } else {
+              core.warning('Could not determine preview URL to comment on PR.');
+            }
