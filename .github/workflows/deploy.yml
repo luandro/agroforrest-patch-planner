@@ -1,0 +1,101 @@
+name: Deploy to Surge
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+concurrency:
+  group: surge-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    env:
+      APP_NAME: agroforrest-patch-planner
+      BUILD_DIR: dist
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure Surge token is available
+        env:
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+        run: |
+          if [ -z "${SURGE_TOKEN}" ]; then
+            echo "SURGE_TOKEN secret must be configured to deploy to Surge." >&2
+            exit 1
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Determine Surge domain
+        id: domain
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          APP_NAME: ${{ env.APP_NAME }}
+          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
+          PR_TITLE: ${{ github.event.pull_request.title || '' }}
+        run: |
+          if [ "${EVENT_NAME}" = "push" ]; then
+            DOMAIN="${APP_NAME}.surge.sh"
+            LABEL="main"
+          else
+            NUMBER="${PR_NUMBER}"
+            TITLE="${PR_TITLE}"
+            SAFE_TITLE=$(printf '%s' "$TITLE" | iconv -c -t ascii//TRANSLIT | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g' | sed -E 's/^-+|-+$//g')
+            SAFE_TITLE=$(printf '%s' "$SAFE_TITLE" | cut -c1-30)
+            if [ -z "${SAFE_TITLE}" ]; then
+              SAFE_TITLE="change"
+            fi
+            DOMAIN="pr-${NUMBER}-${SAFE_TITLE}-${APP_NAME}.surge.sh"
+            LABEL="PR #${NUMBER}"
+          fi
+
+          echo "Domain: ${DOMAIN}"
+          echo "domain=${DOMAIN}" >> "${GITHUB_OUTPUT}"
+          echo "label=${LABEL}" >> "${GITHUB_OUTPUT}"
+
+      - name: Install Surge CLI
+        run: npm install --global surge
+
+      - name: Deploy to Surge
+        env:
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+          SURGE_DOMAIN: ${{ steps.domain.outputs.domain }}
+          BUILD_DIR: ${{ env.BUILD_DIR }}
+        run: |
+          surge "./${BUILD_DIR}" "${SURGE_DOMAIN}" --token "${SURGE_TOKEN}"
+
+      - name: Publish deployment URL
+        env:
+          SURGE_DOMAIN: ${{ steps.domain.outputs.domain }}
+          LABEL: ${{ steps.domain.outputs.label }}
+        run: |
+          {
+            echo "### Surge deployment"
+            echo
+            echo "- Target: ${LABEL}"
+            echo "- URL: https://${SURGE_DOMAIN}"
+          } >> "${GITHUB_STEP_SUMMARY}"
