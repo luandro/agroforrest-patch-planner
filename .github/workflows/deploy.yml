@@ -64,7 +64,7 @@ jobs:
           else
             NUMBER="${PR_NUMBER}"
             TITLE="${PR_TITLE}"
-            SAFE_TITLE=$(printf '%s' "$TITLE" | iconv -c -t ascii//TRANSLIT | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g' | sed -E 's/^-+|-+$//g')
+            SAFE_TITLE=$(printf '%s' "$TITLE" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9 ' | tr ' ' '-' | sed -E 's/-+/-/g' | sed -E 's/^-+|-+$//g')
             SAFE_TITLE=$(printf '%s' "$SAFE_TITLE" | cut -c1-30)
             if [ -z "${SAFE_TITLE}" ]; then
               SAFE_TITLE="change"
