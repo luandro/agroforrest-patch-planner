@@ -27,16 +27,20 @@ export const calculateGridPositions = (
     return positions; // Bed too small
   }
 
-  const { 
-    plantsPerLength, 
-    plantsPerWidth, 
-    actualSpacingLength, 
-    actualSpacingWidth 
+  const {
+    plantsPerLength,
+    plantsPerWidth,
+    actualSpacingLength,
+    actualSpacingWidth
   } = calculateGridDimensions(usableLength, usableWidth, spacing);
 
-  // Generate positions relative to bed center
-  const startX = -(usableLength / 2);
-  const startY = -(usableWidth / 2);
+  // Generate positions relative to bed center. When only one plant fits in a
+  // row/column we want it to be centered instead of stuck to one edge, so the
+  // span is based on the actual spacing instead of the full usable length.
+  const lengthSpan = actualSpacingLength * (plantsPerLength - 1);
+  const widthSpan = actualSpacingWidth * (plantsPerWidth - 1);
+  const startX = -(lengthSpan / 2);
+  const startY = -(widthSpan / 2);
 
   for (let row = 0; row < plantsPerWidth; row++) {
     for (let col = 0; col < plantsPerLength; col++) {
@@ -110,8 +114,10 @@ export const calculateRowPositions = (
   const actualSpacingLength = plantsPerRow > 1 ? usableLength / (plantsPerRow - 1) : 0;
   const rowSpacing = numRows > 1 ? usableWidth / (numRows - 1) : 0;
 
-  const startX = -(usableLength / 2);
-  const startY = -(usableWidth / 2);
+  const lengthSpan = actualSpacingLength * (plantsPerRow - 1);
+  const widthSpan = rowSpacing * (numRows - 1);
+  const startX = -(lengthSpan / 2);
+  const startY = -(widthSpan / 2);
 
   for (let row = 0; row < numRows; row++) {
     for (let col = 0; col < plantsPerRow; col++) {
