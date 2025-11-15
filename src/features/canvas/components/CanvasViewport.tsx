@@ -7,28 +7,31 @@ import { ViewModeToggle } from './ViewModeToggle';
 import { useSideViewStore } from '../stores/sideViewStore';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import type { CanvasViewport as CanvasViewportState } from '../types/canvas.types';
+import type { Bed, BedConfig, CanvasTool } from '../types/bed.types';
+import type { ZoomToFn } from '../types/layout.types';
 
 interface CanvasViewportProps {
-  viewport: any;
-  beds: any[];
+  viewport: CanvasViewportState;
+  beds: Bed[];
   selectedBedIds: string[];
-  tool: any;
+  tool: CanvasTool;
   isCreating: boolean;
-  previewBed: any;
-  placementBed: any;
-  previewBeds?: any[];
-  placementBeds?: any[];
+  previewBed: Bed | null;
+  placementBed: Bed | null;
+  previewBeds?: Bed[];
+  placementBeds?: Bed[];
   hasCollision?: boolean;
-  handlePointerDown: (e: React.PointerEvent) => void;
-  handlePointerMove: (e: React.PointerEvent) => void;
+  handlePointerDown: (event: React.PointerEvent<HTMLCanvasElement>) => void;
+  handlePointerMove: (event: React.PointerEvent<HTMLCanvasElement>) => void;
   handlePointerUp: () => void;
-  handleDoubleClick: (e: React.MouseEvent) => void;
+  handleDoubleClick: (event: React.MouseEvent<HTMLCanvasElement>) => void;
   pan: (deltaX: number, deltaY: number) => void;
-  zoomTo: (zoom: number) => void;
-  bedConfig: any;
+  zoomTo: ZoomToFn;
+  bedConfig: BedConfig;
   gridSize?: number;
   canvasRef?: React.RefObject<HTMLCanvasElement>;
-  focusedBed?: any;
+  focusedBed?: Bed | null;
 }
 
 export const CanvasViewport: React.FC<CanvasViewportProps> = ({

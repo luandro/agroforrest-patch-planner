@@ -1,6 +1,7 @@
 
 import { useCallback } from 'react';
-import { CanvasTool } from '../types/bed.types';
+import type { Bed, CanvasTool } from '../types/bed.types';
+import type { CanvasViewport } from '../types/canvas.types';
 import { usePlantPlacementStore } from '../stores/plantPlacementStore';
 import { usePlantSelection } from './usePlantSelection';
 import { useCanvasPointerHandlers } from './useCanvasPointerHandlers';
@@ -19,8 +20,8 @@ interface UseCanvasEventHandlersProps {
   updateSelection: (x: number, y: number) => void;
   finishSelection: () => void;
   handleToolChange: (tool: CanvasTool) => void;
-  viewport?: any;
-  focusedBed?: any;
+  viewport?: CanvasViewport;
+  focusedBed?: Bed | null;
   canvasRef?: React.RefObject<HTMLCanvasElement>;
 }
 

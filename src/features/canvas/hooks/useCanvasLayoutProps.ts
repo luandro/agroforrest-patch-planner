@@ -1,32 +1,37 @@
 
 import { useCallback } from 'react';
+import type React from 'react';
+import type { CanvasViewport } from '../types/canvas.types';
+import type { Bed, BedConfig, CanvasTool } from '../types/bed.types';
+import type { PlantSpecies } from '../types/species.types';
+import type { CanvasLayoutSharedProps, ZoomToFn, ViewportUpdate, BedConfigUpdate } from '../types/layout.types';
 
-interface UseCanvasLayoutPropsParams {
-  viewport: any;
-  updateViewport: any;
-  beds: any[];
+export interface UseCanvasLayoutPropsParams {
+  viewport: CanvasViewport;
+  updateViewport: ViewportUpdate;
+  beds: Bed[];
   selectedBedIds: string[];
-  tool: any;
-  handleToolChange: any;
-  bedConfig: any;
-  updateBedConfig: any;
+  tool: CanvasTool;
+  handleToolChange: (tool: CanvasTool) => void;
+  bedConfig: BedConfig;
+  updateBedConfig: BedConfigUpdate;
   isCreating: boolean;
-  previewBed: any;
-  previewBeds?: any[];
-  placementBed: any;
-  placementBeds?: any[];
+  previewBed: Bed | null;
+  previewBeds?: Bed[];
+  placementBed: Bed | null;
+  placementBeds?: Bed[];
   showConfirmation: boolean;
   multiCreationMode: boolean;
   setMultiCreationMode: (enabled: boolean) => void;
   hasCollision?: boolean;
-  handlePointerDown: (e: React.PointerEvent) => void;
-  handlePointerMove: (e: React.PointerEvent) => void;
+  handlePointerDown: (event: React.PointerEvent<HTMLCanvasElement>) => void;
+  handlePointerMove: (event: React.PointerEvent<HTMLCanvasElement>) => void;
   handlePointerUp: () => void;
-  handleDoubleClick: (e: React.MouseEvent) => void;
+  handleDoubleClick: (event: React.MouseEvent<HTMLCanvasElement>) => void;
   confirmPlacement: () => void;
   cancelPlacement: () => void;
   pan: (deltaX: number, deltaY: number) => void;
-  zoomTo: (zoom: number) => void;
+  zoomTo: ZoomToFn;
   undo: () => void;
   redo: () => void;
   canUndo: () => boolean;
@@ -39,15 +44,16 @@ interface UseCanvasLayoutPropsParams {
   minZoom: number;
   maxZoom: number;
   handlePlantSelectionOpen?: () => void;
-  handlePlantSpeciesSelect?: (species: any) => void;
+  handlePlantSpeciesSelect?: (species: PlantSpecies) => void;
   isInFocusMode?: boolean;
   focusedBedId?: string | null;
-  focusedBed?: any;
+  focusedBed?: Bed | null;
   handleEnterFocus?: (bedId: string) => void;
   handleExitFocus?: () => void;
+  onCancelPlantPlacement?: () => void;
 }
 
-export const useCanvasLayoutProps = (params: UseCanvasLayoutPropsParams) => {
+export const useCanvasLayoutProps = (params: UseCanvasLayoutPropsParams): CanvasLayoutSharedProps => {
   const {
     viewport,
     updateViewport,
@@ -91,7 +97,8 @@ export const useCanvasLayoutProps = (params: UseCanvasLayoutPropsParams) => {
     focusedBedId,
     focusedBed,
     handleEnterFocus,
-    handleExitFocus
+    handleExitFocus,
+    onCancelPlantPlacement
   } = params;
 
   // Enhanced zoom handlers
@@ -150,6 +157,7 @@ export const useCanvasLayoutProps = (params: UseCanvasLayoutPropsParams) => {
     maxZoom,
     onOpenPlantSelection: handlePlantSelectionOpen,
     onSelectPlantSpecies: handlePlantSpeciesSelect,
+    onCancelPlantPlacement,
     isInFocusMode,
     focusedBedId,
     focusedBed,

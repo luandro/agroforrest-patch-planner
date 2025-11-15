@@ -63,10 +63,10 @@ export const useCanvasRenderer = ({ canvasRef, gridSize, spacing = 0.4, focusedB
     viewport: CanvasViewport, 
     beds: Bed[] = [], 
     selectedBedIds: string[] = [], 
-    previewBed?: any,
-    placementBed?: any,
-    previewBeds?: any[],
-    placementBeds?: any[],
+    previewBed?: Bed | null,
+    placementBed?: Bed | null,
+    previewBeds?: Bed[],
+    placementBeds?: Bed[],
     hasCollision?: boolean
   ) => {
     // Always pass current timeline data to renderer

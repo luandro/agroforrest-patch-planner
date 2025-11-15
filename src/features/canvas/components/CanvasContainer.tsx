@@ -2,28 +2,31 @@
 import React, { useRef, useEffect } from 'react';
 import { useCanvasGestures } from '../hooks/useCanvasGestures';
 import { useCanvasRenderer } from '../hooks/useCanvasRenderer';
+import type { CanvasViewport } from '../types/canvas.types';
+import type { Bed, BedConfig, CanvasTool } from '../types/bed.types';
+import type { ZoomToFn } from '../types/layout.types';
 
 interface CanvasContainerProps {
-  viewport: any;
-  tool: string;
+  viewport: CanvasViewport;
+  tool: CanvasTool;
   isCreating: boolean;
-  handlePointerDown: (e: React.PointerEvent) => void;
-  handlePointerMove: (e: React.PointerEvent) => void;
+  handlePointerDown: (event: React.PointerEvent<HTMLCanvasElement>) => void;
+  handlePointerMove: (event: React.PointerEvent<HTMLCanvasElement>) => void;
   handlePointerUp: () => void;
-  handleDoubleClick: (e: React.MouseEvent) => void;
+  handleDoubleClick: (event: React.MouseEvent<HTMLCanvasElement>) => void;
   pan: (deltaX: number, deltaY: number) => void;
-  zoomTo: (zoom: number) => void;
-  beds: any[];
+  zoomTo: ZoomToFn;
+  beds: Bed[];
   selectedBedIds: string[];
-  previewBed: any;
-  placementBed?: any;
-  previewBeds?: any[];
-  placementBeds?: any[];
+  previewBed: Bed | null;
+  placementBed?: Bed | null;
+  previewBeds?: Bed[];
+  placementBeds?: Bed[];
   hasCollision?: boolean;
   gridSize?: number;
-  bedConfig?: any;
+  bedConfig?: BedConfig;
   canvasRef?: React.RefObject<HTMLCanvasElement>;
-  focusedBed?: any;
+  focusedBed?: Bed | null;
 }
 
 export const CanvasContainer: React.FC<CanvasContainerProps> = ({
