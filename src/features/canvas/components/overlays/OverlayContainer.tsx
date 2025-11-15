@@ -4,46 +4,9 @@ import { MiniMapOverlay } from './MiniMapOverlay';
 import { FocusModeOverlay } from './FocusModeOverlay';
 import { ControlsOverlay } from './ControlsOverlay';
 import { ConfigurationOverlay } from './ConfigurationOverlay';
-import { CanvasTool } from '../../types/bed.types';
+import type { CanvasLayoutSharedProps } from '../../types/layout.types';
 
-interface OverlayContainerProps {
-  viewport: any;
-  updateViewport: any;
-  beds: any[];
-  selectedBedIds: string[];
-  tool: CanvasTool;
-  setTool: (tool: CanvasTool) => void;
-  bedConfig: any;
-  updateBedConfig: any;
-  isCreating: boolean;
-  previewBed: any;
-  placementBed: any;
-  showConfirmation: boolean;
-  multiCreationMode: boolean;
-  setMultiCreationMode: (enabled: boolean) => void;
-  hasCollision?: boolean;
-  handleConfirmPlacement: () => void;
-  handleCancelPlacement: () => void;
-  pan: (deltaX: number, deltaY: number) => void;
-  zoomTo: (zoom: number) => void;
-  handleZoomIn: () => void;
-  handleZoomOut: () => void;
-  handleFitAll: () => void;
-  undo: () => void;
-  redo: () => void;
-  canUndo: () => boolean;
-  canRedo: () => boolean;
-  deleteSelected: () => void;
-  isSaving: boolean;
-  cancelCreation: () => void;
-  isCollapsed?: boolean;
-  onToggleCollapse?: (collapsed: boolean) => void;
-  onOpenPlantSelection?: () => void;
-  isInFocusMode?: boolean;
-  focusedBedId?: string | null;
-  onExitFocus?: () => void;
-  onSelectPlantSpecies?: (species: any) => void;
-  onCancelPlantPlacement?: () => void;
+interface OverlayContainerProps extends CanvasLayoutSharedProps {
   isMobile?: boolean;
 }
 

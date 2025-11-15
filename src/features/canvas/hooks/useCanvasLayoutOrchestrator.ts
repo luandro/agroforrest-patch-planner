@@ -3,40 +3,43 @@ import { useCanvasEventOrchestrator } from './useCanvasEventOrchestrator';
 import { useCanvasToolOrchestrator } from './useCanvasToolOrchestrator';
 import { useBedSelectionFlow } from './useBedSelectionFlow';
 import { useCanvasLayoutBuilder } from './useCanvasLayoutBuilder';
+import type { CanvasViewport } from '../types/canvas.types';
+import type { Bed, BedConfig, CanvasTool } from '../types/bed.types';
+import type { PlantSpecies } from '../types/species.types';
+import type { ZoomToFn, ViewportUpdate, BedConfigUpdate } from '../types/layout.types';
 
 interface UseCanvasLayoutOrchestratorProps {
-  // State manager outputs
-  viewport: any;
-  updateViewport: any;
-  beds: any[];
+  viewport: CanvasViewport;
+  updateViewport: ViewportUpdate;
+  beds: Bed[];
   selectedBedIds: string[];
   pan: (deltaX: number, deltaY: number) => void;
-  zoomTo: (zoom: number) => void;
+  zoomTo: ZoomToFn;
   fitAllBeds: () => void;
   undo: () => void;
   redo: () => void;
   canUndo: () => boolean;
   canRedo: () => boolean;
   isSaving: boolean;
-  bedStore: any;
+  bedStore: {
+    setTool: (tool: CanvasTool) => void;
+  };
 
-  // Focus mode
   isInFocusMode: boolean;
   focusedBedId?: string | null;
-  focusedBed?: any;
+  focusedBed?: Bed | null;
   handleEnterFocus: (bedId: string) => void;
   handleExitFocus: () => void;
   handlePlantSelectionOpen?: () => void;
-  handlePlantSpeciesSelect?: (species: any) => void;
+  handlePlantSpeciesSelect?: (species: PlantSpecies) => void;
 
-  // Bed creation
-  bedConfig: any;
-  updateBedConfig: any;
+  bedConfig: BedConfig;
+  updateBedConfig: BedConfigUpdate;
   isCreating: boolean;
-  previewBed: any;
-  previewBeds?: any[];
-  placementBed: any;
-  placementBeds?: any[];
+  previewBed: Bed | null;
+  previewBeds?: Bed[];
+  placementBed: Bed | null;
+  placementBeds?: Bed[];
   showConfirmation: boolean;
   multiCreationMode: boolean;
   setMultiCreationMode: (enabled: boolean) => void;
@@ -49,9 +52,8 @@ interface UseCanvasLayoutOrchestratorProps {
   cancelCreation: () => void;
   clearPreview: () => void;
   clearPlacement: () => void;
-  handleToolChange: (tool: any) => void;
+  handleToolChange: (tool: CanvasTool) => void;
 
-  // Canvas props
   gridSize: number;
   minZoom: number;
   maxZoom: number;

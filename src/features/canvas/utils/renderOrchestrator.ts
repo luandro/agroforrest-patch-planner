@@ -9,7 +9,7 @@ import { drawBed } from './shapeRenderer';
 import { drawPlantPlacements } from './plantRenderer';
 import { clearCanvas, setCanvasBackground, getSnapHighlight } from './canvasUtils';
 import { drawCollisionIndicators } from './collisionRenderer';
-import { useTimelineStore } from '../stores/timelineStore';
+import type { PlantPlacement } from '../stores/plantPlacementStore';
 
 interface RenderCanvasParams {
   ctx: CanvasRenderingContext2D;
@@ -17,17 +17,17 @@ interface RenderCanvasParams {
   viewport: CanvasViewport;
   beds: Bed[];
   selectedBedIds: string[];
-  previewBed?: any;
-  placementBed?: any;
-  previewBeds?: any[];
-  placementBeds?: any[];
+  previewBed?: Bed | null;
+  placementBed?: Bed | null;
+  previewBeds?: Bed[];
+  placementBeds?: Bed[];
   hasCollision?: boolean;
   gridSize: number;
   spacing: number;
   focusedBed?: Bed | null;
-  getPlacementsForBed: (bedId: string) => any[];
+  getPlacementsForBed: (bedId: string) => PlantPlacement[];
   selectedPlacementIds: string[];
-  placementPreview?: any;
+  placementPreview?: { x: number; y: number } | null;
   growthMonth?: number;
 }
 

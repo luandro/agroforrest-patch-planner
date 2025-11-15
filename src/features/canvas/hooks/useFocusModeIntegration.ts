@@ -6,11 +6,13 @@ import { usePlantPlacement } from './usePlantPlacement';
 import { usePlantPlacementStore } from '../stores/plantPlacementStore';
 import { useTimelineStore } from '../stores/timelineStore';
 import { CanvasViewport } from '../types/canvas.types';
+import type { Bed } from '../types/bed.types';
+import type { PlantSpecies } from '../types/species.types';
 
 interface UseFocusModeIntegrationProps {
   viewport: CanvasViewport;
   updateViewport: (updates: Partial<CanvasViewport>) => void;
-  beds: any[];
+  beds: Bed[];
   canvasRef?: React.RefObject<HTMLCanvasElement>;
   onOpenPlantSelection?: () => void;
   onOpenPlantSpeciesPanel?: () => void;
@@ -81,7 +83,7 @@ export const useFocusModeIntegration = ({
   }, [onOpenPlantSelection]);
 
   // Handle species selection for placement
-  const handlePlantSpeciesSelect = useCallback((species: any) => {
+  const handlePlantSpeciesSelect = useCallback((species: PlantSpecies) => {
     plantPlacement.selectSpeciesForPlacement(species);
   }, [plantPlacement]);
 

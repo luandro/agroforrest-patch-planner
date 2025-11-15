@@ -1,6 +1,6 @@
 
-import { useCallback } from 'react';
-import { CanvasTool } from '../types/bed.types';
+import type { CanvasViewport } from '../types/canvas.types';
+import type { Bed, CanvasTool } from '../types/bed.types';
 import { useCanvasEventHandlers } from './useCanvasEventHandlers';
 
 interface UseCanvasEventOrchestratorProps {
@@ -14,8 +14,8 @@ interface UseCanvasEventOrchestratorProps {
   updateSelection: (x: number, y: number) => void;
   finishSelection: () => void;
   handleToolChange: (tool: CanvasTool) => void;
-  viewport?: any;
-  focusedBed?: any;
+  viewport?: CanvasViewport;
+  focusedBed?: Bed | null;
   canvasRef?: React.RefObject<HTMLCanvasElement>;
 }
 
