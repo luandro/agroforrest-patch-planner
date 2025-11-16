@@ -331,8 +331,8 @@ describe('bedPositioning', () => {
   describe('edge cases', () => {
     it('should handle NaN gracefully in snapToGrid', () => {
       const result = snapToGrid(NaN, NaN, 1);
-      // Should produce 0 or NaN depending on implementation
-      expect(isNaN(result.x) || result.x === 0).toBe(true);
+      expect(result.x).toBeNaN();
+      expect(result.y).toBeNaN();
     });
 
     it('should handle Infinity in snapToGrid', () => {
