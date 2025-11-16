@@ -26,7 +26,7 @@ class Logger {
   constructor(config: Partial<LoggerConfig> = {}) {
     this.config = {
       level: this.getDefaultLogLevel(),
-      enabled: import.meta.env.DEV,
+      enabled: true, // Always enabled; log level controls what gets logged
       ...config,
     };
   }
