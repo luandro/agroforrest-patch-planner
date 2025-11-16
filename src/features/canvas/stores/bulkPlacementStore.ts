@@ -1,14 +1,15 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
-import { 
-  BulkPlacementConfig, 
-  BulkPlacementPreview, 
+import {
+  BulkPlacementConfig,
+  BulkPlacementPreview,
 } from '../types/bulkPlacement.types';
 import { PlantSpecies } from '../types/species.types';
 import { Bed } from '../types/bed.types';
 import { useBedState, useFocusModeStore } from './bedStore';
 import { usePlantPlacementStore } from './plantPlacementStore';
 import { calculateBulkPlacement, getDefaultBulkConfig } from '../utils/bulkPlacementCalculator';
+import { storeLogger } from '@/lib/logger';
 
 interface BulkPlacementState {
   isActive: boolean;
@@ -52,7 +53,7 @@ export const useBulkPlacementStore = create<BulkPlacementStore>()(
         : null;
 
       if (!focusedBed) {
-        console.warn('No focused bed for bulk placement');
+        storeLogger.warn('No focused bed for bulk placement');
         return;
       }
       
@@ -100,7 +101,7 @@ export const useBulkPlacementStore = create<BulkPlacementStore>()(
         );
         set({ preview: previewResult, isCalculating: false });
       } catch (error) {
-        console.error('Error calculating bulk placement:', error);
+        storeLogger.error('Error calculating bulk placement', error);
         set({ preview: null, isCalculating: false });
       }
     },
@@ -108,7 +109,7 @@ export const useBulkPlacementStore = create<BulkPlacementStore>()(
     executeBulkPlacement: () => {
       const { selectedSpecies, selectedBed, preview } = get();
       if (!selectedSpecies || !selectedBed || !preview || preview.positions.length === 0) {
-        console.warn('Cannot execute bulk placement: missing data');
+        storeLogger.warn('Cannot execute bulk placement: missing data');
         return false;
       }
 

@@ -1,0 +1,121 @@
+/**
+ * Centralized logging utility with log levels
+ * Prevents console logs from leaking to production and provides better control
+ */
+
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'none';
+
+interface LoggerConfig {
+  level: LogLevel;
+  enabled: boolean;
+  prefix?: string;
+}
+
+const LOG_LEVELS: Record<LogLevel, number> = {
+  debug: 0,
+  info: 1,
+  warn: 2,
+  error: 3,
+  none: 4,
+};
+
+class Logger {
+  private config: LoggerConfig;
+
+  constructor(config: Partial<LoggerConfig> = {}) {
+    this.config = {
+      level: this.getDefaultLogLevel(),
+      enabled: process.env.NODE_ENV === 'development',
+      ...config,
+    };
+  }
+
+  private getDefaultLogLevel(): LogLevel {
+    if (process.env.NODE_ENV === 'production') {
+      return 'error';
+    }
+    // Read from localStorage if available
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('app:logLevel') as LogLevel;
+      if (stored && LOG_LEVELS[stored] !== undefined) {
+        return stored;
+      }
+    }
+    return 'info';
+  }
+
+  private shouldLog(level: LogLevel): boolean {
+    if (!this.config.enabled) return false;
+    return LOG_LEVELS[level] >= LOG_LEVELS[this.config.level];
+  }
+
+  private formatMessage(level: LogLevel, message: string, data?: unknown): string {
+    const timestamp = new Date().toISOString();
+    const prefix = this.config.prefix ? `[${this.config.prefix}]` : '';
+    return `${timestamp} ${prefix}[${level.toUpperCase()}] ${message}`;
+  }
+
+  debug(message: string, data?: unknown): void {
+    if (this.shouldLog('debug')) {
+      console.debug(this.formatMessage('debug', message), data ?? '');
+    }
+  }
+
+  info(message: string, data?: unknown): void {
+    if (this.shouldLog('info')) {
+      console.info(this.formatMessage('info', message), data ?? '');
+    }
+  }
+
+  warn(message: string, data?: unknown): void {
+    if (this.shouldLog('warn')) {
+      console.warn(this.formatMessage('warn', message), data ?? '');
+    }
+  }
+
+  error(message: string, error?: unknown): void {
+    if (this.shouldLog('error')) {
+      console.error(this.formatMessage('error', message), error ?? '');
+    }
+  }
+
+  /**
+   * Set the log level at runtime
+   * Persists to localStorage for development mode
+   */
+  setLevel(level: LogLevel): void {
+    this.config.level = level;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('app:logLevel', level);
+    }
+  }
+
+  /**
+   * Enable or disable logging entirely
+   */
+  setEnabled(enabled: boolean): void {
+    this.config.enabled = enabled;
+  }
+
+  /**
+   * Create a child logger with a specific prefix
+   */
+  createChild(prefix: string): Logger {
+    return new Logger({
+      ...this.config,
+      prefix: this.config.prefix ? `${this.config.prefix}:${prefix}` : prefix,
+    });
+  }
+}
+
+// Create default logger instance
+export const logger = new Logger();
+
+// Create specific loggers for different modules
+export const canvasLogger = logger.createChild('Canvas');
+export const storageLogger = logger.createChild('Storage');
+export const storeLogger = logger.createChild('Store');
+export const plantLogger = logger.createChild('Plant');
+
+// Export the Logger class for creating custom loggers
+export { Logger };

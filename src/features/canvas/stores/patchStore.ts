@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { Patch, PatchCreationData } from '../types/patch.types';
+import { storeLogger } from '@/lib/logger';
 
 interface PatchState {
   patches: Patch[];
@@ -57,48 +58,48 @@ export const usePatchStore = create<PatchStore>()(
         isDirty: true
       }));
 
-      console.log('✅ Patch created and marked dirty:', newPatch.id);
+      storeLogger.info(`Patch created and marked dirty: ${newPatch.id}`);
       return newPatch.id;
     },
 
     loadPatches: (patches, markDirty = false) => {
       set({ patches, isDirty: markDirty });
-      console.log('📂 Patches loaded, isDirty:', markDirty, 'count:', patches.length);
+      storeLogger.info(`Patches loaded, isDirty: ${markDirty}, count: ${patches.length}`);
     },
 
     setCurrentPatch: (patchId) => {
       set({ currentPatchId: patchId });
       // Store current patch in localStorage with consistent key
       localStorage.setItem('agroforest_current_patch_id', patchId);
-      console.log('🎯 Current patch set:', patchId);
+      storeLogger.info(`Current patch set: ${patchId}`);
     },
 
     updatePatch: (id, updates) => {
       set(state => ({
         patches: state.patches.map(patch =>
-          patch.id === id 
+          patch.id === id
             ? { ...patch, ...updates, updatedAt: Date.now() }
             : patch
         ),
         isDirty: true
       }));
-      console.log('📝 Patch updated and marked dirty:', id);
+      storeLogger.info(`Patch updated and marked dirty: ${id}`);
     },
 
     deletePatch: (id) => {
       set(state => {
         const newPatches = state.patches.filter(p => p.id !== id);
-        const newCurrentId = state.currentPatchId === id 
+        const newCurrentId = state.currentPatchId === id
           ? (newPatches.length > 0 ? newPatches[0].id : null)
           : state.currentPatchId;
-        
+
         return {
           patches: newPatches,
           currentPatchId: newCurrentId,
           isDirty: true
         };
       });
-      console.log('🗑️ Patch deleted and marked dirty:', id);
+      storeLogger.info(`Patch deleted and marked dirty: ${id}`);
     },
 
     duplicatePatch: async (sourceId, newName) => {
@@ -118,7 +119,7 @@ export const usePatchStore = create<PatchStore>()(
         isDirty: true
       }));
 
-      console.log('📄 Patch duplicated and marked dirty:', duplicatedPatch.id);
+      storeLogger.info(`Patch duplicated and marked dirty: ${duplicatedPatch.id}`);
       return duplicatedPatch.id;
     },
 
@@ -129,12 +130,12 @@ export const usePatchStore = create<PatchStore>()(
 
     markClean: () => {
       set({ isDirty: false });
-      console.log('✅ Patch store marked clean');
+      storeLogger.debug('Patch store marked clean');
     },
 
     markDirty: () => {
       set({ isDirty: true });
-      console.log('💾 Patch store marked dirty');
+      storeLogger.debug('Patch store marked dirty');
     },
 
     setLoading: (loading) => set({ isLoading: loading }),
@@ -142,7 +143,7 @@ export const usePatchStore = create<PatchStore>()(
     manualSave: () => {
       const state = get();
       if (state.isDirty) {
-        console.log('🔧 Manual save triggered for patches');
+        storeLogger.info('Manual save triggered for patches');
         // The auto-save hook will handle the actual saving
         set({ isDirty: true }); // Force trigger auto-save
       }

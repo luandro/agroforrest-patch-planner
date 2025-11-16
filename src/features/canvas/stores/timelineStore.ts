@@ -1,5 +1,6 @@
 
 import { create } from 'zustand';
+import { storeLogger } from '@/lib/logger';
 
 interface TimelineState {
   isTimelineActive: boolean;
@@ -27,45 +28,45 @@ export const useTimelineStore = create<TimelineStore>((set, get) => ({
 
   // Actions with improved state management
   setTimelineActive: (active) => {
-    console.log('[Timeline Store] setTimelineActive:', active);
+    storeLogger.debug(`[Timeline] setTimelineActive: ${active}`);
     set((state) => {
-      const newState = { 
+      const newState = {
         isTimelineActive: active,
         // Reset to month 0 when activating timeline for consistent start
         ...(active && { currentMonth: 0, isPlaying: false })
       };
-      console.log('[Timeline Store] New state after setTimelineActive:', { ...state, ...newState });
+      storeLogger.debug('[Timeline] New state after setTimelineActive', { ...state, ...newState });
       return newState;
     });
   },
-  
+
   setCurrentMonth: (month) => {
     set((state) => {
       const newMonth = typeof month === 'function' ? month(state.currentMonth) : month;
       const clampedMonth = Math.max(0, Math.min(newMonth, 240)); // 20 years max
-      
-      console.log('[Timeline Store] setCurrentMonth:', state.currentMonth, '->', clampedMonth);
-      
+
+      storeLogger.debug(`[Timeline] setCurrentMonth: ${state.currentMonth} -> ${clampedMonth}`);
+
       return { currentMonth: clampedMonth };
     });
   },
-  
+
   setIsPlaying: (playing) => {
-    console.log('[Timeline Store] setIsPlaying:', playing);
+    storeLogger.debug(`[Timeline] setIsPlaying: ${playing}`);
     set({ isPlaying: playing });
   },
-  
+
   setPlaybackSpeed: (speed) => {
-    console.log('[Timeline Store] setPlaybackSpeed:', speed);
+    storeLogger.debug(`[Timeline] setPlaybackSpeed: ${speed}`);
     set({ playbackSpeed: speed });
   },
-  
+
   resetTimeline: () => {
-    console.log('[Timeline Store] resetTimeline');
-    set({ 
-      currentMonth: 0, 
+    storeLogger.debug('[Timeline] resetTimeline');
+    set({
+      currentMonth: 0,
       isPlaying: false,
-      playbackSpeed: 1 
+      playbackSpeed: 1
     });
   }
 }));

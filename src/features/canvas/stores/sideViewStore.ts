@@ -1,6 +1,7 @@
 
 import { create } from 'zustand';
 import { ViewMode, SideViewport } from '../types/sideView.types';
+import { storeLogger } from '@/lib/logger';
 
 interface SideViewState {
   viewMode: ViewMode;
@@ -28,7 +29,7 @@ export const useSideViewStore = create<SideViewStore>((set) => ({
 
   // Actions
   setViewMode: (mode) => {
-    console.log('[Side View Store] setViewMode:', mode);
+    storeLogger.debug(`[Side View] setViewMode: ${mode}`);
     set({ viewMode: mode });
   },
 

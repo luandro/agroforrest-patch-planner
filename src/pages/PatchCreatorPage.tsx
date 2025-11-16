@@ -8,6 +8,8 @@ import { usePatchCreatorState } from '../features/patch-creator/hooks/usePatchCr
 import { PatchCreatorHeader } from '../features/patch-creator/components/PatchCreatorHeader';
 import { useOfflineStorage } from '../features/canvas/hooks/useOfflineStorage';
 import { StorageDebugPanel } from '../features/canvas/components/StorageDebugPanel';
+import { PageErrorBoundary } from '@/components/ErrorBoundary';
+import { logger } from '@/lib/logger';
 
 // Import storage test for development
 if (process.env.NODE_ENV === 'development') {
@@ -41,7 +43,7 @@ const PatchCreatorPage: React.FC = () => {
 
   // Debug storage state
   React.useEffect(() => {
-    console.log('🔧 PatchCreatorPage storage state:', {
+    logger.debug('PatchCreatorPage storage state', {
       isInitialized: storage.isInitialized,
       isLoading: storage.isLoading,
       isDirty: storage.isDirty,
@@ -53,7 +55,7 @@ const PatchCreatorPage: React.FC = () => {
   const handlePatchSwitch = (patchId: string) => {
     // The patch switching is handled automatically by the auto-save hooks
     // when the current patch changes in the store
-    console.log('Switching to patch:', patchId);
+    logger.info(`Switching to patch: ${patchId}`);
   };
 
   // Show loading state while storage is initializing
@@ -87,65 +89,67 @@ const PatchCreatorPage: React.FC = () => {
   }
 
   return (
-    <GrowthTimelineProvider>
-      <MainLayout 
-        showUserMenu={true}
-        showPatchSelector={true}
-        onFitAll={handleFitAll}
-        onCreateNewPatch={handleCreateNewPatch}
-        onPatchSwitch={handlePatchSwitch}
-      >
-        <PatchCreatorHeader 
-          isMobile={isMobile}
-          focusMode={focusMode}
-          handleExitFocus={handleExitFocus}
-          placements={placements}
-          isTimelineActive={isTimelineActive}
-          setTimelineActive={setTimelineActive}
-          fps={fps}
-          beds={beds}
-          selectedBedIds={selectedBedIds}
-          tool={tool}
-        />
-
-        {/* Full-Screen Canvas */}
-        <main className="relative">
-          <PatchCanvas
-            onViewportChange={handleViewportChange}
-            onOpenPlantSelection={handleOpenPlantSelection}
-            gridSize={1}
-            minZoom={0.5}
-            maxZoom={5}
+    <PageErrorBoundary>
+      <GrowthTimelineProvider>
+        <MainLayout
+          showUserMenu={true}
+          showPatchSelector={true}
+          onFitAll={handleFitAll}
+          onCreateNewPatch={handleCreateNewPatch}
+          onPatchSwitch={handlePatchSwitch}
+        >
+          <PatchCreatorHeader
+            isMobile={isMobile}
+            focusMode={focusMode}
+            handleExitFocus={handleExitFocus}
+            placements={placements}
+            isTimelineActive={isTimelineActive}
+            setTimelineActive={setTimelineActive}
+            fps={fps}
+            beds={beds}
+            selectedBedIds={selectedBedIds}
+            tool={tool}
           />
-        </main>
 
-        {/* Plant Selection Panel */}
-        <PlantSelectionPanel
-          isOpen={isPlantSelectionOpen}
-          onClose={handleClosePlantSelection}
-          onSelectSpecies={handleSelectSpecies}
-          selectedBedId={focusMode.isActive ? focusMode.bedId : undefined}
-        />
+          {/* Full-Screen Canvas */}
+          <main className="relative">
+            <PatchCanvas
+              onViewportChange={handleViewportChange}
+              onOpenPlantSelection={handleOpenPlantSelection}
+              gridSize={1}
+              minZoom={0.5}
+              maxZoom={5}
+            />
+          </main>
 
-        {/* Debug Panel - Remove in production */}
-        {process.env.NODE_ENV === 'development' && <StorageDebugPanel />}
+          {/* Plant Selection Panel */}
+          <PlantSelectionPanel
+            isOpen={isPlantSelectionOpen}
+            onClose={handleClosePlantSelection}
+            onSelectSpecies={handleSelectSpecies}
+            selectedBedId={focusMode.isActive ? focusMode.bedId : undefined}
+          />
 
-        {/* Hidden stats for development */}
-        {process.env.NODE_ENV === 'development' && viewport && (
-          <div className="fixed bottom-20 right-4 bg-black/80 text-white text-xs p-2 rounded font-mono z-50 hidden lg:block">
-            <div>Área Total: {beds.reduce((total, bed) => {
-              if (bed.shape === 'rectangle') {
-                return total + ((bed.dimensions.length || 0) * (bed.dimensions.width || 0));
-              } else {
-                const radius = bed.dimensions.radius || 0;
-                return total + (Math.PI * radius * radius);
-              }
-            }, 0).toFixed(1)}m²</div>
-            <div>Área Visível: {(viewport.width * viewport.height).toFixed(0)}m²</div>
-          </div>
-        )}
-      </MainLayout>
-    </GrowthTimelineProvider>
+          {/* Debug Panel - Remove in production */}
+          {process.env.NODE_ENV === 'development' && <StorageDebugPanel />}
+
+          {/* Hidden stats for development */}
+          {process.env.NODE_ENV === 'development' && viewport && (
+            <div className="fixed bottom-20 right-4 bg-black/80 text-white text-xs p-2 rounded font-mono z-50 hidden lg:block">
+              <div>Área Total: {beds.reduce((total, bed) => {
+                if (bed.shape === 'rectangle') {
+                  return total + ((bed.dimensions.length || 0) * (bed.dimensions.width || 0));
+                } else {
+                  const radius = bed.dimensions.radius || 0;
+                  return total + (Math.PI * radius * radius);
+                }
+              }, 0).toFixed(1)}m²</div>
+              <div>Área Visível: {(viewport.width * viewport.height).toFixed(0)}m²</div>
+            </div>
+          )}
+        </MainLayout>
+      </GrowthTimelineProvider>
+    </PageErrorBoundary>
   );
 };
 
