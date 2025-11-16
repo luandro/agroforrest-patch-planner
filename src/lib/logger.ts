@@ -26,13 +26,13 @@ class Logger {
   constructor(config: Partial<LoggerConfig> = {}) {
     this.config = {
       level: this.getDefaultLogLevel(),
-      enabled: process.env.NODE_ENV === 'development',
+      enabled: import.meta.env.DEV,
       ...config,
     };
   }
 
   private getDefaultLogLevel(): LogLevel {
-    if (process.env.NODE_ENV === 'production') {
+    if (import.meta.env.PROD) {
       return 'error';
     }
     // Read from localStorage if available

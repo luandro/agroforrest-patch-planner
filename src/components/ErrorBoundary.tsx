@@ -87,7 +87,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
       // Default error UI
       const { error, errorInfo } = this.state;
-      const { showDetails = process.env.NODE_ENV === 'development' } = this.props;
+      const { showDetails = import.meta.env.DEV } = this.props;
 
       return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">

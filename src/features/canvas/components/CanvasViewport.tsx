@@ -60,7 +60,7 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
   const { viewMode } = useSideViewStore();
 
   // DEBUG: Log focusedBed as received
-  if (process.env.NODE_ENV === "development") {
+  if (import.meta.env.DEV) {
     // eslint-disable-next-line no-console
     console.debug("[CanvasViewport] focusedBed", focusedBed, "viewMode", viewMode);
   }
@@ -109,7 +109,7 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
       </div>
 
       {/* Development Info - Positioned safely */}
-      {process.env.NODE_ENV === 'development' && (
+      {import.meta.env.DEV && (
         <div className="absolute bottom-4 left-4 z-[50] max-w-xs">
           <DevelopmentInfo
             beds={beds}

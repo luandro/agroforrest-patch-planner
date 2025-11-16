@@ -12,7 +12,7 @@ import { PageErrorBoundary } from '@/components/ErrorBoundary';
 import { logger } from '@/lib/logger';
 
 // Import storage test for development
-if (process.env.NODE_ENV === 'development') {
+if (import.meta.env.DEV) {
   import('../features/canvas/utils/storageTest');
 }
 
@@ -131,10 +131,10 @@ const PatchCreatorPage: React.FC = () => {
           />
 
           {/* Debug Panel - Remove in production */}
-          {process.env.NODE_ENV === 'development' && <StorageDebugPanel />}
+          {import.meta.env.DEV && <StorageDebugPanel />}
 
           {/* Hidden stats for development */}
-          {process.env.NODE_ENV === 'development' && viewport && (
+          {import.meta.env.DEV && viewport && (
             <div className="fixed bottom-20 right-4 bg-black/80 text-white text-xs p-2 rounded font-mono z-50 hidden lg:block">
               <div>Área Total: {beds.reduce((total, bed) => {
                 if (bed.shape === 'rectangle') {

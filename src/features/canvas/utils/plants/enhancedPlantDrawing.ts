@@ -95,7 +95,7 @@ export const drawEnhancedPlant = (
   }
 
   // Development label - improved visibility
-  if (process.env.NODE_ENV === 'development' && species && finalRadius > 8) {
+  if (import.meta.env.DEV && species && finalRadius > 8) {
     ctx.fillStyle = '#000';
     ctx.font = 'bold 10px Arial';
     ctx.strokeStyle = '#fff';
