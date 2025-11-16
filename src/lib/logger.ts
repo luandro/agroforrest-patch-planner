@@ -45,9 +45,6 @@ class Logger {
       } catch {
         // localStorage unavailable, fall back to default
       }
-      if (stored && LOG_LEVELS[stored] !== undefined) {
-        return stored;
-      }
     }
     return 'info';
   }
