@@ -94,7 +94,11 @@ class Logger {
   setLevel(level: LogLevel): void {
     this.config.level = level;
     if (typeof window !== 'undefined') {
-      localStorage.setItem('app:logLevel', level);
+      try {
+        localStorage.setItem('app:logLevel', level);
+      } catch {
+        // localStorage unavailable, ignore silently
+      }
     }
   }
 
