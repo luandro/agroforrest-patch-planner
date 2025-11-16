@@ -1,9 +1,10 @@
 
 import { useBedSelection } from './useBedSelection';
 import { useSelectionState } from './useSelectionState';
+import { CanvasViewport } from '../types/canvas.types';
 
 interface UseBedSelectionFlowProps {
-  viewport: any;
+  viewport: CanvasViewport;
   canvasRef?: React.RefObject<HTMLCanvasElement>;
   onEnterFocus?: (bedId: string) => void;
   onExitFocus?: () => void;

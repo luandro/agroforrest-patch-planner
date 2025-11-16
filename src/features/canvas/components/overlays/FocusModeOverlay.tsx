@@ -1,13 +1,14 @@
 
 import React from 'react';
 import { FocusModeControls } from '../FocusModeControls';
+import { PlantSpecies } from '../../types/species.types';
 
 interface FocusModeOverlayProps {
   isVisible: boolean;
   focusedBedId?: string | null;
   onExitFocus?: () => void;
   onOpenPlantSelection?: () => void;
-  onSelectSpecies?: (species: any) => void;
+  onSelectSpecies?: (species: PlantSpecies) => void;
   onCancelPlacement?: () => void;
 }
 

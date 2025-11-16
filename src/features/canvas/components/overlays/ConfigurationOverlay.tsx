@@ -2,16 +2,17 @@
 import React from 'react';
 import { BedConfigPanel } from '../BedConfigPanel';
 import { BedConfirmationPanel } from '../BedConfirmationPanel';
-import { CanvasTool } from '../../types/bed.types';
+import { Bed, BedConfig, CanvasTool } from '../../types/bed.types';
+import { BedConfigUpdate } from '../../types/layout.types';
 
 interface ConfigurationOverlayProps {
   tool: CanvasTool;
   isCreating: boolean;
   showConfirmation: boolean;
-  placementBed: any;
-  beds: any[];
-  bedConfig: any;
-  updateBedConfig: any;
+  placementBed: Bed | null;
+  beds: Bed[];
+  bedConfig: BedConfig;
+  updateBedConfig: BedConfigUpdate;
   multiCreationMode: boolean;
   setMultiCreationMode: (enabled: boolean) => void;
   hasCollision?: boolean;

@@ -19,10 +19,10 @@ export const setCanvasBackground = (
 };
 
 export const getSnapHighlight = (
-  previewBeds?: any[],
-  previewBed?: any,
-  placementBeds?: any[],
-  placementBed?: any
+  previewBeds?: Bed[],
+  previewBed?: Bed | null,
+  placementBeds?: Bed[],
+  placementBed?: Bed | null
 ): { x: number; y: number } | undefined => {
   // Show snap highlight for preview or placement bed (use first bed for position)
   if (previewBeds && previewBeds.length > 0) {

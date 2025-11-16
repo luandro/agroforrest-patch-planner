@@ -1,6 +1,8 @@
 
 import React from 'react';
-import { CanvasTool } from '../../types/bed.types';
+import { Bed, BedConfig, CanvasTool } from '../../types/bed.types';
+import { CanvasViewport } from '../../types/canvas.types';
+import { BedConfigUpdate } from '../../types/layout.types';
 import { BedCreationStatusBar } from './BedCreationStatusBar';
 import { BedCreationFloatingControls } from './BedCreationFloatingControls';
 import { MobileBottomToolbar } from './MobileBottomToolbar';
@@ -11,8 +13,8 @@ import { MobileContextActions } from './MobileContextActions';
 interface MobileBedCreationLayoutProps {
   activeTool: CanvasTool;
   onToolChange: (tool: CanvasTool) => void;
-  bedConfig: any;
-  onBedConfigChange: any;
+  bedConfig: BedConfig;
+  onBedConfigChange: BedConfigUpdate;
   onUndo: () => void;
   onRedo: () => void;
   canUndo: boolean;
@@ -20,8 +22,8 @@ interface MobileBedCreationLayoutProps {
   onDeleteSelected: () => void;
   selectedCount: number;
   isSaving: boolean;
-  viewport: any;
-  beds: any[];
+  viewport: CanvasViewport;
+  beds: Bed[];
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFitAll: () => void;

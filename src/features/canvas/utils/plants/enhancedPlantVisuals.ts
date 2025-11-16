@@ -14,7 +14,7 @@ export interface EnhancedPlantVisuals {
 }
 
 export const getEnhancedPlantVisuals = (
-  species: any,
+  species: PlantSpecies | null,
   growthMonth?: number,
   environmentalStress: number = 0
 ): EnhancedPlantVisuals => {
@@ -167,7 +167,7 @@ export const calculateShadowEffects = (
 
 // Função para visualização em massa (bulk placement)
 export const getBulkPreviewVisualsEnhanced = (
-  species: any,
+  species: PlantSpecies | null,
   growthMonth?: number
 ): { color: string; radius: number; opacity: number } => {
   const enhanced = getEnhancedPlantVisuals(species, growthMonth);

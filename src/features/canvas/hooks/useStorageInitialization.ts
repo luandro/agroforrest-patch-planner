@@ -16,6 +16,9 @@ import {
   BEDS_STORE_NAME,
   PLACEMENTS_STORE_NAME
 } from '../utils/storageManager';
+import { Patch } from '../types/patch.types';
+import { Bed } from '../types/bed.types';
+import { PlantPlacement } from '../stores/plantPlacementStore';
 
 interface StorageInitializationState {
   isInitialized: boolean;
@@ -83,7 +86,7 @@ export const useStorageInitialization = () => {
   const initializePatches = async () => {
     console.log('📦 Initializing patches...');
     
-    let patches: any[] = [];
+    let patches: Patch[] = [];
     
     // Try IndexedDB first, fallback to localStorage
     if (await isIndexedDBAvailable()) {
@@ -94,7 +97,7 @@ export const useStorageInitialization = () => {
           const transaction = db.transaction([PATCHES_STORE_NAME], 'readonly');
           const store = transaction.objectStore(PATCHES_STORE_NAME);
           
-          patches = await new Promise<any[]>((resolve, reject) => {
+          patches = await new Promise<Patch[]>((resolve, reject) => {
             const request = store.getAll();
             request.onsuccess = () => resolve(request.result || []);
             request.onerror = () => reject(request.error);
@@ -104,10 +107,10 @@ export const useStorageInitialization = () => {
         db.close();
       } catch (error) {
         console.warn('⚠️ IndexedDB failed for patches, using localStorage:', error);
-        patches = loadFromLocalStorageFallback('patches', []);
+        patches = loadFromLocalStorageFallback<Patch[]>('patches', []);
       }
     } else {
-      patches = loadFromLocalStorageFallback('patches', []);
+      patches = loadFromLocalStorageFallback<Patch[]>('patches', []);
     }
 
     if (patches.length === 0) {
@@ -141,7 +144,7 @@ export const useStorageInitialization = () => {
       return;
     }
 
-    let beds: any[] = [];
+    let bedsForPatch: Bed[] = [];
     
     // Try IndexedDB first, fallback to localStorage
     if (await isIndexedDBAvailable()) {
@@ -152,28 +155,28 @@ export const useStorageInitialization = () => {
           const transaction = db.transaction([BEDS_STORE_NAME], 'readonly');
           const store = transaction.objectStore(BEDS_STORE_NAME);
           
-          const allBeds = await new Promise<any[]>((resolve, reject) => {
+          const allBeds = await new Promise<Bed[]>((resolve, reject) => {
             const request = store.getAll();
             request.onsuccess = () => resolve(request.result || []);
             request.onerror = () => reject(request.error);
           });
-          
-          beds = allBeds.filter(bed => bed.patchId === currentPatchId);
+
+          bedsForPatch = allBeds.filter(bed => bed.patchId === currentPatchId);
         }
         
         db.close();
       } catch (error) {
         console.warn('⚠️ IndexedDB failed for beds, using localStorage:', error);
-        const allBeds = loadFromLocalStorageFallback('beds', []);
-        beds = allBeds.filter((bed: any) => bed.patchId === currentPatchId);
+        const allBeds = loadFromLocalStorageFallback<Bed[]>('beds', []);
+        bedsForPatch = allBeds.filter((bed) => bed.patchId === currentPatchId);
       }
     } else {
-      const allBeds = loadFromLocalStorageFallback('beds', []);
-      beds = allBeds.filter((bed: any) => bed.patchId === currentPatchId);
+      const allBeds = loadFromLocalStorageFallback<Bed[]>('beds', []);
+      bedsForPatch = allBeds.filter((bed) => bed.patchId === currentPatchId);
     }
 
-    loadBeds(beds);
-    console.log('✅ Beds loaded for patch:', currentPatchId, 'count:', beds.length);
+    loadBeds(bedsForPatch);
+    console.log('✅ Beds loaded for patch:', currentPatchId, 'count:', bedsForPatch.length);
   };
 
   const initializePlants = async () => {
@@ -184,7 +187,7 @@ export const useStorageInitialization = () => {
       return;
     }
 
-    let placements: any[] = [];
+    let placementsForPatch: PlantPlacement[] = [];
     const currentPatchBedIds = beds.map(bed => bed.id);
     
     // Try IndexedDB first, fallback to localStorage
@@ -196,14 +199,14 @@ export const useStorageInitialization = () => {
           const transaction = db.transaction([PLACEMENTS_STORE_NAME], 'readonly');
           const store = transaction.objectStore(PLACEMENTS_STORE_NAME);
           
-          const allPlacements = await new Promise<any[]>((resolve, reject) => {
+          const allPlacements = await new Promise<PlantPlacement[]>((resolve, reject) => {
             const request = store.getAll();
             request.onsuccess = () => resolve(request.result || []);
             request.onerror = () => reject(request.error);
           });
-          
+
           // Filter by both patchId and bedId for compatibility
-          placements = allPlacements.filter(
+          placementsForPatch = allPlacements.filter(
             placement => placement.patchId === currentPatchId || currentPatchBedIds.includes(placement.bedId)
           );
         }
@@ -211,20 +214,20 @@ export const useStorageInitialization = () => {
         db.close();
       } catch (error) {
         console.warn('⚠️ IndexedDB failed for placements, using localStorage:', error);
-        const allPlacements = loadFromLocalStorageFallback('placements', []);
-        placements = allPlacements.filter(
-          (placement: any) => placement.patchId === currentPatchId || currentPatchBedIds.includes(placement.bedId)
+        const allPlacements = loadFromLocalStorageFallback<PlantPlacement[]>('placements', []);
+        placementsForPatch = allPlacements.filter(
+          (placement) => placement.patchId === currentPatchId || currentPatchBedIds.includes(placement.bedId)
         );
       }
     } else {
-      const allPlacements = loadFromLocalStorageFallback('placements', []);
-      placements = allPlacements.filter(
-        (placement: any) => placement.patchId === currentPatchId || currentPatchBedIds.includes(placement.bedId)
+      const allPlacements = loadFromLocalStorageFallback<PlantPlacement[]>('placements', []);
+      placementsForPatch = allPlacements.filter(
+        (placement) => placement.patchId === currentPatchId || currentPatchBedIds.includes(placement.bedId)
       );
     }
 
-    loadPlacements(placements);
-    console.log('✅ Plants loaded for patch:', currentPatchId, 'count:', placements.length);
+    loadPlacements(placementsForPatch);
+    console.log('✅ Plants loaded for patch:', currentPatchId, 'count:', placementsForPatch.length);
   };
 
   // Initialize on mount

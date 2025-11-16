@@ -1,11 +1,12 @@
 
 import React from 'react';
 import { CanvasViewport } from '../../types/canvas.types';
+import { Bed } from '../../types/bed.types';
 import { cn } from '@/lib/utils';
 
 interface MobileMiniMapProps {
   viewport: CanvasViewport;
-  beds: any[];
+  beds: Bed[];
   onNavigate: (x: number, y: number) => void;
   className?: string;
 }

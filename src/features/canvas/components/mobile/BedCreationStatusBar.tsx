@@ -2,11 +2,13 @@
 import React from 'react';
 import { SaveStatus } from './SaveStatus';
 import { MobileMiniMap } from './MobileMiniMap';
+import { CanvasViewport } from '../../types/canvas.types';
+import { Bed } from '../../types/bed.types';
 
 interface BedCreationStatusBarProps {
   isSaving: boolean;
-  viewport: any;
-  beds: any[];
+  viewport: CanvasViewport;
+  beds: Bed[];
   onNavigate: (x: number, y: number) => void;
 }
 

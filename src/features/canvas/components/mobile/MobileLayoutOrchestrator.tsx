@@ -1,6 +1,8 @@
 
 import React from 'react';
-import { CanvasTool } from '../../types/bed.types';
+import { Bed, BedConfig, CanvasTool } from '../../types/bed.types';
+import { CanvasViewport } from '../../types/canvas.types';
+import { BedConfigUpdate } from '../../types/layout.types';
 import { MobileFocusModeLayout } from './MobileFocusModeLayout';
 import { MobileBedCreationLayout } from './MobileBedCreationLayout';
 import { PlantEditorModal } from './PlantEditorModal';
@@ -10,8 +12,8 @@ import { usePlantPlacementStore } from '../../stores/plantPlacementStore';
 interface MobileLayoutOrchestratorProps {
   activeTool: CanvasTool;
   onToolChange: (tool: CanvasTool) => void;
-  bedConfig: any;
-  onBedConfigChange: any;
+  bedConfig: BedConfig;
+  onBedConfigChange: BedConfigUpdate;
   onUndo: () => void;
   onRedo: () => void;
   canUndo: boolean;
@@ -21,8 +23,8 @@ interface MobileLayoutOrchestratorProps {
   isSaving: boolean;
   showConfirmation: boolean;
   isInFocusMode: boolean;
-  viewport: any;
-  beds: any[];
+  viewport: CanvasViewport;
+  beds: Bed[];
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFitAll: () => void;

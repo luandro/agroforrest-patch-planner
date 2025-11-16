@@ -2,10 +2,12 @@
 import { useCallback } from 'react';
 import { usePlantPlacement } from './usePlantPlacement';
 import { PlantSpecies } from '../types/species.types';
+import { CanvasViewport } from '../types/canvas.types';
+import { Bed } from '../types/bed.types';
 
 interface UsePlantSelectionFlowProps {
-  viewport: any;
-  focusedBed: any;
+  viewport: CanvasViewport;
+  focusedBed: Bed | null;
   canvasRef?: React.RefObject<HTMLCanvasElement>;
   onOpenPlantSelection?: () => void;
 }

@@ -1,5 +1,5 @@
 import { CanvasViewport } from '../types/canvas.types';
-import { BedConfig, Bed } from '../types/bed.types';
+import { BedConfig, Bed, BedDimensions } from '../types/bed.types';
 
 export interface WorldPosition {
   x: number;
@@ -164,7 +164,7 @@ export const checkCollision = (footprint1: BedFootprint, footprint2: BedFootprin
 };
 
 // Check if position has collision with existing beds (legacy function)
-export const checkCollisionLegacy = (position: WorldPosition, dimensions: any): boolean => {
+export const checkCollisionLegacy = (position: WorldPosition, dimensions: BedDimensions): boolean => {
   // This would check against existing beds in a real implementation
   // For now, just return false
   return false;

@@ -1,5 +1,6 @@
 
 import { PlantingTemplate } from '../types/template.types';
+import { PlantSpecies } from '../types/species.types';
 
 export const predefinedTemplates: PlantingTemplate[] = [
   {
@@ -263,71 +264,89 @@ export const predefinedTemplates: PlantingTemplate[] = [
   }
 ];
 
+const defaultTemplateSpeciesProps: Omit<PlantSpecies, 'id' | 'commonName' | 'scientificName' | 'category'> = {
+  companionCompatibility: 'high',
+  matureSize: { height: 2, width: 1.5 },
+  spacing: { min: 0.4, max: 1 },
+  description: 'Espécie utilizada em modelos de canteiro',
+  growthRate: 'medium',
+  sunRequirement: 'full',
+  waterRequirement: 'medium'
+};
+
+const createTemplateSpecies = (
+  species: Pick<PlantSpecies, 'id' | 'commonName' | 'scientificName' | 'category'> &
+    Partial<Omit<PlantSpecies, 'id' | 'commonName' | 'scientificName' | 'category'>>
+): PlantSpecies => ({
+  ...defaultTemplateSpeciesProps,
+  ...species
+});
+
 // Map species IDs to actual species data
 export const getSpeciesForTemplate = (speciesId: string) => {
   // This would normally query from your species database
   // For now, return mock data that matches the existing species structure
-  const speciesMap: Record<string, any> = {
-    'mango': {
+  const speciesMap: Record<string, PlantSpecies> = {
+    'mango': createTemplateSpecies({
       id: 'mango',
       commonName: 'Mangueira',
       scientificName: 'Mangifera indica',
       category: 'trees'
-    },
-    'papaya': {
+    }),
+    'papaya': createTemplateSpecies({
       id: 'papaya', 
       commonName: 'Mamoeiro',
       scientificName: 'Carica papaya',
       category: 'trees'
-    },
-    'coffee': {
+    }),
+    'coffee': createTemplateSpecies({
       id: 'coffee',
       commonName: 'Cafeeiro',
       scientificName: 'Coffea arabica', 
       category: 'shrubs'
-    },
-    'turmeric': {
+    }),
+    'turmeric': createTemplateSpecies({
       id: 'turmeric',
       commonName: 'Açafrão',
       scientificName: 'Curcuma longa',
       category: 'herbs'
-    },
-    'lettuce': {
+    }),
+    'lettuce': createTemplateSpecies({
       id: 'lettuce',
       commonName: 'Alface',
       scientificName: 'Lactuca sativa',
       category: 'herbs'
-    },
-    'banana': {
+    }),
+    'banana': createTemplateSpecies({
       id: 'banana',
       commonName: 'Bananeira', 
       scientificName: 'Musa spp.',
       category: 'trees'
-    },
-    'basil': {
+    }),
+    'basil': createTemplateSpecies({
       id: 'basil',
       commonName: 'Manjericão',
       scientificName: 'Ocimum basilicum',
       category: 'herbs'
-    },
-    'eucalyptus': {
+    }),
+    'eucalyptus': createTemplateSpecies({
       id: 'eucalyptus',
       commonName: 'Eucalipto',
       scientificName: 'Eucalyptus spp.',
       category: 'trees'
-    },
-    'acacia': {
+    }),
+    'acacia': createTemplateSpecies({
       id: 'acacia',
       commonName: 'Acácia',
       scientificName: 'Acacia mangium',
       category: 'trees'
-    },
-    'bean': {
+    }),
+    'bean': createTemplateSpecies({
       id: 'bean',
       commonName: 'Feijão',
       scientificName: 'Phaseolus vulgaris',
       category: 'herbs'
-    }
+    })
   };
   
   return speciesMap[speciesId] || null;

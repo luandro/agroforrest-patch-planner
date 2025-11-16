@@ -1,3 +1,4 @@
+import { PlantSpecies } from './species.types';
 
 export interface PlantingTemplate {
   id: string;
@@ -36,7 +37,7 @@ export interface TemplatePreview {
 
 export interface ScaledTemplatePlant extends TemplatePlant {
   scaledPosition: { x: number; y: number };
-  species: any; // PlantSpecies reference
+  species?: PlantSpecies; // PlantSpecies reference
 }
 
 export interface TemplateCompatibility {

@@ -2,11 +2,12 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Undo, Redo } from 'lucide-react';
+import { PlantSpecies } from '../../types/species.types';
 
 interface FocusModeControlsProps {
   canUndo: boolean;
   canRedo: boolean;
-  selectedSpecies: any;
+  selectedSpecies: PlantSpecies | null;
   onUndo: () => void;
   onRedo: () => void;
   onOpenTimeline: () => void;

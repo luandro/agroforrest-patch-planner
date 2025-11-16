@@ -1,12 +1,14 @@
 
 import { getBulkPreviewVisuals } from './plantVisuals';
+import { PlantSpecies } from '../../types/species.types';
+import { PlacementPosition } from '../../types/bulkPlacement.types';
 
 export const drawBulkPreviewPlant = (
   ctx: CanvasRenderingContext2D,
   screenX: number,
   screenY: number,
-  species: any = null,
-  position: any
+  species: PlantSpecies | null = null,
+  position: PlacementPosition
 ) => {
   ctx.save();
   ctx.globalAlpha = 0.6;

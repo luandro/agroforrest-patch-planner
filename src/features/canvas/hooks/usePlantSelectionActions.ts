@@ -2,6 +2,7 @@
 import { useCallback } from 'react';
 import { Bed } from '../types/bed.types';
 import { usePlantPlacementStore } from '../stores/plantPlacementStore';
+import type { PlantPlacement } from '../stores/plantPlacementStore';
 
 interface UsePlantSelectionActionsProps {
   focusedBed: Bed | null;
@@ -18,7 +19,7 @@ export const usePlantSelectionActions = ({
   } = usePlantPlacementStore();
 
   // Enhanced plant selection with better multi-select support
-  const handlePlantSelection = useCallback((plant: any, isMultiSelect: boolean = false) => {
+  const handlePlantSelection = useCallback((plant: PlantPlacement | null, isMultiSelect: boolean = false) => {
     if (plant) {
       if (isMultiSelect) {
         // Multi-select toggle with improved logic

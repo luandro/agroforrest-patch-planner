@@ -1,11 +1,12 @@
 
 import { CanvasViewport } from '../types/canvas.types';
+import { Bed } from '../types/bed.types';
 import { getPixelsPerMeter, getDisplayDimensions, getOffsets } from './gridMath';
 
 interface PlantingGridRendererArgs {
   ctx: CanvasRenderingContext2D;
   viewport: CanvasViewport;
-  focusedBed: any;
+  focusedBed: Bed;
   zoom: number;
 }
 

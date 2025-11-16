@@ -2,11 +2,12 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { CanvasViewport } from '../types/canvas.types';
+import { Bed, CanvasTool } from '../types/bed.types';
 
 interface DevelopmentInfoProps {
   viewport: CanvasViewport;
-  tool: string;
-  beds: any[];
+  tool: CanvasTool;
+  beds: Bed[];
   selectedBedIds: string[];
   isMobile: boolean;
 }

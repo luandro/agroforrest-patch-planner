@@ -1,13 +1,14 @@
 
 import React, { createContext, useContext } from 'react';
-import { useGrowthTimeline } from '../hooks/useGrowthTimeline';
+import { useGrowthTimeline, GrowthStage } from '../hooks/useGrowthTimeline';
+import { PlantSpecies } from '../types/species.types';
 
 interface GrowthTimelineContextType {
   currentMonth: number;
   setCurrentMonth: (month: number) => void;
   isPlaying: boolean;
-  calculatePlantSize: (species: any, months: number) => number;
-  currentStage: any;
+  calculatePlantSize: (species: PlantSpecies, months: number) => number;
+  currentStage: GrowthStage;
   startPlayback: () => void;
   stopPlayback: () => void;
   resetTimeline: () => void;

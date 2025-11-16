@@ -1,4 +1,5 @@
 import { getEnhancedPlantVisuals, getBulkPreviewVisualsEnhanced } from './enhancedPlantVisuals';
+import { PlantSpecies } from '../../types/species.types';
 
 export interface PlantVisuals {
   color: string;
@@ -7,7 +8,7 @@ export interface PlantVisuals {
 }
 
 // Manter a função original para compatibilidade, mas usar o sistema aprimorado internamente
-export const getPlantVisuals = (species: any, growthMonth?: number): PlantVisuals => {
+export const getPlantVisuals = (species: PlantSpecies | null, growthMonth?: number): PlantVisuals => {
   const enhanced = getEnhancedPlantVisuals(species, growthMonth);
   
   return {
@@ -18,7 +19,7 @@ export const getPlantVisuals = (species: any, growthMonth?: number): PlantVisual
 };
 
 // Atualizar a função de preview para usar os novos cálculos
-export const getBulkPreviewVisuals = (species: any): { color: string; radius: number } => {
+export const getBulkPreviewVisuals = (species: PlantSpecies | null): { color: string; radius: number } => {
   const enhanced = getBulkPreviewVisualsEnhanced(species);
   
   return {

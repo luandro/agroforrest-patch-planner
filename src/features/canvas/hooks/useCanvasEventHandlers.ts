@@ -9,6 +9,9 @@ import { useCanvasHoverState } from './useCanvasHoverState';
 import { useCanvasContextMenu } from './useCanvasContextMenu';
 import { useCanvasDoubleClick } from './useCanvasDoubleClick';
 
+import { CanvasViewport } from '../types/canvas.types';
+import { Bed } from '../types/bed.types';
+
 interface UseCanvasEventHandlersProps {
   tool: CanvasTool;
   isCreating: boolean;

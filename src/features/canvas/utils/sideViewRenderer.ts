@@ -1,12 +1,19 @@
 
-import { SideViewPlant, SideViewBed } from '../types/sideView.types';
+import { SideViewPlant, SideViewBed, SideViewport } from '../types/sideView.types';
 import { CANOPY_LAYERS } from '../data/heightGrowthData';
+
+type CanvasPadding = {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+};
 
 interface RenderSideViewParams {
   ctx: CanvasRenderingContext2D;
   canvas: HTMLCanvasElement;
   bed: SideViewBed;
-  viewport: any;
+  viewport: SideViewport;
   currentMonth: number;
 }
 
@@ -25,7 +32,7 @@ export const renderSideView = ({
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   
   // Calculate usable canvas area
-  const padding = { left: 80, right: 40, top: 40, bottom: 80 };
+  const padding: CanvasPadding = { left: 80, right: 40, top: 40, bottom: 80 };
   const usableWidth = canvas.width - padding.left - padding.right;
   const usableHeight = canvas.height - padding.top - padding.bottom;
   
@@ -37,7 +44,7 @@ export const renderSideView = ({
   
   // Draw plants with proper distribution
   bed.plants.forEach(plant => {
-    drawSideViewPlant(ctx, plant, viewport, currentMonth, bed.length, padding, usableWidth, usableHeight);
+    drawSideViewPlant(ctx, plant, currentMonth, bed.length, padding, usableWidth, usableHeight);
   });
   
   // Draw height scale
@@ -50,8 +57,8 @@ export const renderSideView = ({
 const drawHeightGrid = (
   ctx: CanvasRenderingContext2D, 
   canvas: HTMLCanvasElement, 
-  viewport: any,
-  padding: any,
+  viewport: SideViewport,
+  padding: CanvasPadding,
   usableWidth: number,
   usableHeight: number
 ) => {
@@ -88,8 +95,8 @@ const drawHeightGrid = (
 const drawCanopyLayers = (
   ctx: CanvasRenderingContext2D, 
   canvas: HTMLCanvasElement, 
-  viewport: any,
-  padding: any,
+  viewport: SideViewport,
+  padding: CanvasPadding,
   usableWidth: number,
   usableHeight: number
 ) => {
@@ -123,10 +130,9 @@ const drawCanopyLayers = (
 const drawSideViewPlant = (
   ctx: CanvasRenderingContext2D, 
   plant: SideViewPlant, 
-  viewport: any, 
   currentMonth: number,
   bedLength: number,
-  padding: any,
+  padding: CanvasPadding,
   usableWidth: number,
   usableHeight: number
 ) => {
@@ -199,8 +205,8 @@ const drawSideViewPlant = (
 const drawHeightScale = (
   ctx: CanvasRenderingContext2D, 
   canvas: HTMLCanvasElement, 
-  viewport: any,
-  padding: any
+  viewport: SideViewport,
+  padding: CanvasPadding
 ) => {
   ctx.fillStyle = '#374151';
   ctx.font = '12px sans-serif';
@@ -230,7 +236,7 @@ const drawLengthScale = (
   ctx: CanvasRenderingContext2D, 
   canvas: HTMLCanvasElement,
   bedLength: number,
-  padding: any,
+  padding: CanvasPadding,
   usableWidth: number
 ) => {
   ctx.fillStyle = '#374151';

@@ -66,7 +66,7 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
       
       let currentHeight = 0.3; // Start with seedling height
       let canopyRadius = 0.2; // Start with seedling canopy
-      let canopyLayer: any = 'understory';
+      let canopyLayer: SideViewPlant['canopyLayer'] = 'understory';
 
       // Use timeline month for proper growth calculation
       const effectiveMonth = isTimelineActive ? timelineMonth : 0;

@@ -1,12 +1,13 @@
 import { drawEnhancedPlant } from './enhancedPlantDrawing';
 import { getEnhancedPlantVisuals } from './enhancedPlantVisuals';
+import { PlantSpecies } from '../../types/species.types';
 
 // Manter a função original para compatibilidade, mas redirecionar para a versão aprimorada
 export const drawPlant = (
   ctx: CanvasRenderingContext2D,
   screenX: number,
   screenY: number,
-  species: any = null,
+  species: PlantSpecies | null = null,
   isSelected: boolean = false,
   isPreview: boolean = false,
   isHovered: boolean = false,

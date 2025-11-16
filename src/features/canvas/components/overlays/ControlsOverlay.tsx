@@ -3,17 +3,19 @@ import React from 'react';
 import { MobileLayout } from '../mobile/MobileLayout';
 import { DesktopSidebar } from '../DesktopSidebar';
 import { ViewControls } from '../ViewControls';
-import { CanvasTool } from '../../types/bed.types';
+import { Bed, BedConfig, CanvasTool } from '../../types/bed.types';
+import { CanvasViewport } from '../../types/canvas.types';
+import { BedConfigUpdate } from '../../types/layout.types';
 import { cn } from '@/lib/utils';
 
 interface ControlsOverlayProps {
-  viewport: any;
-  beds: any[];
+  viewport: CanvasViewport;
+  beds: Bed[];
   selectedBedIds: string[];
   tool: CanvasTool;
   setTool: (tool: CanvasTool) => void;
-  bedConfig: any;
-  updateBedConfig: any;
+  bedConfig: BedConfig;
+  updateBedConfig: BedConfigUpdate;
   handleZoomIn: () => void;
   handleZoomOut: () => void;
   handleFitAll: () => void;

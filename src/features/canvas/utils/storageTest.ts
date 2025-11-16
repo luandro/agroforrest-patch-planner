@@ -11,9 +11,25 @@ import {
   PATCHES_STORE_NAME,
   PLACEMENTS_STORE_NAME
 } from './storageManager';
+import { Patch } from '../types/patch.types';
+import { Bed } from '../types/bed.types';
+import { PlantPlacement } from '../stores/plantPlacementStore';
+
+interface StorageTestAPI {
+  testLocalStorageFallback: () => ReturnType<typeof testLocalStorageFallback>;
+  testIndexedDB: () => ReturnType<typeof testIndexedDB>;
+  runStorageTests: () => ReturnType<typeof runStorageTests>;
+  clearTestData: () => ReturnType<typeof clearTestData>;
+}
+
+declare global {
+  interface Window {
+    storageTest?: StorageTestAPI;
+  }
+}
 
 // Test data
-const testPatch = {
+const testPatch: Patch = {
   id: 'test-patch-1',
   name: 'Test Patch',
   description: 'Test patch for storage verification',
@@ -23,7 +39,7 @@ const testPatch = {
   lastViewport: { zoom: 1, centerX: 0, centerY: 0 }
 };
 
-const testBed = {
+const testBed: Bed = {
   id: 'test-bed-1',
   patchId: 'test-patch-1',
   shape: 'rectangle',
@@ -34,7 +50,7 @@ const testBed = {
   updatedAt: Date.now()
 };
 
-const testPlacement = {
+const testPlacement: PlantPlacement = {
   id: 'test-placement-1',
   bedId: 'test-bed-1',
   patchId: 'test-patch-1',
@@ -42,12 +58,14 @@ const testPlacement = {
     id: 'test-species',
     commonName: 'Test Plant',
     scientificName: 'Testus plantus',
-    category: 'test',
+    category: 'trees',
+    companionCompatibility: 'high',
+    matureSize: { height: 3, width: 2 },
     spacing: { min: 1, max: 2 },
-    growthHabit: 'upright',
+    description: 'Demo species',
+    growthRate: 'medium',
     sunRequirement: 'full',
-    waterRequirement: 'medium',
-    soilRequirement: 'any'
+    waterRequirement: 'medium'
   },
   position: { x: 1, y: 1 },
   notes: 'Test placement'
@@ -66,9 +84,9 @@ export const testLocalStorageFallback = () => {
     saveToLocalStorageFallback('placements', [testPlacement]);
     
     // Test loading
-    const loadedPatches = loadFromLocalStorageFallback('patches', []);
-    const loadedBeds = loadFromLocalStorageFallback('beds', []);
-    const loadedPlacements = loadFromLocalStorageFallback('placements', []);
+    const loadedPatches = loadFromLocalStorageFallback<Patch[]>('patches', []);
+    const loadedBeds = loadFromLocalStorageFallback<Bed[]>('beds', []);
+    const loadedPlacements = loadFromLocalStorageFallback<PlantPlacement[]>('placements', []);
     
     console.log('✅ localStorage test results:', {
       patches: loadedPatches,
@@ -116,17 +134,17 @@ export const testIndexedDB = async () => {
     const readTransaction = db.transaction([PATCHES_STORE_NAME, BEDS_STORE_NAME, PLACEMENTS_STORE_NAME], 'readonly');
     
     const [patches, beds, placements] = await Promise.all([
-      new Promise<any[]>((resolve, reject) => {
+      new Promise<Patch[]>((resolve, reject) => {
         const request = readTransaction.objectStore(PATCHES_STORE_NAME).getAll();
         request.onsuccess = () => resolve(request.result || []);
         request.onerror = () => reject(request.error);
       }),
-      new Promise<any[]>((resolve, reject) => {
+      new Promise<Bed[]>((resolve, reject) => {
         const request = readTransaction.objectStore(BEDS_STORE_NAME).getAll();
         request.onsuccess = () => resolve(request.result || []);
         request.onerror = () => reject(request.error);
       }),
-      new Promise<any[]>((resolve, reject) => {
+      new Promise<PlantPlacement[]>((resolve, reject) => {
         const request = readTransaction.objectStore(PLACEMENTS_STORE_NAME).getAll();
         request.onsuccess = () => resolve(request.result || []);
         request.onerror = () => reject(request.error);
@@ -206,7 +224,7 @@ export const clearTestData = async () => {
 
 // Make functions available globally for console testing
 if (typeof window !== 'undefined') {
-  (window as any).storageTest = {
+  window.storageTest = {
     testLocalStorageFallback,
     testIndexedDB,
     runStorageTests,

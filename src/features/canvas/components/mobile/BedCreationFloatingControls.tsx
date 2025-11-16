@@ -1,14 +1,15 @@
 
 import React from 'react';
-import { CanvasTool } from '../../types/bed.types';
+import { Bed, BedConfig, CanvasTool } from '../../types/bed.types';
+import { CanvasViewport } from '../../types/canvas.types';
 import { MobileFloatingZoom } from './MobileFloatingZoom';
 import { MobileBedConfigButton } from './MobileBedConfigButton';
 
 interface BedCreationFloatingControlsProps {
   activeTool: CanvasTool;
-  bedConfig: any;
-  viewport: any;
-  beds: any[];
+  bedConfig: BedConfig;
+  viewport: CanvasViewport;
+  beds: Bed[];
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFitAll: () => void;

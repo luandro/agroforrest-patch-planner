@@ -42,7 +42,7 @@ export const createPreviewManager = (
 export const createPlacementManager = (
   placeBedBase: (previewBed: Bed | null) => void,
   confirmPlacementBase: () => boolean,
-  cancelPlacementBase: (cursorPosition: { x: number; y: number } | null) => any,
+  cancelPlacementBase: (cursorPosition?: { x: number; y: number } | null) => { resumePreview?: boolean; bed?: Bed | null } | void,
   clearPreview: () => void,
   clearPlacement: () => void,
   getPreviewBed: () => Bed | null,  // <-- instead of stale previewBed
@@ -65,7 +65,7 @@ export const createPlacementManager = (
   };
 
   const cancelPlacement = () => {
-    const result = cancelPlacementBase(getCursorPosition());
+    const result = cancelPlacementBase(getCursorPosition()) || {};
 
     if (result.resumePreview && result.bed) {
       clearPreview();

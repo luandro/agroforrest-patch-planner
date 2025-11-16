@@ -2,6 +2,9 @@
  * Unified storage manager for IndexedDB with localStorage fallback
  * Handles all database operations for patches, beds, and plant placements
  */
+import { Patch } from '../types/patch.types';
+import { Bed } from '../types/bed.types';
+import { PlantPlacement } from '../stores/plantPlacementStore';
 
 export const DB_NAME = 'AgroForestDB';
 export const DB_VERSION = 4; // Incremented to force schema update
@@ -206,7 +209,7 @@ export const clearAllStorage = async (): Promise<void> => {
 /**
  * Upsert (insert or update) patches data efficiently
  */
-export const upsertPatches = async (patches: unknown[]): Promise<void> => {
+export const upsertPatches = async (patches: Patch[]): Promise<void> => {
   try {
     if (await isIndexedDBAvailable()) {
       const db = await openDB();
@@ -227,12 +230,12 @@ export const upsertPatches = async (patches: unknown[]): Promise<void> => {
       console.log('✅ Patches upserted successfully:', patches.length);
     } else {
       // For localStorage, we still need to load all and merge
-      const existing = loadFromLocalStorageFallback('patches', []);
-      const patchMap = new Map(existing.map((p: unknown) => [(p as any).id, p]));
+      const existing = loadFromLocalStorageFallback<Patch[]>('patches', []);
+      const patchMap = new Map(existing.map((p) => [p.id, p] as const));
       
       // Update existing or add new
       patches.forEach(patch => {
-        patchMap.set((patch as any).id, patch);
+        patchMap.set(patch.id, patch);
       });
       
       saveToLocalStorageFallback('patches', Array.from(patchMap.values()));
@@ -247,7 +250,7 @@ export const upsertPatches = async (patches: unknown[]): Promise<void> => {
 /**
  * Upsert beds data efficiently for a specific patch
  */
-export const upsertBedsForPatch = async (patchId: string, beds: unknown[]): Promise<void> => {
+export const upsertBedsForPatch = async (patchId: string, beds: Bed[]): Promise<void> => {
   try {
     if (await isIndexedDBAvailable()) {
       const db = await openDB();
@@ -259,19 +262,19 @@ export const upsertBedsForPatch = async (patchId: string, beds: unknown[]): Prom
       const range = IDBKeyRange.only(patchId);
       const existingBedsRequest = index.getAll(range);
       
-      const existingBeds = await new Promise<unknown[]>((resolve, reject) => {
+      const existingBeds = await new Promise<Bed[]>((resolve, reject) => {
         existingBedsRequest.onsuccess = () => resolve(existingBedsRequest.result || []);
         existingBedsRequest.onerror = () => reject(existingBedsRequest.error);
       });
       
       // Delete existing beds for this patch
       existingBeds.forEach(bed => {
-        store.delete((bed as any).id);
+        store.delete(bed.id);
       });
       
       // Add new beds with patch reference
       const bedsWithPatch = beds.map(bed => ({
-        ...(bed as any),
+        ...bed,
         patchId
       }));
       
@@ -288,9 +291,9 @@ export const upsertBedsForPatch = async (patchId: string, beds: unknown[]): Prom
       console.log('✅ Beds upserted successfully for patch:', patchId, 'count:', beds.length);
     } else {
       // For localStorage, load all beds and update
-      const allBeds = loadFromLocalStorageFallback('beds', []);
-      const otherPatchBeds = allBeds.filter((bed: unknown) => (bed as any).patchId !== patchId);
-      const bedsWithPatch = beds.map(bed => ({ ...(bed as any), patchId }));
+      const allBeds = loadFromLocalStorageFallback<Bed[]>('beds', []);
+      const otherPatchBeds = allBeds.filter((bed) => bed.patchId !== patchId);
+      const bedsWithPatch = beds.map(bed => ({ ...bed, patchId }));
       
       saveToLocalStorageFallback('beds', [...otherPatchBeds, ...bedsWithPatch]);
       console.log('✅ Beds upserted to localStorage for patch:', patchId, 'count:', beds.length);
@@ -304,7 +307,7 @@ export const upsertBedsForPatch = async (patchId: string, beds: unknown[]): Prom
 /**
  * Upsert plant placements data efficiently for a specific patch
  */
-export const upsertPlacementsForPatch = async (patchId: string, placements: unknown[]): Promise<void> => {
+export const upsertPlacementsForPatch = async (patchId: string, placements: PlantPlacement[]): Promise<void> => {
   try {
     if (await isIndexedDBAvailable()) {
       const db = await openDB();
@@ -316,19 +319,19 @@ export const upsertPlacementsForPatch = async (patchId: string, placements: unkn
       const range = IDBKeyRange.only(patchId);
       const existingPlacementsRequest = index.getAll(range);
       
-      const existingPlacements = await new Promise<unknown[]>((resolve, reject) => {
+      const existingPlacements = await new Promise<PlantPlacement[]>((resolve, reject) => {
         existingPlacementsRequest.onsuccess = () => resolve(existingPlacementsRequest.result || []);
         existingPlacementsRequest.onerror = () => reject(existingPlacementsRequest.error);
       });
       
       // Delete existing placements for this patch
       existingPlacements.forEach(placement => {
-        store.delete((placement as any).id);
+        store.delete(placement.id);
       });
       
       // Add new placements with patch reference
       const placementsWithPatch = placements.map(placement => ({
-        ...(placement as any),
+        ...placement,
         patchId
       }));
       
@@ -345,9 +348,9 @@ export const upsertPlacementsForPatch = async (patchId: string, placements: unkn
       console.log('✅ Placements upserted successfully for patch:', patchId, 'count:', placements.length);
     } else {
       // For localStorage, load all placements and update
-      const allPlacements = loadFromLocalStorageFallback('placements', []);
-      const otherPatchPlacements = allPlacements.filter((placement: unknown) => (placement as any).patchId !== patchId);
-      const placementsWithPatch = placements.map(placement => ({ ...(placement as any), patchId }));
+      const allPlacements = loadFromLocalStorageFallback<PlantPlacement[]>('placements', []);
+      const otherPatchPlacements = allPlacements.filter((placement) => placement.patchId !== patchId);
+      const placementsWithPatch = placements.map(placement => ({ ...placement, patchId }));
       
       saveToLocalStorageFallback('placements', [...otherPatchPlacements, ...placementsWithPatch]);
       console.log('✅ Placements upserted to localStorage for patch:', patchId, 'count:', placements.length);
@@ -361,10 +364,10 @@ export const upsertPlacementsForPatch = async (patchId: string, placements: unkn
 /**
  * Load data for a specific patch efficiently
  */
-export const loadPatchData = async (patchId: string) => {
+export const loadPatchData = async (patchId: string): Promise<{ beds: Bed[]; placements: PlantPlacement[] }> => {
   try {
-    let beds: unknown[] = [];
-    let placements: unknown[] = [];
+    let beds: Bed[] = [];
+    let placements: PlantPlacement[] = [];
     
     if (await isIndexedDBAvailable()) {
       const db = await openDB();
@@ -376,7 +379,7 @@ export const loadPatchData = async (patchId: string) => {
       const bedRange = IDBKeyRange.only(patchId);
       const bedRequest = bedIndex.getAll(bedRange);
       
-      beds = await new Promise<unknown[]>((resolve, reject) => {
+      beds = await new Promise<Bed[]>((resolve, reject) => {
         bedRequest.onsuccess = () => resolve(bedRequest.result || []);
         bedRequest.onerror = () => reject(bedRequest.error);
       });
@@ -387,7 +390,7 @@ export const loadPatchData = async (patchId: string) => {
       const placementRange = IDBKeyRange.only(patchId);
       const placementRequest = placementIndex.getAll(placementRange);
       
-      placements = await new Promise<unknown[]>((resolve, reject) => {
+      placements = await new Promise<PlantPlacement[]>((resolve, reject) => {
         placementRequest.onsuccess = () => resolve(placementRequest.result || []);
         placementRequest.onerror = () => reject(placementRequest.error);
       });
@@ -395,11 +398,11 @@ export const loadPatchData = async (patchId: string) => {
       db.close();
     } else {
       // Load from localStorage fallback
-      const allBeds = loadFromLocalStorageFallback('beds', []);
-      const allPlacements = loadFromLocalStorageFallback('placements', []);
+      const allBeds = loadFromLocalStorageFallback<Bed[]>('beds', []);
+      const allPlacements = loadFromLocalStorageFallback<PlantPlacement[]>('placements', []);
       
-      beds = allBeds.filter((bed: unknown) => (bed as any).patchId === patchId);
-      placements = allPlacements.filter((placement: unknown) => (placement as any).patchId === patchId);
+      beds = allBeds.filter((bed) => bed.patchId === patchId);
+      placements = allPlacements.filter((placement) => placement.patchId === patchId);
     }
     
     console.log('✅ Loaded patch data for:', patchId, 'beds:', beds.length, 'placements:', placements.length);

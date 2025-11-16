@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { PlantSpecies, PlantCategory } from '../types/species.types';
+import { PlantSpecies, PlantCategory, CompatibilityLevel } from '../types/species.types';
 import { PlantSelectionSearch } from './PlantSelectionSearch';
 import { PlantSelectionResults } from './PlantSelectionResults';
 import { PlantSelectionContent } from './PlantSelectionContent';
@@ -15,8 +15,8 @@ interface PlantSelectionIndividualModeProps {
   onSearchChange: (value: string) => void;
   selectedCategory: PlantCategory | 'all';
   onCategoryChange: (category: PlantCategory | 'all') => void;
-  selectedCompatibility: any;
-  onCompatibilityChange: (compatibility: any) => void;
+  selectedCompatibility: CompatibilityLevel | 'all';
+  onCompatibilityChange: (compatibility: CompatibilityLevel | 'all') => void;
   showFilters: boolean;
   onToggleFilters: () => void;
   onClearFilters: () => void;

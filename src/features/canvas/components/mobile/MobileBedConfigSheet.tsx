@@ -9,14 +9,14 @@ import {
 } from '@/components/ui/drawer';
 import { X } from 'lucide-react';
 import { BedConfigPanel } from '../BedConfigPanel';
-import { CanvasTool } from '../../types/bed.types';
+import { BedConfig, CanvasTool } from '../../types/bed.types';
 
 interface MobileBedConfigSheetProps {
   isOpen: boolean;
   onClose: () => void;
   tool: CanvasTool;
-  bedConfig: any;
-  onConfigChange: any;
+  bedConfig: BedConfig;
+  onConfigChange: (updates: Partial<BedConfig>) => void;
 }
 
 export const MobileBedConfigSheet: React.FC<MobileBedConfigSheetProps> = ({

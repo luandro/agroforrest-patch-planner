@@ -1,5 +1,6 @@
 
 import { CanvasViewport } from '../types/canvas.types';
+import { Bed } from '../types/bed.types';
 import { getPixelsPerMeter, getDisplayDimensions, getOffsets } from './gridMath';
 
 interface BaseGridRendererArgs {
@@ -7,7 +8,7 @@ interface BaseGridRendererArgs {
   viewport: CanvasViewport;
   gridSize: number;
   zoom: number;
-  focusedBed?: any;
+  focusedBed?: Bed | null;
 }
 
 /**

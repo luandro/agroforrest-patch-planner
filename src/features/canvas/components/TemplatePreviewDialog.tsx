@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TemplatePreview } from '../types/template.types';
+import { PlantSpecies } from '../types/species.types';
 import { cn } from '@/lib/utils';
 
 interface TemplatePreviewDialogProps {
@@ -57,8 +58,8 @@ export const TemplatePreviewDialog: React.FC<TemplatePreviewDialogProps> = ({
               </Badge>
             </div>
             
-            <div className="text-xs text-gray-600 space-y-1">
-              {scaledPlants.reduce((acc, plant) => {
+          <div className="text-xs text-gray-600 space-y-1">
+              {scaledPlants.reduce<Array<{ species?: PlantSpecies; quantity: number }>>((acc, plant) => {
                 const existing = acc.find(p => p.species?.commonName === plant.species?.commonName);
                 if (existing) {
                   existing.quantity += plant.quantity;
@@ -69,7 +70,7 @@ export const TemplatePreviewDialog: React.FC<TemplatePreviewDialogProps> = ({
                   });
                 }
                 return acc;
-              }, [] as any[]).map((plantGroup, index) => (
+              }, []).map((plantGroup, index) => (
                 <div key={index} className="flex justify-between">
                   <span>{plantGroup.quantity}x {plantGroup.species?.commonName}</span>
                 </div>

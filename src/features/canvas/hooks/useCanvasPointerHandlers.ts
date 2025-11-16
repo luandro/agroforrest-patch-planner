@@ -1,14 +1,15 @@
 
 import { useCallback } from 'react';
-import { CanvasTool } from '../types/bed.types';
+import { Bed, CanvasTool } from '../types/bed.types';
+import { CanvasViewport } from '../types/canvas.types';
 import { usePlantPlacement } from './usePlantPlacement';
 import { usePlantSelection } from './usePlantSelection';
 
 interface UseCanvasPointerHandlersProps {
   tool: CanvasTool;
   isCreating: boolean;
-  focusedBed?: any;
-  viewport?: any;
+  focusedBed?: Bed | null;
+  viewport: CanvasViewport;
   canvasRef?: React.RefObject<HTMLCanvasElement>;
   isPlacing: boolean;
   startPreview: (x: number, y: number) => void;

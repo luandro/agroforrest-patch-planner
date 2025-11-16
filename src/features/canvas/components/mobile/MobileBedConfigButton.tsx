@@ -3,10 +3,11 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { BedConfig } from '../../types/bed.types';
 
 interface MobileBedConfigButtonProps {
   onOpenConfig: () => void;
-  bedConfig: any;
+  bedConfig: BedConfig;
   className?: string;
 }
 

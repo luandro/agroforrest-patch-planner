@@ -3,12 +3,13 @@ import React from 'react';
 import { ArrowLeft, Plus, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePlantPlacementStore } from '../stores/plantPlacementStore';
+import { PlantSpecies } from '../types/species.types';
 
 interface FocusModeControlsProps {
   focusedBedId: string;
   onExitFocus: () => void;
   onOpenPlantSelection: () => void;
-  onSelectSpecies?: (species: any) => void;
+  onSelectSpecies?: (species: PlantSpecies) => void;
   onCancelPlacement?: () => void;
 }
 

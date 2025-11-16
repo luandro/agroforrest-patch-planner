@@ -1,10 +1,11 @@
 
 import { useEffect, useRef } from 'react';
 import { CanvasViewport } from '../types/canvas.types';
+import { Bed } from '../types/bed.types';
 
 interface UseCanvasInitializationProps {
   updateViewport: (updates: Partial<CanvasViewport>) => void;
-  beds: any[];
+  beds: Bed[];
 }
 
 export const useCanvasInitialization = ({

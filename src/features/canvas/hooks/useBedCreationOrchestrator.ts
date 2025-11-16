@@ -10,6 +10,7 @@ import {
   createPreviewManager, 
   createPlacementManager 
 } from '../utils/bedCreationHelpers';
+import { CanvasTool } from '../types/bed.types';
 
 interface UseBedCreationOrchestratorProps {
   viewport: CanvasViewport;
@@ -61,7 +62,7 @@ export const useBedCreationOrchestrator = ({
   );
 
   // Clear preview when tool changes
-  const handleToolChange = useCallback((newTool: any) => {
+  const handleToolChange = useCallback((newTool: CanvasTool) => {
     if (newTool !== tool) {
       clearPreview();
       clearPlacement();

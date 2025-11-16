@@ -1,15 +1,16 @@
 
 import { useCallback } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { CanvasTool } from '../types/bed.types';
+import { CanvasTool, Bed } from '../types/bed.types';
+import { PlantPlacement } from '../stores/plantPlacementStore';
 
 interface UseCanvasDoubleClickProps {
   tool: CanvasTool;
-  focusedBed?: any;
+  focusedBed?: Bed | null;
   isPlacing: boolean;
   startPreview: (x: number, y: number) => void;
   placeBed: () => void;
-  getPlantAtCanvasPosition: (x: number, y: number) => any;
+  getPlantAtCanvasPosition: (x: number, y: number) => PlantPlacement | null;
   handlePlantSelection: (x: number, y: number, isMultiSelect: boolean) => boolean;
 }
 

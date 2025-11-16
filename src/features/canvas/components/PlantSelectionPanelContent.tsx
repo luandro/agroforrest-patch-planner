@@ -18,6 +18,25 @@ interface PlantSelectionPanelContentProps {
   onSelectSpecies: (species: PlantSpecies) => void;
 }
 
+type BulkPlacementHookReturn = ReturnType<typeof useBulkPlacement>;
+
+const inactiveBulkPlacementState: BulkPlacementHookReturn = {
+  isActive: false,
+  selectedSpecies: null,
+  selectedBed: null,
+  config: null,
+  preview: null,
+  showPreview: false,
+  isCalculating: false,
+  initializeBulkPlacement: () => undefined,
+  updateConfig: () => undefined,
+  executeBulkPlacement: () => false,
+  cancelBulkPlacement: () => undefined,
+  setShowPreview: () => undefined,
+  canExecute: false,
+  hasConflicts: false
+};
+
 const BulkPlacementManager: React.FC<{
   speciesForBulk: PlantSpecies;
   onCancel: () => void;
@@ -234,7 +253,7 @@ export const PlantSelectionPanelContent: React.FC<PlantSelectionPanelContentProp
           onCancel={handleCancelBulkPlacement}
         />
       ) : (
-        <PlantSelectionBulkMode bulkPlacementProps={{ isActive: false } as any} />
+        <PlantSelectionBulkMode bulkPlacementProps={inactiveBulkPlacementState} />
       )}
     </div>
   );

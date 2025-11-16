@@ -1,5 +1,7 @@
 
 import { useState, useCallback } from 'react';
+import type { Bed } from '../types/bed.types';
+import type { PlantPlacement } from '../stores/plantPlacementStore';
 
 interface ContextMenuState {
   isOpen: boolean;
@@ -36,9 +38,9 @@ export const useCanvasContextMenu = () => {
 
   const handleContextMenu = useCallback((
     e: React.MouseEvent,
-    focusedBed: any,
+    focusedBed: Bed | null,
     isPlacing: boolean,
-    getPlantAtCanvasPosition: (x: number, y: number) => any
+    getPlantAtCanvasPosition: (x: number, y: number) => PlantPlacement | null
   ) => {
     e.preventDefault();
     

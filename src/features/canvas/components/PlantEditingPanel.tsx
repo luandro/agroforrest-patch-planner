@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { usePlantPlacementStore } from '../stores/plantPlacementStore';
+import type { PlantPlacement } from '../stores/plantPlacementStore';
 import { PlantSpecies } from '../types/species.types';
 
 interface PlantEditingPanelProps {
@@ -53,7 +54,9 @@ export const PlantEditingPanel: React.FC<PlantEditingPanelProps> = ({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Group selected plants by species
-  const speciesGroups = selectedPlacements.reduce((acc, placement) => {
+  type SpeciesGroup = { species: PlantSpecies; count: number; placements: PlantPlacement[] };
+
+  const speciesGroups = selectedPlacements.reduce<Record<string, SpeciesGroup>>((acc, placement) => {
     const speciesId = placement.species.id;
     if (!acc[speciesId]) {
       acc[speciesId] = {
@@ -65,9 +68,9 @@ export const PlantEditingPanel: React.FC<PlantEditingPanelProps> = ({
     acc[speciesId].count++;
     acc[speciesId].placements.push(placement);
     return acc;
-  }, {} as Record<string, { species: PlantSpecies; count: number; placements: any[] }>);
+  }, {});
 
-  const handleFormChange = useCallback((field: keyof PlantEditForm, value: any) => {
+  const handleFormChange = useCallback(<K extends keyof PlantEditForm>(field: K, value: PlantEditForm[K]) => {
     setEditForm(prev => ({ ...prev, [field]: value }));
     setHasUnsavedChanges(true);
   }, []);
@@ -157,7 +160,7 @@ export const PlantEditingPanel: React.FC<PlantEditingPanelProps> = ({
             <Label htmlFor="maturity" className="text-sm font-medium">Maturidade</Label>
             <Select
               value={editForm.maturity}
-              onValueChange={(value: any) => handleFormChange('maturity', value)}
+              onValueChange={(value: PlantEditForm['maturity']) => handleFormChange('maturity', value)}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -191,7 +194,7 @@ export const PlantEditingPanel: React.FC<PlantEditingPanelProps> = ({
             <Label htmlFor="variety" className="text-sm font-medium">Variedade</Label>
             <Select
               value={editForm.variety}
-              onValueChange={(value) => handleFormChange('variety', value)}
+              onValueChange={(value: PlantEditForm['variety']) => handleFormChange('variety', value)}
             >
               <SelectTrigger>
                 <SelectValue />
