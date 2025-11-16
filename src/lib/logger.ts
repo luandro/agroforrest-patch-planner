@@ -37,7 +37,14 @@ class Logger {
     }
     // Read from localStorage if available
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('app:logLevel') as LogLevel;
+      try {
+        const stored = localStorage.getItem('app:logLevel') as LogLevel;
+        if (stored && LOG_LEVELS[stored] !== undefined) {
+          return stored;
+        }
+      } catch {
+        // localStorage unavailable, fall back to default
+      }
       if (stored && LOG_LEVELS[stored] !== undefined) {
         return stored;
       }
