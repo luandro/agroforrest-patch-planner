@@ -22,6 +22,7 @@ interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
   errorInfo: ErrorInfo | null;
+  resetKey: number;
 }
 
 /**
@@ -35,6 +36,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       hasError: false,
       error: null,
       errorInfo: null,
+      resetKey: 0,
     };
   }
 
@@ -64,11 +66,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   handleReset = (): void => {
-    this.setState({
+    this.setState((prevState) => ({
       hasError: false,
       error: null,
       errorInfo: null,
-    });
+      resetKey: prevState.resetKey + 1, // Increment to force remount
+    }));
   };
 
   handleReload = (): void => {
@@ -142,7 +145,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       );
     }
 
-    return this.props.children;
+    // Wrap children with key to force remount on reset
+    return (
+      <React.Fragment key={this.state.resetKey}>
+        {this.props.children}
+      </React.Fragment>
+    );
   }
 }
 

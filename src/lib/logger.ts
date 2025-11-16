@@ -20,6 +20,7 @@ const LOG_LEVELS: Record<LogLevel, number> = {
 };
 
 class Logger {
+  private static childLoggers = new Map<string, Logger>();
   private config: LoggerConfig;
 
   constructor(config: Partial<LoggerConfig> = {}) {
@@ -99,12 +100,26 @@ class Logger {
 
   /**
    * Create a child logger with a specific prefix
+   * Child loggers are cached to prevent memory leaks
    */
   createChild(prefix: string): Logger {
-    return new Logger({
+    const fullPrefix = this.config.prefix
+      ? `${this.config.prefix}:${prefix}`
+      : prefix;
+
+    // Return cached child logger if it exists
+    if (Logger.childLoggers.has(fullPrefix)) {
+      return Logger.childLoggers.get(fullPrefix)!;
+    }
+
+    // Create and cache new child logger
+    const child = new Logger({
       ...this.config,
-      prefix: this.config.prefix ? `${this.config.prefix}:${prefix}` : prefix,
+      prefix: fullPrefix,
     });
+
+    Logger.childLoggers.set(fullPrefix, child);
+    return child;
   }
 }
 

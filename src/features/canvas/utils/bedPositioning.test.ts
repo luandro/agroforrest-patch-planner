@@ -327,4 +327,57 @@ describe('bedPositioning', () => {
       });
     });
   });
+
+  describe('edge cases', () => {
+    it('should handle NaN gracefully in snapToGrid', () => {
+      const result = snapToGrid(NaN, NaN, 1);
+      // Should produce 0 or NaN depending on implementation
+      expect(isNaN(result.x) || result.x === 0).toBe(true);
+    });
+
+    it('should handle Infinity in snapToGrid', () => {
+      const result = snapToGrid(Infinity, -Infinity, 1);
+      expect(isFinite(result.x) || result.x === Infinity).toBe(true);
+    });
+
+    it('should handle zero-sized bed footprint', () => {
+      const bed: Bed = {
+        id: 'test-zero',
+        name: 'Zero Bed',
+        shape: 'rectangle',
+        position: { x: 0, y: 0 },
+        dimensions: { length: 0, width: 0 },
+        soilType: 'loam',
+        sunExposure: 'full',
+        createdAt: Date.now(),
+      };
+
+      const footprint = calculateBedFootprint(bed, 1);
+      expect(footprint.width).toBeGreaterThanOrEqual(0);
+      expect(footprint.height).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should handle very large grid sizes', () => {
+      const result = snapToGrid(50, 75, 1000);
+      expect(result.x).toBe(0); // Should snap to 0 with large grid
+      expect(result.y).toBe(0);
+    });
+
+    it('should handle negative spacing in footprint', () => {
+      const bed: Bed = {
+        id: 'test-neg',
+        name: 'Test Bed',
+        shape: 'circle',
+        position: { x: 5, y: 5 },
+        dimensions: { radius: 2 },
+        soilType: 'loam',
+        sunExposure: 'full',
+        createdAt: Date.now(),
+      };
+
+      // Negative spacing should still work mathematically
+      const footprint = calculateBedFootprint(bed, -1);
+      expect(footprint.radius).toBe(2 - 0.5); // radius + (spacing/2)
+    });
+  });
 });

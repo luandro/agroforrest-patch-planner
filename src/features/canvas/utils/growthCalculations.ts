@@ -44,6 +44,29 @@ export const calculateGrowthAtMonth: GrowthCurveFunction = (
   targetMonth,
   curveType
 ) => {
+  // Input validation
+  if (!dataPoints || dataPoints.length === 0) {
+    throw new Error('dataPoints cannot be empty');
+  }
+
+  if (typeof targetMonth !== 'number' || isNaN(targetMonth) || targetMonth < 0) {
+    throw new Error('targetMonth must be a non-negative number');
+  }
+
+  if (!['linear', 'sigmoid', 'exponential'].includes(curveType)) {
+    throw new Error(`Invalid curve type: ${curveType}. Must be 'linear', 'sigmoid', or 'exponential'`);
+  }
+
+  // Validate data point values
+  for (const point of dataPoints) {
+    if (point.canopyRadius < 0 || point.height < 0 || point.lightPenetration < 0) {
+      throw new Error('Data points cannot have negative values');
+    }
+    if (point.months < 0) {
+      throw new Error('Data point months cannot be negative');
+    }
+  }
+
   // Ordenar pontos por mês
   const sortedPoints = [...dataPoints].sort((a, b) => a.months - b.months);
   

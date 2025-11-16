@@ -16,8 +16,8 @@ describe('growthCalculations', () => {
   ];
 
   describe('calculateGrowthAtMonth', () => {
-    it('should return first point for month before all data points', () => {
-      const result = calculateGrowthAtMonth(mockDataPoints, -5, 'linear');
+    it('should return first point for month at or before first data point', () => {
+      const result = calculateGrowthAtMonth(mockDataPoints, 0, 'linear');
 
       expect(result.canopyRadius).toBe(0.5);
       expect(result.height).toBe(0.2);
@@ -341,6 +341,38 @@ describe('growthCalculations', () => {
 
       expect(lowWater.canopyRadius).toBeLessThan(goodWater.canopyRadius);
       expect(lowWater.height).toBeLessThan(goodWater.height);
+    });
+  });
+
+  describe('input validation', () => {
+    it('should throw error for empty dataPoints', () => {
+      expect(() => calculateGrowthAtMonth([], 12, 'linear')).toThrow('dataPoints cannot be empty');
+    });
+
+    it('should throw error for negative targetMonth', () => {
+      expect(() => calculateGrowthAtMonth(mockDataPoints, -5, 'linear')).toThrow('targetMonth must be a non-negative number');
+    });
+
+    it('should throw error for NaN targetMonth', () => {
+      expect(() => calculateGrowthAtMonth(mockDataPoints, NaN, 'linear')).toThrow('targetMonth must be a non-negative number');
+    });
+
+    it('should throw error for invalid curve type', () => {
+      expect(() => calculateGrowthAtMonth(mockDataPoints, 12, 'invalid' as any)).toThrow('Invalid curve type');
+    });
+
+    it('should throw error for negative data point values', () => {
+      const invalidData: GrowthDataPoint[] = [
+        { months: 0, canopyRadius: -1, height: 0.2, lightPenetration: 80 },
+      ];
+      expect(() => calculateGrowthAtMonth(invalidData, 12, 'linear')).toThrow('Data points cannot have negative values');
+    });
+
+    it('should throw error for negative months in data points', () => {
+      const invalidData: GrowthDataPoint[] = [
+        { months: -5, canopyRadius: 1, height: 0.2, lightPenetration: 80 },
+      ];
+      expect(() => calculateGrowthAtMonth(invalidData, 12, 'linear')).toThrow('Data point months cannot be negative');
     });
   });
 });
