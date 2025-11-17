@@ -45,7 +45,10 @@ describe('bedPositioning', () => {
   describe('calculateBedPosition', () => {
     const mockBedConfig: BedConfig = {
       shape: 'rectangle',
-      dimensions: { length: 2, width: 1 },
+      length: 2,
+      width: 1,
+      spacing: 0.4,
+      quantity: 1,
     };
 
     it('should calculate position for rectangle bed', () => {
@@ -75,15 +78,15 @@ describe('bedPositioning', () => {
 
   describe('calculateBedFootprint', () => {
     it('should calculate footprint for rectangular bed with spacing', () => {
+      const now = Date.now();
       const bed: Bed = {
         id: 'test-1',
-        name: 'Test Bed',
         shape: 'rectangle',
         position: { x: 5, y: 5 },
         dimensions: { length: 4, width: 2 },
-        soilType: 'loam',
-        sunExposure: 'full',
-        createdAt: Date.now(),
+        rotation: 0,
+        createdAt: now,
+        updatedAt: now,
       };
       const spacing = 1;
 
@@ -97,15 +100,15 @@ describe('bedPositioning', () => {
     });
 
     it('should calculate footprint for circular bed with spacing', () => {
+      const now = Date.now();
       const bed: Bed = {
         id: 'test-2',
-        name: 'Test Bed',
         shape: 'circle',
         position: { x: 5, y: 5 },
         dimensions: { radius: 2 },
-        soilType: 'loam',
-        sunExposure: 'full',
-        createdAt: Date.now(),
+        rotation: 0,
+        createdAt: now,
+        updatedAt: now,
       };
       const spacing = 1;
 
@@ -120,15 +123,15 @@ describe('bedPositioning', () => {
     });
 
     it('should handle zero spacing', () => {
+      const now = Date.now();
       const bed: Bed = {
         id: 'test-3',
-        name: 'Test Bed',
         shape: 'rectangle',
         position: { x: 0, y: 0 },
         dimensions: { length: 2, width: 1 },
-        soilType: 'loam',
-        sunExposure: 'full',
-        createdAt: Date.now(),
+        rotation: 0,
+        createdAt: now,
+        updatedAt: now,
       };
       const spacing = 0;
 
@@ -341,15 +344,15 @@ describe('bedPositioning', () => {
     });
 
     it('should handle zero-sized bed footprint', () => {
+      const now = Date.now();
       const bed: Bed = {
         id: 'test-zero',
-        name: 'Zero Bed',
         shape: 'rectangle',
         position: { x: 0, y: 0 },
         dimensions: { length: 0, width: 0 },
-        soilType: 'loam',
-        sunExposure: 'full',
-        createdAt: Date.now(),
+        rotation: 0,
+        createdAt: now,
+        updatedAt: now,
       };
 
       const footprint = calculateBedFootprint(bed, 1);
@@ -364,15 +367,15 @@ describe('bedPositioning', () => {
     });
 
     it('should handle negative spacing in footprint', () => {
+      const now = Date.now();
       const bed: Bed = {
         id: 'test-neg',
-        name: 'Test Bed',
         shape: 'circle',
         position: { x: 5, y: 5 },
         dimensions: { radius: 2 },
-        soilType: 'loam',
-        sunExposure: 'full',
-        createdAt: Date.now(),
+        rotation: 0,
+        createdAt: now,
+        updatedAt: now,
       };
 
       // Negative spacing should still work mathematically
