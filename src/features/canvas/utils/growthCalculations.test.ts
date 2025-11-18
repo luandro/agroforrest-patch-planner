@@ -240,8 +240,10 @@ describe('growthCalculations', () => {
 
   describe('calculateRealisticGrowth', () => {
     const mockProfile: SpeciesGrowthProfile = {
+      speciesId: 'test-species',
       dataPoints: mockDataPoints,
       growthCurveType: 'sigmoid',
+      maxAge: 120,
       environmentalFactors: {
         soilQualityEffect: 1.2,
         waterAvailabilityEffect: 1.3,
