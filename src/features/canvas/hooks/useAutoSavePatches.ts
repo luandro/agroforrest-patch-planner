@@ -93,11 +93,20 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
 
           // Immediately save the new default patch to prevent data loss on quick page close
           setTimeout(async () => {
-            const currentPatches = usePatchStore.getState().patches;
-            if (currentPatches.length > 0) {
-              await upsertPatches(currentPatches);
-              usePatchStore.getState().markClean();
-              console.log('💾 Default patch saved immediately');
+            try {
+              setIsSaving(true);
+              setSaveError(null);
+              const currentPatches = usePatchStore.getState().patches;
+              if (currentPatches.length > 0) {
+                await upsertPatches(currentPatches);
+                usePatchStore.getState().markClean();
+                console.log('💾 Default patch saved immediately');
+              }
+            } catch (error) {
+              console.error('❌ Failed to save default patch:', error);
+              setSaveError(error instanceof Error ? error.message : 'Failed to save default patch');
+            } finally {
+              setIsSaving(false);
             }
           }, 100);
         } catch (error) {
@@ -133,11 +142,20 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
 
         // Immediately save the new default patch to prevent data loss on quick page close
         setTimeout(async () => {
-          const currentPatches = usePatchStore.getState().patches;
-          if (currentPatches.length > 0) {
-            await upsertPatches(currentPatches);
-            usePatchStore.getState().markClean();
-            console.log('💾 Default patch saved immediately');
+          try {
+            setIsSaving(true);
+            setSaveError(null);
+            const currentPatches = usePatchStore.getState().patches;
+            if (currentPatches.length > 0) {
+              await upsertPatches(currentPatches);
+              usePatchStore.getState().markClean();
+              console.log('💾 Default patch saved immediately');
+            }
+          } catch (error) {
+            console.error('❌ Failed to save default patch:', error);
+            setSaveError(error instanceof Error ? error.message : 'Failed to save default patch');
+          } finally {
+            setIsSaving(false);
           }
         }, 100);
       } catch (createError) {
