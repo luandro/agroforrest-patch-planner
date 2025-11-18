@@ -6,7 +6,7 @@ import { useBedStore } from '../stores/bedStore';
 import {
   upsertPlacementsForPatch,
   loadPatchData
-} from '../utils/storageManager';
+} from '../storage';
 
 interface UseAutoSavePlantsProps {
   debounceMs?: number;

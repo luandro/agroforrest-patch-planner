@@ -6,7 +6,7 @@ import { Bed } from '../types/bed.types';
 import {
   upsertBedsForPatch,
   loadPatchData
-} from '../utils/storageManager';
+} from '../storage';
 
 interface UseAutoSaveProps {
   debounceMs?: number;

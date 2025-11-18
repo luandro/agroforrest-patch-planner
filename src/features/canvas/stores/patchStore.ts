@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { Patch, PatchCreationData } from '../types/patch.types';
 import { storeLogger } from '@/lib/logger';
-import { saveToLocalStorageFallback } from '../utils/storageManager';
+import { saveToLocalStorageFallback } from '../storage';
 
 interface PatchState {
   patches: Patch[];

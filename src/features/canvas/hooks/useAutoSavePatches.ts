@@ -7,7 +7,7 @@ import {
   loadFromLocalStorageFallback,
   upsertPatches,
   PATCHES_STORE_NAME
-} from '../utils/storageManager';
+} from '../storage';
 
 interface UseAutoSavePatchesProps {
   debounceMs?: number;

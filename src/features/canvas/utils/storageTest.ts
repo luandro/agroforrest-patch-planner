@@ -3,14 +3,14 @@
  * Use this to verify that the storage system is working correctly
  */
 
-import { 
-  openDB, 
-  saveToLocalStorageFallback, 
+import {
+  openDB,
+  saveToLocalStorageFallback,
   loadFromLocalStorageFallback,
   BEDS_STORE_NAME,
   PATCHES_STORE_NAME,
   PLACEMENTS_STORE_NAME
-} from './storageManager';
+} from '../storage';
 import { Patch } from '../types/patch.types';
 import { Bed } from '../types/bed.types';
 import { PlantPlacement } from '../stores/plantPlacementStore';
