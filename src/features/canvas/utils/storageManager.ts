@@ -151,15 +151,23 @@ export const saveToLocalStorageFallback = <T>(key: keyof typeof STORAGE_KEYS, da
 
 /**
  * Load data from localStorage fallback
+ * Handles backwards compatibility for values stored as plain strings (pre-JSON encoding)
  */
 export const loadFromLocalStorageFallback = <T>(key: keyof typeof STORAGE_KEYS, defaultValue: T): T => {
   try {
     const storageKey = STORAGE_KEYS[key];
     const stored = localStorage.getItem(storageKey);
     if (stored) {
-      const parsed = JSON.parse(stored);
-      storageLogger.debug(`Loaded from localStorage fallback: ${key}`);
-      return parsed;
+      try {
+        const parsed = JSON.parse(stored);
+        storageLogger.debug(`Loaded from localStorage fallback: ${key}`);
+        return parsed;
+      } catch {
+        // Backwards compatibility: if JSON.parse fails, the value may be a plain string
+        // (e.g., currentPatchId was previously stored without JSON encoding)
+        storageLogger.debug(`Loaded raw string from localStorage fallback: ${key}`);
+        return stored as unknown as T;
+      }
     }
   } catch (error) {
     storageLogger.error('Failed to load from localStorage', error);
