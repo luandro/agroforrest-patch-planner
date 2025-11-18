@@ -4,7 +4,6 @@ import { usePatchStore } from '../stores/patchStore';
 import { Patch } from '../types/patch.types';
 import {
   openDB,
-  saveToLocalStorageFallback,
   loadFromLocalStorageFallback,
   upsertPatches,
   PATCHES_STORE_NAME
