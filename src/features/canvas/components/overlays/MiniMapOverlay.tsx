@@ -3,19 +3,14 @@ import React from 'react';
 import { MiniMap } from '../MiniMap';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { CanvasViewport } from '../../types/canvas.types';
-import type { Bed } from '../../types/bed.types';
 
 interface MiniMapOverlayProps {
   viewport: CanvasViewport;
-  beds: Bed[];
-  onNavigate: (x: number, y: number) => void;
   isVisible: boolean;
 }
 
 export const MiniMapOverlay: React.FC<MiniMapOverlayProps> = ({
   viewport,
-  beds: _beds,
-  onNavigate: _onNavigate,
   isVisible
 }) => {
   const isMobile = useIsMobile();
