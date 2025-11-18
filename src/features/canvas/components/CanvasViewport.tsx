@@ -61,7 +61,6 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
 
   // DEBUG: Log focusedBed as received
   if (import.meta.env.DEV) {
-    // eslint-disable-next-line no-console
     console.debug("[CanvasViewport] focusedBed", focusedBed, "viewMode", viewMode);
   }
 

@@ -8,7 +8,6 @@ import type { CanvasLayoutSharedProps } from '../types/layout.types';
 export const CanvasLayout: React.FC<CanvasLayoutSharedProps> = (props) => {
   // DEBUG: Log focusedBed and focus mode props
   if (import.meta.env.DEV) {
-    // eslint-disable-next-line no-console
     console.debug("[CanvasLayout] focusedBedId", props.focusedBedId, "focusedBed", props.focusedBed);
   }
 
