@@ -4,10 +4,8 @@ import { useBedStore } from '../stores/bedStore';
 import { usePatchStore } from '../stores/patchStore';
 import { Bed } from '../types/bed.types';
 import {
-  openDB,
   upsertBedsForPatch,
-  loadPatchData,
-  BEDS_STORE_NAME
+  loadPatchData
 } from '../utils/storageManager';
 
 interface UseAutoSaveProps {

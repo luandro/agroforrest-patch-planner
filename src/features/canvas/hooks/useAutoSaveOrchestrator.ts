@@ -3,7 +3,7 @@
  * Ensures proper saving order and prevents race conditions
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAutoSave } from './useAutoSave';
 import { useAutoSavePlants } from './useAutoSavePlants';
 import { useAutoSavePatches } from './useAutoSavePatches';
