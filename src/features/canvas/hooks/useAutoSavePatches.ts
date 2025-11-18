@@ -90,7 +90,7 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
         loadPatches(loadedPatches, false);
 
         // Restore last active patch
-        const savedCurrentPatchId = localStorage.getItem('agroforest_current_patch_id');
+        const savedCurrentPatchId = loadFromLocalStorageFallback<string | null>('currentPatchId', null);
         if (savedCurrentPatchId && loadedPatches.find(p => p.id === savedCurrentPatchId)) {
           setCurrentPatch(savedCurrentPatchId);
           console.log('✅ Restored current patch:', savedCurrentPatchId);
