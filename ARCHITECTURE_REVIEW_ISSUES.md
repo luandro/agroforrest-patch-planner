@@ -113,8 +113,35 @@ Created from comprehensive architecture review on 2025-11-14
    - ✅ Build: Successful
    - ✅ All 54 tests passing
 
+2. **✅ Issue #4 - Extract Desktop/Mobile Shared Logic (2025-11-18)**
+
+   Created shared `usePlantEditorActions.ts` hook to eliminate code duplication between DesktopPlantEditor and MobilePlantEditor.
+
+   **New File Created:**
+   - `src/features/canvas/hooks/usePlantEditorActions.ts` - Shared hook with:
+     - Selected placements filtering
+     - Species grouping calculation
+     - Action handlers (delete, duplicate, edit, move, selectSameSpecies, adjustSpacing)
+     - Label generators (getDeleteLabel, getSelectionLabel)
+     - Computed values (selectedCount, isSingleSelection, singlePlacement)
+
+   **Files Refactored:**
+   - `DesktopPlantEditor.tsx` - Reduced from 165 to 143 lines
+   - `MobilePlantEditor.tsx` - Reduced from 116 to 120 lines (cleaner separation)
+
+   **Benefits:**
+   - Single source of truth for plant editor business logic
+   - Easier to test (hook can be tested independently)
+   - Consistent behavior between desktop and mobile
+   - ~50 lines of duplicated logic eliminated
+
+   **Results:**
+   - ✅ TypeScript compilation: 0 errors
+   - ✅ ESLint: 0 errors (22 warnings)
+   - ✅ Build: Successful
+   - ✅ All 54 tests passing
+
 **Remaining Sprint 2 Scope:**
-2. ⏳ Issue #4 - Extract desktop/mobile shared logic
 3. ⏳ Issue #5 - Refactor storage manager
 4. ⏳ Issue #6 - Break down large components
 5. ⏳ Expand test coverage to stores and hooks
@@ -480,7 +507,7 @@ Create `src/features/canvas/validation/schemas.ts` with Zod schemas
 
 **Week 3-4 (Sprint 2):** 🚧 **IN PROGRESS**
 5. ✅ Fix TypeScript strict mode violations (~77 errors fixed)
-6. ⏳ Issue #4 - Extract desktop/mobile shared logic
+6. ✅ Issue #4 - Extract desktop/mobile shared logic (usePlantEditorActions hook)
 7. ⏳ Issue #5 - Refactor storage manager
 8. ⏳ Issue #6 - Break down large components
 9. ⏳ Expand test coverage to stores and hooks

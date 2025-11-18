@@ -2,11 +2,11 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { usePlantPlacementStore } from '../../stores/plantPlacementStore';
 import { PlantDeletionDialog } from '../PlantDeletionDialog';
 import { PlantDetailsDisplay } from './PlantDetailsDisplay';
 import { PlantSummaryDisplay } from './PlantSummaryDisplay';
 import { PlantEditorActions } from './PlantEditorActions';
+import { usePlantEditorActions } from '../../hooks/usePlantEditorActions';
 
 interface MobilePlantEditorProps {
   selectedPlacementIds: string[];
@@ -19,21 +19,26 @@ export const MobilePlantEditor: React.FC<MobilePlantEditorProps> = ({
   onClose,
   focusedBedId: _focusedBedId
 }) => {
-  const { placements, removePlacements } = usePlantPlacementStore();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const selectedPlacements = placements.filter(p => selectedPlacementIds.includes(p.id));
-  const isSingle = selectedPlacementIds.length === 1;
-  const singlePlacement = isSingle ? selectedPlacements[0] : null;
+  const {
+    selectedPlacements,
+    selectedCount,
+    isSingleSelection,
+    singlePlacement,
+    handleDelete
+  } = usePlantEditorActions({
+    selectedPlacementIds,
+    onClose
+  });
 
-  const handleDelete = () => {
+  const handleDeleteClick = () => {
     setShowDeleteDialog(true);
   };
 
   const handleConfirmDelete = () => {
-    removePlacements(selectedPlacementIds);
+    handleDelete();
     setShowDeleteDialog(false);
-    onClose();
   };
 
   const handleEditDetails = () => {
@@ -58,7 +63,7 @@ export const MobilePlantEditor: React.FC<MobilePlantEditorProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
           <h3 className="text-lg font-semibold text-gray-900">
-            {isSingle ? 'Editar Planta' : `Editar ${selectedPlacementIds.length} Plantas`}
+            {isSingleSelection ? 'Editar Planta' : `Editar ${selectedCount} Plantas`}
           </h3>
           <Button
             size="sm"
@@ -73,32 +78,32 @@ export const MobilePlantEditor: React.FC<MobilePlantEditorProps> = ({
         {/* Content */}
         <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
           {/* Selection Display */}
-          {isSingle && singlePlacement ? (
+          {isSingleSelection && singlePlacement ? (
             <PlantDetailsDisplay placement={singlePlacement} />
           ) : (
-            <PlantSummaryDisplay 
+            <PlantSummaryDisplay
               placements={selectedPlacements}
-              selectedCount={selectedPlacementIds.length}
+              selectedCount={selectedCount}
             />
           )}
 
           {/* Quick Info */}
           <div className="text-xs text-gray-500 bg-blue-50 p-3 rounded-lg">
-            💡 Toque e segure uma planta para mais opções de edição detalhada
+            Toque e segure uma planta para mais opções de edição detalhada
           </div>
         </div>
 
         {/* Actions */}
         <PlantEditorActions
-          selectedCount={selectedPlacementIds.length}
+          selectedCount={selectedCount}
           onEditDetails={handleEditDetails}
           onMoreOptions={handleMoreOptions}
-          onDelete={handleDelete}
+          onDelete={handleDeleteClick}
         />
       </div>
 
       {/* Backdrop */}
-      <div 
+      <div
         className="fixed inset-0 bg-black/30 z-[49]"
         onClick={onClose}
       />
