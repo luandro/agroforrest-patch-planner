@@ -455,8 +455,8 @@ export const exportAllData = async (): Promise<string> => {
       data.patches = patches;
       data.beds = beds;
       data.placements = placements;
-      data.currentPatchId = localStorage.getItem(STORAGE_KEYS.currentPatchId);
-      
+      data.currentPatchId = loadFromLocalStorageFallback('currentPatchId', null);
+
       db.close();
     } else {
       // Fallback to localStorage
@@ -517,7 +517,7 @@ export const importAllData = async (jsonData: string): Promise<void> => {
     
     // Restore current patch
     if (data.currentPatchId) {
-      localStorage.setItem(STORAGE_KEYS.currentPatchId, data.currentPatchId);
+      saveToLocalStorageFallback('currentPatchId', data.currentPatchId);
     }
 
     storageLogger.info('Data imported successfully');

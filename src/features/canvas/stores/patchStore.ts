@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { Patch, PatchCreationData } from '../types/patch.types';
 import { storeLogger } from '@/lib/logger';
+import { saveToLocalStorageFallback } from '../utils/storageManager';
 
 interface PatchState {
   patches: Patch[];
@@ -69,8 +70,8 @@ export const usePatchStore = create<PatchStore>()(
 
     setCurrentPatch: (patchId) => {
       set({ currentPatchId: patchId });
-      // Store current patch in localStorage with consistent key
-      localStorage.setItem('agroforest_current_patch_id', patchId);
+      // Store current patch in localStorage with consistent JSON encoding
+      saveToLocalStorageFallback('currentPatchId', patchId);
       storeLogger.info(`Current patch set: ${patchId}`);
     },
 
