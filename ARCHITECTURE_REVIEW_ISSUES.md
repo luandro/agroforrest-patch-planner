@@ -141,9 +141,88 @@ Created from comprehensive architecture review on 2025-11-14
    - ✅ Build: Successful
    - ✅ All 54 tests passing
 
+3. **✅ Issue #5 - Refactor Storage Manager (2025-11-18)**
+
+   Split monolithic `storageManager.ts` (543 lines) into modular storage directory structure.
+
+   **New Directory Structure:**
+   ```
+   src/features/canvas/storage/
+   ├── schema.ts (21 lines) - DB constants and storage keys
+   ├── connection.ts (118 lines) - openDB, isIndexedDBAvailable, migrations
+   ├── fallback.ts (45 lines) - localStorage fallback functions
+   ├── operations.ts (249 lines) - CRUD operations (upsertPatches, loadPatchData, etc.)
+   ├── export.ts (119 lines) - exportAllData, importAllData
+   └── index.ts (40 lines) - Re-exports for backward compatibility
+   ```
+
+   **Benefits:**
+   - Each file follows Single Responsibility Principle
+   - All files under 250 lines
+   - Easier to test individual modules
+   - Better code organization
+
+   **Files Updated (7 imports):**
+   - useAutoSavePatches.ts
+   - useAutoSaveBeds.ts
+   - useAutoSavePlacements.ts
+   - usePatchWorkflow.ts
+   - PatchSaveButton.tsx
+   - ErrorBoundary.tsx
+   - PatchSettingsDialog.tsx
+
+   **Results:**
+   - ✅ TypeScript compilation: 0 errors
+   - ✅ Build: Successful
+   - ✅ All 54 tests passing
+
+4. **✅ Issue #6 - Break Down Large Components (2025-11-18)**
+
+   Successfully broke down all 5 large components (>250 lines) into smaller, focused modules.
+
+   **Component Breakdown Summary:**
+
+   | Component | Before | After | Reduction | Extracted Modules |
+   |-----------|--------|-------|-----------|-------------------|
+   | SideViewCanvas.tsx | 256 | 169 | 34% | useSideViewPlantConverter hook |
+   | PlantSelectionPanelContent.tsx | 259 | 134 | 48% | usePlantSpeciesFilter, useTemplateApplication, BulkPlacementManager |
+   | PlantEditingPanel.tsx | 308 | 98 | 68% | usePlantEditForm, PlantEditFormFields, PlantEditFormActions |
+   | SideViewTimelineControls.tsx | 312 | 29 | 91% | SideViewTimelineMobile, SideViewTimelineDesktop, timelineUtils |
+   | BedConfigPanel.tsx | 268 | 122 | 54% | SliderControl, BedShapeSelector |
+
+   **New Files Created (16 total):**
+
+   Hooks:
+   - `useSideViewPlantConverter.ts` - Convert bed placements to side view
+   - `usePlantSpeciesFilter.ts` - Filter and categorize plant species
+   - `useTemplateApplication.ts` - Handle planting template application
+   - `usePlantEditForm.ts` - Plant edit form state and handlers
+
+   Components:
+   - `BulkPlacementManager.tsx` - Bulk placement lifecycle management
+   - `PlantEditFormFields.tsx` - Form fields for plant editing
+   - `PlantEditFormActions.tsx` - Action buttons for plant editing
+   - `SideViewTimelineMobile.tsx` - Mobile timeline layout
+   - `SideViewTimelineDesktop.tsx` - Desktop timeline layout
+   - `SliderControl.tsx` - Reusable slider with +/- buttons
+   - `BedShapeSelector.tsx` - Shape selection UI
+
+   Utils:
+   - `timelineUtils.ts` - formatTime, growth stage helpers
+
+   **Benefits:**
+   - All orchestrator components now under 175 lines
+   - Reusable components (SliderControl used in 5 places)
+   - Better separation of concerns
+   - Easier testing of individual hooks
+   - Mobile/Desktop layouts now independently maintainable
+
+   **Results:**
+   - ✅ TypeScript compilation: 0 errors
+   - ✅ Build: Successful
+   - ✅ All 54 tests passing
+
 **Remaining Sprint 2 Scope:**
-3. ⏳ Issue #5 - Refactor storage manager
-4. ⏳ Issue #6 - Break down large components
 5. ⏳ Expand test coverage to stores and hooks
 
 ---
@@ -505,11 +584,11 @@ Create `src/features/canvas/validation/schemas.ts` with Zod schemas
 3. ✅ Issue #3 - Setup Vitest and write first tests (54 tests passing)
 4. ✅ Issue #7 - Add error boundaries
 
-**Week 3-4 (Sprint 2):** 🚧 **IN PROGRESS**
+**Week 3-4 (Sprint 2):** ✅ **NEARLY COMPLETE** (2025-11-18)
 5. ✅ Fix TypeScript strict mode violations (~77 errors fixed)
 6. ✅ Issue #4 - Extract desktop/mobile shared logic (usePlantEditorActions hook)
-7. ⏳ Issue #5 - Refactor storage manager
-8. ⏳ Issue #6 - Break down large components
+7. ✅ Issue #5 - Refactor storage manager (543 lines → 6 modular files)
+8. ✅ Issue #6 - Break down large components (5 components, avg 59% reduction)
 9. ⏳ Expand test coverage to stores and hooks
 
 **Week 5-6 (Sprint 3):**

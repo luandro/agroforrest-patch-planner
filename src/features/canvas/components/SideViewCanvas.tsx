@@ -5,10 +5,8 @@ import { useBedStore } from '../stores/bedStore';
 import { useTimelineStore } from '../stores/timelineStore';
 import { useSideViewStore } from '../stores/sideViewStore';
 import { useGrowthTimeline } from '../hooks/useGrowthTimeline';
+import { useSideViewPlantConverter } from '../hooks/useSideViewPlantConverter';
 import { renderSideView } from '../utils/sideViewRenderer';
-import { getSpeciesHeightProfile, calculateHeightAtMonth } from '../data/heightGrowthData';
-import { SideViewBed, SideViewPlant } from '../types/sideView.types';
-import { getSpeciesById } from '../data/mockSpecies';
 import { SideViewTimelineControls } from './timeline/SideViewTimelineControls';
 import { Button } from '@/components/ui/button';
 import { Clock, X } from 'lucide-react';
@@ -28,10 +26,11 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
   const [showTimeline, setShowTimeline] = useState(true);
   const isMobile = useIsMobile();
   
-  const { placements, getPlacementsForBed } = usePlantPlacementStore();
+  const { placements } = usePlantPlacementStore();
   const { beds } = useBedStore();
   const { isTimelineActive } = useTimelineStore();
   const { viewport } = useSideViewStore();
+  const { convertToSideViewBed } = useSideViewPlantConverter();
 
   // Timeline controls
   const {
@@ -46,93 +45,7 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
     maxMonths
   } = useGrowthTimeline();
 
-  // Convert placements to side view data with improved plant distribution
-  const convertToSideViewBed = (bedId: string): SideViewBed | null => {
-    const bed = beds.find(b => b.id === bedId);
-    if (!bed) return null;
-
-    const bedPlacements = getPlacementsForBed(bedId);
-    const bedLength = bed.shape === 'rectangle' ? bed.dimensions.length || 10 : bed.dimensions.radius ? bed.dimensions.radius * 2 : 10;
-
-    // Sort plants by X position to maintain order
-    const sortedPlacements = [...bedPlacements].sort((a, b) => a.position.x - b.position.x);
-
-    const sideViewPlants: SideViewPlant[] = sortedPlacements.map((placement, index) => {
-      // Extract species ID - handle both string and object cases
-      const speciesId = typeof placement.species === 'string' ? placement.species : placement.species.id;
-      
-      const species = getSpeciesById(speciesId);
-      const heightProfile = getSpeciesHeightProfile(speciesId);
-      
-      let currentHeight = 0.3; // Start with seedling height
-      let canopyRadius = 0.2; // Start with seedling canopy
-      let canopyLayer: SideViewPlant['canopyLayer'] = 'understory';
-
-      // Use timeline month for proper growth calculation
-      const effectiveMonth = isTimelineActive ? timelineMonth : 0;
-
-      if (heightProfile && effectiveMonth >= 0) {
-        currentHeight = calculateHeightAtMonth(heightProfile, effectiveMonth);
-        canopyRadius = Math.max(0.2, currentHeight * 0.25); // Proportional canopy
-        canopyLayer = heightProfile.canopyLayer;
-        
-        console.log('[Side View Plant]', {
-          species: species?.commonName,
-          month: effectiveMonth,
-          height: currentHeight,
-          canopyRadius
-        });
-      } else if (species && !isTimelineActive) {
-        // Use species mature height only if timeline is not active
-        currentHeight = species.matureSize?.height || 2;
-        canopyRadius = species.matureSize?.width ? species.matureSize.width / 2 : 0.5;
-        canopyLayer = species.category === 'trees' ? 'canopy' : 
-                      species.category === 'shrubs' ? 'understory' : 'ground';
-      }
-
-      // Improved position calculation with better distribution
-      let xPosition: number;
-      
-      if (bedPlacements.length > 1) {
-        // Calculate spread across bed length
-        const minX = Math.min(...bedPlacements.map(p => p.position.x));
-        const maxX = Math.max(...bedPlacements.map(p => p.position.x));
-        const range = maxX - minX;
-        
-        if (range < 0.2) {
-          // Plants are clustered, distribute evenly
-          xPosition = (index / Math.max(1, bedPlacements.length - 1)) * bedLength;
-        } else {
-          // Use actual positions but scale to bed length
-          const normalizedX = (placement.position.x - minX) / range;
-          xPosition = normalizedX * bedLength;
-        }
-      } else {
-        // Single plant, place in center
-        xPosition = bedLength / 2;
-      }
-
-      return {
-        id: placement.id,
-        speciesId: speciesId,
-        position: {
-          x: xPosition,
-          height: Math.max(0.2, currentHeight) // Ensure minimum height
-        },
-        canopyRadius: Math.max(0.1, canopyRadius), // Ensure minimum canopy
-        canopyLayer,
-        age: effectiveMonth
-      };
-    });
-
-    return {
-      id: bedId,
-      length: bedLength,
-      plants: sideViewPlants
-    };
-  };
-
-  // Handle canvas resize with improved scaling
+  // Handle canvas resize
   useEffect(() => {
     const resizeCanvas = () => {
       const canvas = canvasRef.current;
@@ -177,7 +90,7 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
     const bedId = focusedBedId || beds[0]?.id;
     if (!bedId) return;
 
-    const sideViewBed = convertToSideViewBed(bedId);
+    const sideViewBed = convertToSideViewBed(bedId, timelineMonth);
     if (!sideViewBed) return;
 
     console.log('[Side View Render]', {
@@ -185,8 +98,8 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
       plantsCount: sideViewBed.plants.length,
       timelineActive: isTimelineActive,
       currentMonth: timelineMonth,
-      plants: sideViewBed.plants.map(p => ({ 
-        id: p.id, 
+      plants: sideViewBed.plants.map(p => ({
+        id: p.id,
         height: p.position.height.toFixed(2),
         canopy: p.canopyRadius.toFixed(2)
       }))
@@ -199,7 +112,7 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
       viewport,
       currentMonth: isTimelineActive ? timelineMonth : 0
     });
-  }, [beds, placements, timelineMonth, isTimelineActive, focusedBedId, viewport, isMobile]);
+  }, [beds, placements, timelineMonth, isTimelineActive, focusedBedId, viewport, isMobile, convertToSideViewBed]);
 
   const toggleTimeline = () => {
     setShowTimeline(!showTimeline);
