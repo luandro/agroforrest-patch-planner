@@ -3,7 +3,6 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Eye, Mountain } from 'lucide-react';
 import { useSideViewStore } from '../stores/sideViewStore';
-import { ViewMode } from '../types/sideView.types';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -14,11 +13,6 @@ interface ViewModeToggleProps {
 export const ViewModeToggle: React.FC<ViewModeToggleProps> = ({ className }) => {
   const { viewMode, setViewMode } = useSideViewStore();
   const isMobile = useIsMobile();
-
-  const handleToggle = () => {
-    const newMode: ViewMode = viewMode === 'top' ? 'side' : 'top';
-    setViewMode(newMode);
-  };
 
   return (
     <div className={cn(

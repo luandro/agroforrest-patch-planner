@@ -22,14 +22,14 @@ interface FocusModePlantToolProps {
 export const FocusModePlantTool: React.FC<FocusModePlantToolProps> = ({
   focusedBedId,
   onOpenPlantSelection,
-  onSelectSpecies,
+  onSelectSpecies: _onSelectSpecies,
   selectedPlacementIds,
   onClearSelection
 }) => {
   const {
     selectedSpecies,
     isPlacing,
-    placements,
+    placements: _placements,
     getPlacementsForBed,
     removePlacements,
     setSelectedSpecies,

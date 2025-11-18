@@ -24,6 +24,7 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
   useEffect(() => {
     console.log('🔧 useAutoSavePatches hook initialized');
     console.log('📦 Initial state:', { patchesCount: patches.length, isDirty });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const savePatches = async () => {
@@ -152,6 +153,7 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
         clearTimeout(timeoutRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDirty, patches, debounceMs]);
 
   // Load patches on mount
@@ -160,6 +162,7 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
       loadPatchesFromStorage();
       isInitialized.current = true;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const manualSave = async (): Promise<void> => {

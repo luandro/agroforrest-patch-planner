@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback } from 'react';
-import { X, Trash2, Copy, Eye, EyeOff } from 'lucide-react';
+import { X, Trash2, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -28,7 +28,7 @@ interface PlantEditForm {
 }
 
 export const PlantEditingPanel: React.FC<PlantEditingPanelProps> = ({
-  focusedBedId,
+  focusedBedId: _focusedBedId,
   selectedPlacementIds,
   onClose,
   onDelete
@@ -36,7 +36,7 @@ export const PlantEditingPanel: React.FC<PlantEditingPanelProps> = ({
   const {
     placements,
     updatePlacement,
-    getPlacementsForBed
+    getPlacementsForBed: _getPlacementsForBed
   } = usePlantPlacementStore();
 
   const selectedPlacements = placements.filter(p => selectedPlacementIds.includes(p.id));
@@ -84,16 +84,6 @@ export const PlantEditingPanel: React.FC<PlantEditingPanelProps> = ({
     });
     setHasUnsavedChanges(false);
   }, [selectedPlacementIds, editForm, updatePlacement]);
-
-  const getMaturityLabel = (maturity: string) => {
-    switch (maturity) {
-      case 'seed': return 'Semente';
-      case 'seedling': return 'Muda';
-      case 'young': return 'Jovem';
-      case 'adult': return 'Adulta';
-      default: return 'Muda';
-    }
-  };
 
   const getCategoryBadgeColor = (category: string) => {
     switch (category) {

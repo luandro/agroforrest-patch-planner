@@ -16,7 +16,7 @@ export const PlantSpeciesCardContent: React.FC<PlantSpeciesCardContentProps> = (
   species,
   isSelected,
   isPlacing,
-  disabled,
+  disabled: _disabled,
   compact = false
 }) => {
   return (

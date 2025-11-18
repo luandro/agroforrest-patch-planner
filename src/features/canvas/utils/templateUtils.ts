@@ -1,5 +1,5 @@
 
-import { PlantingTemplate, TemplatePlant, TemplatePreview, TemplateCompatibility, ScaledTemplatePlant } from '../types/template.types';
+import { PlantingTemplate, TemplatePreview, TemplateCompatibility, ScaledTemplatePlant } from '../types/template.types';
 import { Bed } from '../types/bed.types';
 import { getSpeciesForTemplate } from '../data/plantingTemplates';
 

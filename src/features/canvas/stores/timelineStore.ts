@@ -19,7 +19,7 @@ interface TimelineActions {
 
 interface TimelineStore extends TimelineState, TimelineActions {}
 
-export const useTimelineStore = create<TimelineStore>((set, get) => ({
+export const useTimelineStore = create<TimelineStore>((set, _get) => ({
   // State - Initialize timeline at month 0 for seedling start
   isTimelineActive: false,
   currentMonth: 0,

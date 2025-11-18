@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Copy, Move, Eye } from 'lucide-react';
+import { Edit, Trash2, Copy, Move } from 'lucide-react';
 import { usePlantPlacementStore } from '../../stores/plantPlacementStore';
 
 interface DesktopPlantEditorProps {
@@ -15,13 +15,11 @@ interface DesktopPlantEditorProps {
 export const DesktopPlantEditor: React.FC<DesktopPlantEditorProps> = ({
   selectedPlacementIds,
   onClose,
-  focusedBedId
+  focusedBedId: _focusedBedId
 }) => {
-  const { 
-    placements, 
-    removePlacements, 
-    updatePlacement,
-    getPlacementsForBed 
+  const {
+    placements,
+    removePlacements
   } = usePlantPlacementStore();
 
   const selectedPlacements = placements.filter(p => 

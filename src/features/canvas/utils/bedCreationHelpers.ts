@@ -1,5 +1,4 @@
 
-import { CanvasViewport } from '../types/canvas.types';
 import { Bed, BedConfig } from '../types/bed.types';
 
 /**

@@ -429,7 +429,13 @@ export const loadPatchData = async (patchId: string): Promise<{ beds: Bed[]; pla
  */
 export const exportAllData = async (): Promise<string> => {
   try {
-    const data = {
+    const data: {
+      patches: Patch[];
+      beds: Bed[];
+      placements: PlantPlacement[];
+      currentPatchId: string | null;
+      exportedAt: number;
+    } = {
       patches: [],
       beds: [],
       placements: [],
@@ -460,9 +466,9 @@ export const exportAllData = async (): Promise<string> => {
         })
       ]);
       
-      data.patches = patches;
-      data.beds = beds;
-      data.placements = placements;
+      data.patches = patches as Patch[];
+      data.beds = beds as Bed[];
+      data.placements = placements as PlantPlacement[];
       data.currentPatchId = loadFromLocalStorageFallback('currentPatchId', null);
 
       db.close();

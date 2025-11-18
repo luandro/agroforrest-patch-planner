@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useCallback, useMemo, useEffect } from 'react';
 import { useTimelineStore } from '../stores/timelineStore';
 import { PlantSpecies } from '../types/species.types';
 

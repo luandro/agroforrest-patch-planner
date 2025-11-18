@@ -3,8 +3,7 @@ import React from 'react';
 import { BulkPlacementPanel } from './BulkPlacementPanel';
 import { useBulkPlacement } from '../hooks/useBulkPlacement';
 import { useBedStore } from '../stores/bedStore';
-import { AlertCircle, Target, Grid3X3, MousePointer } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Target, Grid3X3, MousePointer } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
 type BulkPlacementHookReturn = ReturnType<typeof useBulkPlacement>;

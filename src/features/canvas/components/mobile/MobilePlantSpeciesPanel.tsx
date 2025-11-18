@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PlantSpecies } from '../../types/species.types';
 import { mockSpecies } from '../../data/mockSpecies';
-import { PlantSpeciesCard } from '../PlantSpeciesCard';
 
 interface MobilePlantSpeciesPanelProps {
   isOpen: boolean;

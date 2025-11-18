@@ -17,7 +17,7 @@ interface MobilePlantEditorProps {
 export const MobilePlantEditor: React.FC<MobilePlantEditorProps> = ({
   selectedPlacementIds,
   onClose,
-  focusedBedId
+  focusedBedId: _focusedBedId
 }) => {
   const { placements, removePlacements } = usePlantPlacementStore();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);

@@ -27,8 +27,8 @@ export const GrowthStagesReference: React.FC<GrowthStagesReferenceProps> = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-2 max-h-40 overflow-y-auto">
-          {GROWTH_STAGES.map((stage, index) => (
-            <div 
+          {GROWTH_STAGES.map((stage) => (
+            <div
               key={stage.months}
               className={cn(
                 "flex justify-between items-center p-2 rounded text-sm transition-colors",

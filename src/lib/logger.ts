@@ -54,7 +54,7 @@ class Logger {
     return LOG_LEVELS[level] >= LOG_LEVELS[this.config.level];
   }
 
-  private formatMessage(level: LogLevel, message: string, data?: unknown): string {
+  private formatMessage(level: LogLevel, message: string): string {
     const timestamp = new Date().toISOString();
     const prefix = this.config.prefix ? `[${this.config.prefix}]` : '';
     return `${timestamp} ${prefix}[${level.toUpperCase()}] ${message}`;

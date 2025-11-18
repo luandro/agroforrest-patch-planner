@@ -50,7 +50,7 @@ export const useCanvasStateManager = ({
   const bedCreation = useBedCreationOrchestrator({
     viewport: stateOrchestrator.viewport,
     gridSize,
-    onBedCreated: (bedId) => {
+    onBedCreated: (_bedId) => {
       setTimeout(() => {
         // centerOnBed is a placeholder in useCanvasViewport and doesn't have access to beds.
       }, 100);
@@ -68,7 +68,7 @@ export const useCanvasStateManager = ({
     setIsPlantSpeciesPanelOpen(false);
   }, []);
 
-  const handleSelectPlantSpecies = useCallback((species: PlantSpecies) => {
+  const handleSelectPlantSpecies = useCallback((_species: PlantSpecies) => {
     // This will be handled by the species panel component
     setIsPlantSpeciesPanelOpen(false);
   }, []);

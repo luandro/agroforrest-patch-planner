@@ -6,7 +6,7 @@ interface FocusModeStore extends FocusModeActions {
   focusMode: FocusMode;
 }
 
-export const useFocusModeStore = create<FocusModeStore>((set, get) => ({
+export const useFocusModeStore = create<FocusModeStore>((set, _get) => ({
   focusMode: {
     isActive: false,
     bedId: null,

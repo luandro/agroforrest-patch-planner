@@ -30,7 +30,7 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
   
   const { placements, getPlacementsForBed } = usePlantPlacementStore();
   const { beds } = useBedStore();
-  const { currentMonth, isTimelineActive } = useTimelineStore();
+  const { isTimelineActive } = useTimelineStore();
   const { viewport } = useSideViewStore();
 
   // Timeline controls

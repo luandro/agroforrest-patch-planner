@@ -56,6 +56,7 @@ export const useBedCreationOrchestrator = ({
   } = useBedPlacement({ bedConfig, onBedCreated });
 
   // Create enhanced handlers using utility functions
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const updateBedConfig = useCallback(
     createBedConfigUpdater(updateBedConfigBase, updatePreviewWithConfig),
     [updateBedConfigBase, updatePreviewWithConfig]
@@ -80,8 +81,7 @@ export const useBedCreationOrchestrator = ({
   const {
     placeBed: placeBedEnhanced,
     confirmPlacement,
-    cancelPlacement,
-    cancelCreation
+    cancelPlacement
   } = createPlacementManager(
     placeBedBase,
     confirmPlacementBase,

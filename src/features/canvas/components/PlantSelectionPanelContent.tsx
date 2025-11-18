@@ -11,8 +11,7 @@ import { PlantSelectionIndividualMode } from './PlantSelectionIndividualMode';
 import { PlantSelectionBulkMode } from './PlantSelectionBulkMode';
 import { PlantingTemplatesSection } from './PlantingTemplatesSection';
 import { useBulkPlacementStore } from '../stores/bulkPlacementStore';
-import { generateTemplatePreview, scaleTemplateToFit } from '../utils/templateUtils';
-import { getSpeciesForTemplate } from '../data/plantingTemplates';
+import { scaleTemplateToFit } from '../utils/templateUtils';
 
 interface PlantSelectionPanelContentProps {
   onSelectSpecies: (species: PlantSpecies) => void;

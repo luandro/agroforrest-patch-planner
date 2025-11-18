@@ -53,8 +53,7 @@ export const MobileLayoutOrchestrator: React.FC<MobileLayoutOrchestratorProps> =
   onZoomOut,
   onFitAll,
   onOpenPlantSelection,
-  focusedBedId,
-  ...rest
+  focusedBedId
 }) => {
   const { 
     selectedPlacementIds, 

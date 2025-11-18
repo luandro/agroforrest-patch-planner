@@ -61,33 +61,63 @@ Created from comprehensive architecture review on 2025-11-14
 
 ---
 
-### Sprint 2 (Week 3-4) - 🔜 UPCOMING
+### Sprint 2 (Week 3-4) - 🚧 IN PROGRESS
 
-**New Priority Item - Fix TypeScript Strict Mode Violations:**
+**Completed Tasks:**
 
-Enabling `noUnusedLocals` and `noUnusedParameters` exposed ~60+ pre-existing errors across the codebase. These need to be fixed for full strict mode compliance.
+1. **✅ Fix TypeScript Strict Mode Violations (2025-11-18)**
 
-**Affected Files (sample):**
-- `src/components/UserMenu.tsx` - Unused imports and variables
-- `src/components/layout/MainLayout.tsx` - Unused state
-- `src/features/canvas/components/*.tsx` - Multiple unused props/imports
-- `src/features/canvas/hooks/*.ts` - Unused variables in hooks
-- `src/features/canvas/utils/*.ts` - Unused parameters
+   Fixed all ~77 TypeScript strict mode errors that were exposed by enabling `noUnusedLocals` and `noUnusedParameters`.
 
-**Approach:**
-1. Remove unused imports
-2. Prefix intentionally unused parameters with underscore (`_param`)
-3. Remove unused variables or implement TODOs that use them
-4. Add proper type annotations where implicit any was used
+   **Files Fixed:**
+   - `src/components/UserMenu.tsx` - Removed unused imports (DialogTrigger), fixed MenuItem interface types, removed unused store values
+   - `src/components/layout/MainLayout.tsx` - Removed unused `isMenuOpen` state
+   - `src/components/ui/calendar.tsx` - Removed unused `_props` parameters
+   - `src/lib/logger.ts` - Removed unused `data` parameter from formatMessage
+   - `src/pages/Index.tsx` - Added explicit return type annotation
+   - `src/test/vitest.d.ts` - Added eslint-disable for empty interface
 
-**Estimated Effort:** 2-3 days
+   **Canvas Components (20+ fixes):**
+   - DesktopSidebar.tsx, FocusModePlantTool.tsx, MiniMap.tsx, MobileControls.tsx
+   - PlantContextMenu.tsx, PlantEditingPanel.tsx, PlantInteractionLayer.tsx
+   - PlantSelectionBulkMode.tsx, PlantSelectionPanelContent.tsx, ViewModeToggle.tsx
+   - DesktopPlantEditor.tsx, DesktopGrowthTimeline.tsx, GrowthStagesReference.tsx
+   - MobileLayoutOrchestrator.tsx, MobilePlantEditor.tsx, MobilePlantSpeciesPanel.tsx
+   - MiniMapOverlay.tsx, GrowthTimelineSlider.tsx, SideViewCanvas.tsx
+   - PlantSelectionResults.tsx, PlantSpeciesCardContent.tsx
 
-**Sprint 2 Full Scope:**
-1. **🆕 Fix TypeScript strict mode violations (~60+ errors)**
-2. Issue #4 - Extract desktop/mobile shared logic
-3. Issue #5 - Refactor storage manager
-4. Issue #6 - Break down large components
-5. Expand test coverage to stores and hooks
+   **Canvas Hooks (25+ fixes):**
+   - useAutoSavePatches.ts, useBedCreationOrchestrator.ts, useCanvasEventHandlers.ts
+   - useCanvasEventOrchestrator.ts, useCanvasGestures.ts, useCanvasLayoutOrchestrator.ts
+   - useCanvasStateManager.ts, useCanvasViewport.ts, useFocusModeIntegration.ts
+   - useGrowthTimeline.ts, usePlantPlacement.ts, useBedFocus.ts
+
+   **Canvas Stores (2 fixes):**
+   - focusModeStore.ts, timelineStore.ts - Prefixed unused `get` parameter
+
+   **Canvas Utils (15+ fixes):**
+   - bedCreationHelpers.ts, bedPositioning.ts, plantingGridRenderer.ts
+   - enhancedPlantDrawing.ts, plantDrawing.ts, sideViewRenderer.ts
+   - spacingRules.ts, storageManager.ts, templateUtils.ts
+
+   **Approach Used:**
+   - Removed unused imports entirely
+   - Prefixed intentionally unused parameters with underscore (`_param`)
+   - Removed unused variables and functions
+   - Added proper type annotations where implicit any was used
+   - Fixed duplicate identifier imports
+
+   **Results:**
+   - ✅ TypeScript compilation: 0 errors
+   - ✅ ESLint: 0 errors (24 warnings - mostly React hooks exhaustive-deps, intentional)
+   - ✅ Build: Successful
+   - ✅ All 54 tests passing
+
+**Remaining Sprint 2 Scope:**
+2. ⏳ Issue #4 - Extract desktop/mobile shared logic
+3. ⏳ Issue #5 - Refactor storage manager
+4. ⏳ Issue #6 - Break down large components
+5. ⏳ Expand test coverage to stores and hooks
 
 ---
 
@@ -448,12 +478,12 @@ Create `src/features/canvas/validation/schemas.ts` with Zod schemas
 3. ✅ Issue #3 - Setup Vitest and write first tests (54 tests passing)
 4. ✅ Issue #7 - Add error boundaries
 
-**Week 3-4 (Sprint 2):**
-5. **🆕 Fix TypeScript strict mode violations (~60+ pre-existing errors)**
-6. Issue #4 - Extract desktop/mobile shared logic
-7. Issue #5 - Refactor storage manager
-8. Issue #6 - Break down large components
-9. Expand test coverage to stores and hooks
+**Week 3-4 (Sprint 2):** 🚧 **IN PROGRESS**
+5. ✅ Fix TypeScript strict mode violations (~77 errors fixed)
+6. ⏳ Issue #4 - Extract desktop/mobile shared logic
+7. ⏳ Issue #5 - Refactor storage manager
+8. ⏳ Issue #6 - Break down large components
+9. ⏳ Expand test coverage to stores and hooks
 
 **Week 5-6 (Sprint 3):**
 10. Issue #8 - Document architecture

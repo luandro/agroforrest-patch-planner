@@ -26,7 +26,7 @@ export const useFocusModeIntegration = ({
   onOpenPlantSelection,
   onOpenPlantSpeciesPanel
 }: UseFocusModeIntegrationProps) => {
-  const { clearSelection: clearPlantSelection, selectedSpecies, setSelectedSpecies } = usePlantPlacementStore();
+  const { clearSelection: clearPlantSelection, selectedSpecies: _selectedSpecies, setSelectedSpecies } = usePlantPlacementStore();
   const { setTimelineActive, resetTimeline } = useTimelineStore();
 
   // Focus mode management

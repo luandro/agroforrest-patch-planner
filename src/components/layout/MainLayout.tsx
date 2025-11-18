@@ -24,7 +24,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   onPatchSwitch
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { isMenuOpen, toggleMenu } = useMenuStore();
+  const { toggleMenu } = useMenuStore();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);

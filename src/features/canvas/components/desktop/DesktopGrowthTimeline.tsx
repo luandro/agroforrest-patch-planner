@@ -21,7 +21,7 @@ interface DesktopGrowthTimelineProps {
 export const DesktopGrowthTimeline: React.FC<DesktopGrowthTimelineProps> = ({
   onClose,
   focusedBedId,
-  isInFocusMode = false
+  isInFocusMode: _isInFocusMode = false
 }) => {
   const {
     currentMonth,

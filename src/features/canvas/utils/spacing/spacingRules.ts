@@ -58,7 +58,7 @@ export const getDefaultBulkConfig = (species: PlantSpecies): BulkPlacementConfig
 export const calculateOptimalPattern = (
   bedLength: number,
   bedWidth: number,
-  species: PlantSpecies, 
+  _species: PlantSpecies,
   config: BulkPlacementConfig
 ): string => {
   if (config.pattern !== 'auto') {

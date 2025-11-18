@@ -210,7 +210,7 @@ export const useCanvasGestures = ({
     // Mouse events for desktop
     const mouseDownHandler = (e: MouseEvent) => handleMouseDown(e);
     const mouseMoveHandler = (e: MouseEvent) => handleMouseMove(e);
-    const mouseUpHandler = (e: MouseEvent) => handleMouseUp();
+    const mouseUpHandler = (_e: MouseEvent) => handleMouseUp();
     const wheelHandler = (e: WheelEvent) => handleWheel(e);
 
     // Add touch event listeners with passive: false to allow preventDefault

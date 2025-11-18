@@ -88,7 +88,7 @@ export const useCanvasViewport = ({
   }, [onViewportChange]);
 
   // Center on a specific bed with optional zoom
-  const centerOnBed = useCallback((bedId: string, targetZoom?: number) => {
+  const centerOnBed = useCallback((_bedId: string, _targetZoom?: number) => {
     // This would need access to beds store, so we'll implement it in the component
     // For now, just provide the function signature
   }, []);
