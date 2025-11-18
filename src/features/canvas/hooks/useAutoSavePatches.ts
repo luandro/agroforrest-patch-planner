@@ -90,6 +90,16 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
             size: { width: 20, height: 20 }
           });
           console.log('✅ Default patch created:', defaultPatchId);
+
+          // Immediately save the new default patch to prevent data loss on quick page close
+          setTimeout(async () => {
+            const currentPatches = usePatchStore.getState().patches;
+            if (currentPatches.length > 0) {
+              await upsertPatches(currentPatches);
+              usePatchStore.getState().markClean();
+              console.log('💾 Default patch saved immediately');
+            }
+          }, 100);
         } catch (error) {
           console.error('❌ Failed to create default patch:', error);
           setSaveError('Failed to create default patch');
@@ -120,6 +130,16 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
           size: { width: 20, height: 20 }
         });
         console.log('✅ Default patch created after error:', defaultPatchId);
+
+        // Immediately save the new default patch to prevent data loss on quick page close
+        setTimeout(async () => {
+          const currentPatches = usePatchStore.getState().patches;
+          if (currentPatches.length > 0) {
+            await upsertPatches(currentPatches);
+            usePatchStore.getState().markClean();
+            console.log('💾 Default patch saved immediately');
+          }
+        }, 100);
       } catch (createError) {
         console.error('❌ Failed to create default patch:', createError);
         setSaveError('Failed to create default patch');
