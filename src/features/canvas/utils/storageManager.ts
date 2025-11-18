@@ -5,6 +5,7 @@
 import { Patch } from '../types/patch.types';
 import { Bed } from '../types/bed.types';
 import { PlantPlacement } from '../stores/plantPlacementStore';
+import { storageLogger } from '@/lib/logger';
 
 export const DB_NAME = 'AgroForestDB';
 export const DB_VERSION = 4; // Incremented to force schema update
@@ -30,29 +31,29 @@ export const openDB = (): Promise<IDBDatabase> => {
     request.onupgradeneeded = (event) => {
       const db = request.result;
       const transaction = (event.target as IDBOpenDBRequest).transaction!;
-      
-      console.log('🔧 Upgrading database schema to version', DB_VERSION);
-      
+
+      storageLogger.info(`Upgrading database schema to version ${DB_VERSION}`);
+
       // Create patches store
       if (!db.objectStoreNames.contains(PATCHES_STORE_NAME)) {
         const patchStore = db.createObjectStore(PATCHES_STORE_NAME, { keyPath: 'id' });
         patchStore.createIndex('createdAt', 'createdAt', { unique: false });
-        console.log('✅ Created patches store');
+        storageLogger.info('Created patches store');
       }
-      
+
       // Create beds store
       if (!db.objectStoreNames.contains(BEDS_STORE_NAME)) {
         const bedStore = db.createObjectStore(BEDS_STORE_NAME, { keyPath: 'id' });
         bedStore.createIndex('patchId', 'patchId', { unique: false });
-        console.log('✅ Created beds store');
+        storageLogger.info('Created beds store');
       }
-      
+
       // Create placements store
       if (!db.objectStoreNames.contains(PLACEMENTS_STORE_NAME)) {
         const placementStore = db.createObjectStore(PLACEMENTS_STORE_NAME, { keyPath: 'id' });
         placementStore.createIndex('patchId', 'patchId', { unique: false });
         placementStore.createIndex('bedId', 'bedId', { unique: false });
-        console.log('✅ Created placements store');
+        storageLogger.info('Created placements store');
       }
       
       // Migration: Add patchId to existing placements if needed
@@ -75,7 +76,7 @@ export const openDB = (): Promise<IDBDatabase> => {
                     placement.patchId = bed.patchId;
                     const updateRequest = cursor.update(placement);
                     updateRequest.onsuccess = () => {
-                      console.log('🔄 Migrated placement', placement.id, 'to patch', bed.patchId);
+                      storageLogger.debug(`Migrated placement ${placement.id} to patch ${bed.patchId}`);
                       resolve();
                     };
                     updateRequest.onerror = () => reject(updateRequest.error);
@@ -91,9 +92,9 @@ export const openDB = (): Promise<IDBDatabase> => {
           } else {
             // All cursor operations complete, wait for migrations
             Promise.all(migrationPromises).then(() => {
-              console.log('🔄 Migration completed successfully');
+              storageLogger.info('Migration completed successfully');
             }).catch((error) => {
-              console.error('❌ Migration failed:', error);
+              storageLogger.error('Migration failed', error);
             });
           }
         };
@@ -101,17 +102,17 @@ export const openDB = (): Promise<IDBDatabase> => {
     };
 
     request.onsuccess = () => {
-      console.log('✅ Database opened successfully');
+      storageLogger.info('Database opened successfully');
       resolve(request.result);
     };
-    
+
     request.onerror = () => {
-      console.error('❌ Database error:', request.error);
+      storageLogger.error('Database error', request.error);
       reject(new Error('Failed to open database'));
     };
-    
+
     request.onblocked = () => {
-      console.warn('⚠️ Database upgrade blocked. Please close other tabs.');
+      storageLogger.warn('Database upgrade blocked. Please close other tabs.');
     };
   });
 };
@@ -122,13 +123,13 @@ export const openDB = (): Promise<IDBDatabase> => {
 export const isIndexedDBAvailable = async (): Promise<boolean> => {
   try {
     if (!window.indexedDB) return false;
-    
+
     // Test if we can actually use IndexedDB
     const testDB = await openDB();
     testDB.close();
     return true;
   } catch (error) {
-    console.warn('⚠️ IndexedDB not available, falling back to localStorage:', error);
+    storageLogger.warn('IndexedDB not available, falling back to localStorage', error);
     return false;
   }
 };
@@ -140,26 +141,36 @@ export const saveToLocalStorageFallback = <T>(key: keyof typeof STORAGE_KEYS, da
   try {
     const storageKey = STORAGE_KEYS[key];
     localStorage.setItem(storageKey, JSON.stringify(data));
-    console.log('💾 Saved to localStorage fallback:', key, 'data length:', Array.isArray(data) ? data.length : 'N/A');
+    storageLogger.debug(`Saved to localStorage fallback: ${key}`, {
+      dataLength: Array.isArray(data) ? data.length : 'N/A'
+    });
   } catch (error) {
-    console.error('❌ Failed to save to localStorage:', error);
+    storageLogger.error('Failed to save to localStorage', error);
   }
 };
 
 /**
  * Load data from localStorage fallback
+ * Handles backwards compatibility for values stored as plain strings (pre-JSON encoding)
  */
 export const loadFromLocalStorageFallback = <T>(key: keyof typeof STORAGE_KEYS, defaultValue: T): T => {
   try {
     const storageKey = STORAGE_KEYS[key];
     const stored = localStorage.getItem(storageKey);
     if (stored) {
-      const parsed = JSON.parse(stored);
-      console.log('📂 Loaded from localStorage fallback:', key);
-      return parsed;
+      try {
+        const parsed = JSON.parse(stored);
+        storageLogger.debug(`Loaded from localStorage fallback: ${key}`);
+        return parsed;
+      } catch {
+        // Backwards compatibility: if JSON.parse fails, the value may be a plain string
+        // (e.g., currentPatchId was previously stored without JSON encoding)
+        storageLogger.debug(`Loaded raw string from localStorage fallback: ${key}`);
+        return stored as unknown as T;
+      }
     }
   } catch (error) {
-    console.error('❌ Failed to load from localStorage:', error);
+    storageLogger.error('Failed to load from localStorage', error);
   }
   return defaultValue;
 };
@@ -202,8 +213,8 @@ export const clearAllStorage = async (): Promise<void> => {
   if (errors.length > 0) {
     throw new Error(`Storage clearing failed: ${errors.map(e => e.message).join(', ')}`);
   }
-  
-  console.log('🧹 All storage cleared');
+
+  storageLogger.info('All storage cleared');
 };
 
 /**
@@ -227,22 +238,22 @@ export const upsertPatches = async (patches: Patch[]): Promise<void> => {
       });
       
       db.close();
-      console.log('✅ Patches upserted successfully:', patches.length);
+      storageLogger.info(`Patches upserted successfully: ${patches.length}`);
     } else {
       // For localStorage, we still need to load all and merge
       const existing = loadFromLocalStorageFallback<Patch[]>('patches', []);
       const patchMap = new Map(existing.map((p) => [p.id, p] as const));
-      
+
       // Update existing or add new
       patches.forEach(patch => {
         patchMap.set(patch.id, patch);
       });
-      
+
       saveToLocalStorageFallback('patches', Array.from(patchMap.values()));
-      console.log('✅ Patches upserted to localStorage:', patches.length);
+      storageLogger.info(`Patches upserted to localStorage: ${patches.length}`);
     }
   } catch (error) {
-    console.error('❌ Failed to upsert patches:', error);
+    storageLogger.error('Failed to upsert patches', error);
     throw error;
   }
 };
@@ -288,18 +299,18 @@ export const upsertBedsForPatch = async (patchId: string, beds: Bed[]): Promise<
       });
       
       db.close();
-      console.log('✅ Beds upserted successfully for patch:', patchId, 'count:', beds.length);
+      storageLogger.info(`Beds upserted successfully for patch: ${patchId}, count: ${beds.length}`);
     } else {
       // For localStorage, load all beds and update
       const allBeds = loadFromLocalStorageFallback<Bed[]>('beds', []);
       const otherPatchBeds = allBeds.filter((bed) => bed.patchId !== patchId);
       const bedsWithPatch = beds.map(bed => ({ ...bed, patchId }));
-      
+
       saveToLocalStorageFallback('beds', [...otherPatchBeds, ...bedsWithPatch]);
-      console.log('✅ Beds upserted to localStorage for patch:', patchId, 'count:', beds.length);
+      storageLogger.info(`Beds upserted to localStorage for patch: ${patchId}, count: ${beds.length}`);
     }
   } catch (error) {
-    console.error('❌ Failed to upsert beds:', error);
+    storageLogger.error('Failed to upsert beds', error);
     throw error;
   }
 };
@@ -345,18 +356,18 @@ export const upsertPlacementsForPatch = async (patchId: string, placements: Plan
       });
       
       db.close();
-      console.log('✅ Placements upserted successfully for patch:', patchId, 'count:', placements.length);
+      storageLogger.info(`Placements upserted successfully for patch: ${patchId}, count: ${placements.length}`);
     } else {
       // For localStorage, load all placements and update
       const allPlacements = loadFromLocalStorageFallback<PlantPlacement[]>('placements', []);
       const otherPatchPlacements = allPlacements.filter((placement) => placement.patchId !== patchId);
       const placementsWithPatch = placements.map(placement => ({ ...placement, patchId }));
-      
+
       saveToLocalStorageFallback('placements', [...otherPatchPlacements, ...placementsWithPatch]);
-      console.log('✅ Placements upserted to localStorage for patch:', patchId, 'count:', placements.length);
+      storageLogger.info(`Placements upserted to localStorage for patch: ${patchId}, count: ${placements.length}`);
     }
   } catch (error) {
-    console.error('❌ Failed to upsert placements:', error);
+    storageLogger.error('Failed to upsert placements', error);
     throw error;
   }
 };
@@ -404,11 +415,11 @@ export const loadPatchData = async (patchId: string): Promise<{ beds: Bed[]; pla
       beds = allBeds.filter((bed) => bed.patchId === patchId);
       placements = allPlacements.filter((placement) => placement.patchId === patchId);
     }
-    
-    console.log('✅ Loaded patch data for:', patchId, 'beds:', beds.length, 'placements:', placements.length);
+
+    storageLogger.info(`Loaded patch data for: ${patchId}, beds: ${beds.length}, placements: ${placements.length}`);
     return { beds, placements };
   } catch (error) {
-    console.error('❌ Failed to load patch data:', error);
+    storageLogger.error('Failed to load patch data', error);
     throw error;
   }
 };
@@ -452,8 +463,8 @@ export const exportAllData = async (): Promise<string> => {
       data.patches = patches;
       data.beds = beds;
       data.placements = placements;
-      data.currentPatchId = localStorage.getItem(STORAGE_KEYS.currentPatchId);
-      
+      data.currentPatchId = loadFromLocalStorageFallback('currentPatchId', null);
+
       db.close();
     } else {
       // Fallback to localStorage
@@ -465,7 +476,7 @@ export const exportAllData = async (): Promise<string> => {
     
     return JSON.stringify(data, null, 2);
   } catch (error) {
-    console.error('❌ Failed to export data:', error);
+    storageLogger.error('Failed to export data', error);
     throw error;
   }
 };
@@ -514,12 +525,12 @@ export const importAllData = async (jsonData: string): Promise<void> => {
     
     // Restore current patch
     if (data.currentPatchId) {
-      localStorage.setItem(STORAGE_KEYS.currentPatchId, data.currentPatchId);
+      saveToLocalStorageFallback('currentPatchId', data.currentPatchId);
     }
-    
-    console.log('✅ Data imported successfully');
+
+    storageLogger.info('Data imported successfully');
   } catch (error) {
-    console.error('❌ Failed to import data:', error);
+    storageLogger.error('Failed to import data', error);
     throw error;
   }
 };

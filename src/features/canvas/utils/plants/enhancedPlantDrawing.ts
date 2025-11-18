@@ -28,17 +28,6 @@ export const drawEnhancedPlant = (
   const stressMultiplier = Math.max(0.5, 1 - (environmentalStress * 0.3));
   const finalRadius = Math.max(4, currentRadius * stressMultiplier);
 
-  // Enhanced logging for debugging
-  console.log('[Plant Render] Drawing plant:', {
-    species: species?.commonName || 'Unknown',
-    month: currentMonth,
-    baseRadius,
-    maxRadius,
-    growthProgress: growthProgress.toFixed(3),
-    finalRadius: finalRadius.toFixed(1),
-    coords: [screenX.toFixed(1), screenY.toFixed(1)]
-  });
-
   // Plant colors with better contrast
   const healthColor = environmentalStress > 0.5 ? '#8B4513' : '#228B22';
   const plantColor = species?.category === 'trees' ? '#2D5B3D' : 
@@ -106,7 +95,7 @@ export const drawEnhancedPlant = (
   }
 
   // Development label - improved visibility
-  if (process.env.NODE_ENV === 'development' && species && finalRadius > 8) {
+  if (import.meta.env.DEV && species && finalRadius > 8) {
     ctx.fillStyle = '#000';
     ctx.font = 'bold 10px Arial';
     ctx.strokeStyle = '#fff';

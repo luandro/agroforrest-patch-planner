@@ -19,7 +19,7 @@ export const DevelopmentInfo: React.FC<DevelopmentInfoProps> = ({
   selectedBedIds,
   isMobile
 }) => {
-  if (process.env.NODE_ENV !== 'development') {
+  if (!import.meta.env.DEV) {
     return null;
   }
 

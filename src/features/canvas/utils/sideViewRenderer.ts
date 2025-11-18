@@ -183,9 +183,9 @@ const drawSideViewPlant = (
   ctx.shadowBlur = 0;
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = 0;
-  
+
   // Add plant info for debugging with better positioning
-  if (process.env.NODE_ENV === 'development') {
+  if (import.meta.env.DEV) {
     ctx.fillStyle = '#000';
     ctx.font = '10px monospace';
     ctx.textAlign = 'center';

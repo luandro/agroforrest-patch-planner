@@ -4,12 +4,8 @@ import { usePlantPlacementStore, PlantPlacement } from '../stores/plantPlacement
 import { usePatchStore } from '../stores/patchStore';
 import { useBedStore } from '../stores/bedStore';
 import {
-  openDB,
-  saveToLocalStorageFallback,
-  loadFromLocalStorageFallback,
   upsertPlacementsForPatch,
-  loadPatchData,
-  PLACEMENTS_STORE_NAME
+  loadPatchData
 } from '../utils/storageManager';
 
 interface UseAutoSavePlantsProps {

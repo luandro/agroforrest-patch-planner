@@ -123,9 +123,9 @@ export const useStorageInitialization = () => {
       console.log('✅ Default patch created:', defaultPatchId);
     } else {
       loadPatches(patches, false);
-      
+
       // Restore current patch
-      const savedCurrentPatchId = localStorage.getItem('agroforest_current_patch_id');
+      const savedCurrentPatchId = loadFromLocalStorageFallback<string | null>('currentPatchId', null);
       if (savedCurrentPatchId && patches.find(p => p.id === savedCurrentPatchId)) {
         setCurrentPatch(savedCurrentPatchId);
       } else {

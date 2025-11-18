@@ -78,8 +78,8 @@ export const PatchCreatorHeader: React.FC<PatchCreatorHeaderProps> = ({
               Linha do Tempo
             </Button>
           )}
-          
-          {process.env.NODE_ENV === 'development' && (
+
+          {import.meta.env.DEV && (
             <div className="text-xs text-gray-500 hidden md:block">
               FPS: {fps} | Canteiros: {beds.length} | Selecionados: {selectedBedIds.length} | Ferramenta: {tool}
               {focusMode.isActive && ` | Focado: ${focusMode.bedId}`}

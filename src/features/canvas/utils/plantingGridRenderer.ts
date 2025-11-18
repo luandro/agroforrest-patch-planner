@@ -81,7 +81,7 @@ export function drawPlantingGrid({
   ctx.clip();
 
   // DEBUG outline
-  if (process.env.NODE_ENV === "development") {
+  if (import.meta.env.DEV) {
     ctx.save();
     ctx.beginPath();
     if (focusedBed.shape === 'rectangle') {

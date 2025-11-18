@@ -86,7 +86,7 @@ export const usePatchCreatorState = () => {
 
   // FPS counter for development
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'development') return;
+    if (!import.meta.env.DEV) return;
     
     let frameCount = 0;
     let lastTime = performance.now();
