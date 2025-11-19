@@ -8,14 +8,14 @@ import { useEffect, useRef, useState } from 'react';
 import { usePatchStore } from '../stores/patchStore';
 import { useBedStore } from '../stores/bedStore';
 import { usePlantPlacementStore } from '../stores/plantPlacementStore';
-import { 
-  openDB, 
-  loadFromLocalStorageFallback, 
+import {
+  openDB,
+  loadFromLocalStorageFallback,
   isIndexedDBAvailable,
   PATCHES_STORE_NAME,
   BEDS_STORE_NAME,
   PLACEMENTS_STORE_NAME
-} from '../utils/storageManager';
+} from '../storage';
 import { Patch } from '../types/patch.types';
 import { Bed } from '../types/bed.types';
 import { PlantPlacement } from '../stores/plantPlacementStore';

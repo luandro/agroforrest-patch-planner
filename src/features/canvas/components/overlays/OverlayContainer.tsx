@@ -13,8 +13,6 @@ interface OverlayContainerProps extends CanvasLayoutSharedProps {
 export const OverlayContainer: React.FC<OverlayContainerProps> = (props) => {
   const {
     viewport,
-    beds,
-    pan,
     isInFocusMode,
     focusedBedId,
     onExitFocus,
@@ -24,20 +22,11 @@ export const OverlayContainer: React.FC<OverlayContainerProps> = (props) => {
     isMobile = false
   } = props;
 
-  // Navigation handler for mini-map
-  const handleMiniMapNavigate = (x: number, y: number) => {
-    const deltaX = x - viewport.centerX;
-    const deltaY = y - viewport.centerY;
-    pan(deltaX, deltaY);
-  };
-
   return (
     <>
       {/* Mini-Map Overlay */}
       <MiniMapOverlay
         viewport={viewport}
-        beds={beds}
-        onNavigate={handleMiniMapNavigate}
         isVisible={!isInFocusMode}
       />
 

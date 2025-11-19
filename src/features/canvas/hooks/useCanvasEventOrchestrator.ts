@@ -3,9 +3,6 @@ import type { CanvasViewport } from '../types/canvas.types';
 import type { Bed, CanvasTool } from '../types/bed.types';
 import { useCanvasEventHandlers } from './useCanvasEventHandlers';
 
-import { CanvasViewport } from '../types/canvas.types';
-import { Bed } from '../types/bed.types';
-
 interface UseCanvasEventOrchestratorProps {
   tool: CanvasTool;
   isCreating: boolean;

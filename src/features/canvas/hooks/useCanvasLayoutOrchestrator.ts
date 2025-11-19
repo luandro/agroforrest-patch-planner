@@ -63,8 +63,8 @@ interface UseCanvasLayoutOrchestratorProps {
 export const useCanvasLayoutOrchestrator = (props: UseCanvasLayoutOrchestratorProps) => {
   const {
     viewport,
-    beds,
-    selectedBedIds,
+    beds: _beds,
+    selectedBedIds: _selectedBedIds,
     isInFocusMode,
     focusedBed,
     handleEnterFocus,

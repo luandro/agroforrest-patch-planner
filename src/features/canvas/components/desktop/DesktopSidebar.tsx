@@ -39,7 +39,7 @@ interface DesktopSidebarProps {
 
 export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   activeTool,
-  onToolChange,
+  onToolChange: _onToolChange,
   bedConfig,
   onBedConfigChange,
   onUndo,
@@ -53,11 +53,11 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   isSaving = false,
   beds,
   viewport,
-  onEnterFocus,
+  onEnterFocus: _onEnterFocus,
   isInFocusMode = false,
   focusedBedId
 }) => {
-  const { selectedPlacementIds, clearSelection, placements } = usePlantPlacementStore();
+  const { selectedPlacementIds, clearSelection } = usePlantPlacementStore();
   const { isTimelineActive, setTimelineActive } = useTimelineStore();
 
   // Show plant editor when plants are selected in focus mode

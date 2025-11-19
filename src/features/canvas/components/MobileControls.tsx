@@ -28,7 +28,7 @@ interface MobileControlsProps {
 
 export const MobileControls: React.FC<MobileControlsProps> = ({
   activeTool,
-  onToolChange,
+  onToolChange: _onToolChange,
   bedConfig,
   onBedConfigChange,
   onUndo,
@@ -37,7 +37,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
   canRedo,
   onDeleteSelected,
   selectedCount,
-  isSaving = false,
+  isSaving: _isSaving = false,
   showConfirmation = false,
   isInFocusMode = false
 }) => {

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Edit, Copy, Move, Trash2, Eye, MoreHorizontal } from 'lucide-react';
+import { Edit, Copy, Move, Trash2, Eye } from 'lucide-react';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -24,7 +24,7 @@ interface PlantContextMenuProps {
 
 export const PlantContextMenu: React.FC<PlantContextMenuProps> = ({
   children,
-  placement,
+  placement: _placement,
   isSelected,
   onEdit,
   onDuplicate,

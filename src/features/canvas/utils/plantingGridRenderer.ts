@@ -53,7 +53,6 @@ export function drawPlantingGrid({
 
   // Fine grid: 10cm
   const fineGridSize = 0.1;
-  const finePixelSize = pixelsPerMeter * fineGridSize;
 
   const fineOpacity = Math.max(0.6, Math.min(1.0, viewport.zoom * 0.3 + 0.3));
   ctx.strokeStyle = `rgba(21, 128, 61, ${fineOpacity})`;

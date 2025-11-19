@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useFocusModeStore } from '../stores/focusModeStore';
 import { useBedStore } from '../stores/bedStore';
 import { CanvasViewport } from '../types/canvas.types';

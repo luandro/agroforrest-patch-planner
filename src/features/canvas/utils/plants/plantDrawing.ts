@@ -1,5 +1,4 @@
 import { drawEnhancedPlant } from './enhancedPlantDrawing';
-import { getEnhancedPlantVisuals } from './enhancedPlantVisuals';
 import { PlantSpecies } from '../../types/species.types';
 
 // Manter a função original para compatibilidade, mas redirecionar para a versão aprimorada

@@ -37,7 +37,7 @@ interface DesktopSidebarProps {
 
 export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   activeTool,
-  onToolChange,
+  onToolChange: _onToolChange,
   bedConfig,
   onBedConfigChange,
   onUndo,
@@ -51,7 +51,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   isSaving = false,
   beds,
   viewport,
-  onEnterFocus,
+  onEnterFocus: _onEnterFocus,
   isInFocusMode = false,
   focusedBedId
 }) => {

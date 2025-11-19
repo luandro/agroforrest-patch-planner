@@ -36,7 +36,7 @@ export const GrowthTimelineSlider: React.FC<GrowthTimelineSliderProps> = ({
   } = useGrowthTimeline();
 
   const { setTimelineActive } = useTimelineStore();
-  const { viewMode } = useSideViewStore();
+  const { viewMode: _viewMode } = useSideViewStore();
 
   const { isInactive, handleActivity } = useTimelineAutoHide({
     isMinimal,

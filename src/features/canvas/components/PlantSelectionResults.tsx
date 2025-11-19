@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { cn } from '@/lib/utils';
 
 interface PlantSelectionResultsProps {
   count: number;

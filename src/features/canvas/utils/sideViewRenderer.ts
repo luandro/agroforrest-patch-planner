@@ -55,8 +55,8 @@ export const renderSideView = ({
 };
 
 const drawHeightGrid = (
-  ctx: CanvasRenderingContext2D, 
-  canvas: HTMLCanvasElement, 
+  ctx: CanvasRenderingContext2D,
+  _canvas: HTMLCanvasElement,
   viewport: SideViewport,
   padding: CanvasPadding,
   usableWidth: number,
@@ -93,9 +93,9 @@ const drawHeightGrid = (
 };
 
 const drawCanopyLayers = (
-  ctx: CanvasRenderingContext2D, 
-  canvas: HTMLCanvasElement, 
-  viewport: SideViewport,
+  ctx: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+  _viewport: SideViewport,
   padding: CanvasPadding,
   usableWidth: number,
   usableHeight: number
@@ -128,9 +128,9 @@ const drawCanopyLayers = (
 };
 
 const drawSideViewPlant = (
-  ctx: CanvasRenderingContext2D, 
-  plant: SideViewPlant, 
-  currentMonth: number,
+  ctx: CanvasRenderingContext2D,
+  plant: SideViewPlant,
+  _currentMonth: number,
   bedLength: number,
   padding: CanvasPadding,
   usableWidth: number,
@@ -203,9 +203,9 @@ const drawSideViewPlant = (
 };
 
 const drawHeightScale = (
-  ctx: CanvasRenderingContext2D, 
-  canvas: HTMLCanvasElement, 
-  viewport: SideViewport,
+  ctx: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+  _viewport: SideViewport,
   padding: CanvasPadding
 ) => {
   ctx.fillStyle = '#374151';

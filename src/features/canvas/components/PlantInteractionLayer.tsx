@@ -18,7 +18,7 @@ interface PlantInteractionLayerProps {
 export const PlantInteractionLayer: React.FC<PlantInteractionLayerProps> = ({
   placement,
   isSelected,
-  isHovered,
+  isHovered: _isHovered,
   onEdit,
   onDuplicate,
   onDelete,

@@ -3,8 +3,8 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Copy, Move, Eye } from 'lucide-react';
-import { usePlantPlacementStore } from '../../stores/plantPlacementStore';
+import { Edit, Trash2, Copy, Move } from 'lucide-react';
+import { usePlantEditorActions } from '../../hooks/usePlantEditorActions';
 
 interface DesktopPlantEditorProps {
   selectedPlacementIds: string[];
@@ -15,47 +15,29 @@ interface DesktopPlantEditorProps {
 export const DesktopPlantEditor: React.FC<DesktopPlantEditorProps> = ({
   selectedPlacementIds,
   onClose,
-  focusedBedId
+  focusedBedId: _focusedBedId
 }) => {
-  const { 
-    placements, 
-    removePlacements, 
-    updatePlacement,
-    getPlacementsForBed 
-  } = usePlantPlacementStore();
+  const {
+    speciesGroups,
+    selectedCount,
+    handleDelete,
+    handleDuplicate,
+    handleEdit,
+    handleMove,
+    handleSelectSameSpecies,
+    handleAdjustSpacing,
+    getDeleteLabel,
+    getSelectionLabel
+  } = usePlantEditorActions({
+    selectedPlacementIds,
+    onClose
+  });
 
-  const selectedPlacements = placements.filter(p => 
-    selectedPlacementIds.includes(p.id)
-  );
-
-  const handleDelete = () => {
-    if (confirm(`Deletar ${selectedPlacements.length} planta${selectedPlacements.length > 1 ? 's' : ''}?`)) {
-      removePlacements(selectedPlacementIds);
-      onClose();
+  const handleDeleteWithConfirm = () => {
+    if (confirm(`Deletar ${selectedCount} planta${selectedCount > 1 ? 's' : ''}?`)) {
+      handleDelete();
     }
   };
-
-  const handleDuplicate = () => {
-    // TODO: Implement duplication logic
-    console.log('Duplicate plants:', selectedPlacementIds);
-  };
-
-  const handleEdit = () => {
-    // TODO: Open detailed editing panel
-    console.log('Edit plants:', selectedPlacementIds);
-  };
-
-  const handleMove = () => {
-    // TODO: Implement move to different bed
-    console.log('Move plants:', selectedPlacementIds);
-  };
-
-  // Group by species for display
-  const speciesGroups = selectedPlacements.reduce((acc, placement) => {
-    const speciesName = placement.species.commonName;
-    acc[speciesName] = (acc[speciesName] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
 
   if (selectedPlacementIds.length === 0) {
     return null;
@@ -76,12 +58,12 @@ export const DesktopPlantEditor: React.FC<DesktopPlantEditorProps> = ({
         {/* Selection Summary */}
         <div className="bg-gray-50 p-3 rounded-lg">
           <div className="text-sm font-medium text-gray-900 mb-2">
-            {selectedPlacementIds.length} planta{selectedPlacementIds.length > 1 ? 's' : ''} selecionada{selectedPlacementIds.length > 1 ? 's' : ''}:
+            {getSelectionLabel()}:
           </div>
           <div className="space-y-1">
-            {Object.entries(speciesGroups).map(([speciesName, count]) => (
-              <div key={speciesName} className="flex justify-between items-center">
-                <span className="text-sm">{speciesName}</span>
+            {Object.values(speciesGroups).map(({ species, count }) => (
+              <div key={species.id} className="flex justify-between items-center">
+                <span className="text-sm">{species.commonName}</span>
                 <Badge variant="secondary">{count.toString()}</Badge>
               </div>
             ))}
@@ -123,16 +105,13 @@ export const DesktopPlantEditor: React.FC<DesktopPlantEditorProps> = ({
           </Button>
 
           {/* Quick Selection Actions */}
-          {selectedPlacementIds.length > 1 && (
+          {selectedCount > 1 && (
             <div className="grid grid-cols-2 gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 className="text-xs"
-                onClick={() => {
-                  // TODO: Select all same species
-                  console.log('Select same species');
-                }}
+                onClick={handleSelectSameSpecies}
               >
                 Mesma Espécie
               </Button>
@@ -140,10 +119,7 @@ export const DesktopPlantEditor: React.FC<DesktopPlantEditorProps> = ({
                 variant="outline"
                 size="sm"
                 className="text-xs"
-                onClick={() => {
-                  // TODO: Adjust spacing
-                  console.log('Adjust spacing');
-                }}
+                onClick={handleAdjustSpacing}
               >
                 Ajustar Espaço
               </Button>
@@ -155,11 +131,11 @@ export const DesktopPlantEditor: React.FC<DesktopPlantEditorProps> = ({
         <Button
           variant="destructive"
           size="sm"
-          onClick={handleDelete}
+          onClick={handleDeleteWithConfirm}
           className="w-full flex items-center gap-2"
         >
           <Trash2 className="w-4 h-4" />
-          Deletar {selectedPlacementIds.length > 1 ? `${selectedPlacementIds.length} Plantas` : 'Planta'}
+          {getDeleteLabel()}
         </Button>
       </CardContent>
     </Card>

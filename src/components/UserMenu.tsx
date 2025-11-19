@@ -12,7 +12,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,9 +21,22 @@ interface UserMenuProps {
   onCreateNewPatch: () => void;
 }
 
+interface MenuItem {
+  icon: React.ComponentType<{ size?: number | string; className?: string }>;
+  label: string;
+  action: () => void;
+  disabled?: boolean;
+  danger?: boolean;
+}
+
+interface MenuSection {
+  section: string;
+  items: MenuItem[];
+}
+
 export const UserMenu: React.FC<UserMenuProps> = ({ onFitAll, onCreateNewPatch }) => {
   const { isMenuOpen, setMenuOpen } = useMenuStore();
-  const { beds, loadBeds, tool, setTool } = useBedStore();
+  const { beds, loadBeds } = useBedStore();
   const { toast } = useToast();
   const [confirmText, setConfirmText] = React.useState('');
   const [showClearDialog, setShowClearDialog] = React.useState(false);
@@ -142,7 +154,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onFitAll, onCreateNewPatch }
     });
   };
 
-  const menuItems = [
+  const menuItems: MenuSection[] = [
     {
       section: 'Usuário',
       items: [

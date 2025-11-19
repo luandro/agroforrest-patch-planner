@@ -66,9 +66,9 @@ export const snapToGrid = (x: number, y: number, gridSize: number): WorldPositio
 
 // Calculate bed position based on shape and snapping rules
 export const calculateBedPosition = (
-  worldPos: WorldPosition, 
+  worldPos: WorldPosition,
   shape: 'rectangle' | 'circle',
-  bedConfig: BedConfig,
+  _bedConfig: BedConfig,
   gridSize: number
 ): WorldPosition => {
   const snappedPos = snapToGrid(worldPos.x, worldPos.y, gridSize);
@@ -164,7 +164,7 @@ export const checkCollision = (footprint1: BedFootprint, footprint2: BedFootprin
 };
 
 // Check if position has collision with existing beds (legacy function)
-export const checkCollisionLegacy = (position: WorldPosition, dimensions: BedDimensions): boolean => {
+export const checkCollisionLegacy = (_position: WorldPosition, _dimensions: BedDimensions): boolean => {
   // This would check against existing beds in a real implementation
   // For now, just return false
   return false;

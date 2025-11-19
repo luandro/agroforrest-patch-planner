@@ -29,8 +29,7 @@ export const drawEnhancedPlant = (
   const finalRadius = Math.max(4, currentRadius * stressMultiplier);
 
   // Plant colors with better contrast
-  const healthColor = environmentalStress > 0.5 ? '#8B4513' : '#228B22';
-  const plantColor = species?.category === 'trees' ? '#2D5B3D' : 
+  const plantColor = species?.category === 'trees' ? '#2D5B3D' :
                     species?.category === 'shrubs' ? '#4A7C59' : '#6B8E5A';
 
   // Draw shadow if needed

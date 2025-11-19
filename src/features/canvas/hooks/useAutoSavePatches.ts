@@ -1,5 +1,5 @@
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { usePatchStore } from '../stores/patchStore';
 import { Patch } from '../types/patch.types';
 import {
@@ -7,7 +7,7 @@ import {
   loadFromLocalStorageFallback,
   upsertPatches,
   PATCHES_STORE_NAME
-} from '../utils/storageManager';
+} from '../storage';
 
 interface UseAutoSavePatchesProps {
   debounceMs?: number;
@@ -20,13 +20,12 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
   const timeoutRef = useRef<NodeJS.Timeout>();
   const isInitialized = useRef(false);
 
-  // Debug logging for hook initialization
+  // Debug logging for hook initialization (mount only)
   useEffect(() => {
     console.log('🔧 useAutoSavePatches hook initialized');
-    console.log('📦 Initial state:', { patchesCount: patches.length, isDirty });
   }, []);
 
-  const savePatches = async () => {
+  const savePatches = useCallback(async () => {
     if (!isDirty) return;
 
     try {
@@ -45,9 +44,9 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [isDirty, patches, markClean]);
 
-  const loadPatchesFromStorage = async () => {
+  const loadPatchesFromStorage = useCallback(async () => {
     try {
       console.log('📂 Loading patches from storage...');
 
@@ -83,7 +82,37 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
 
       if (loadedPatches.length === 0) {
         console.log('🆕 No patches found. Creating default patch.');
-        await createDefaultPatch();
+        // Create default patch inline to avoid circular dependency
+        try {
+          const defaultPatchId = await createPatch({
+            name: 'Meu Primeiro Canteiro',
+            description: 'Canteiro principal para experimentos agroflorestais',
+            size: { width: 20, height: 20 }
+          });
+          console.log('✅ Default patch created:', defaultPatchId);
+
+          // Immediately save the new default patch to prevent data loss on quick page close
+          setTimeout(async () => {
+            try {
+              setIsSaving(true);
+              setSaveError(null);
+              const currentPatches = usePatchStore.getState().patches;
+              if (currentPatches.length > 0) {
+                await upsertPatches(currentPatches);
+                usePatchStore.getState().markClean();
+                console.log('💾 Default patch saved immediately');
+              }
+            } catch (error) {
+              console.error('❌ Failed to save default patch:', error);
+              setSaveError(error instanceof Error ? error.message : 'Failed to save default patch');
+            } finally {
+              setIsSaving(false);
+            }
+          }, 100);
+        } catch (error) {
+          console.error('❌ Failed to create default patch:', error);
+          setSaveError('Failed to create default patch');
+        }
       } else {
         // Load patches without marking dirty
         loadPatches(loadedPatches, false);
@@ -102,29 +131,39 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
       console.log('✅ Patches loaded successfully:', loadedPatches.length);
     } catch (error) {
       console.error('❌ Failed to load patches:', error);
-      await createDefaultPatch();
-    }
-  };
+      // Create default patch on error
+      try {
+        const defaultPatchId = await createPatch({
+          name: 'Meu Primeiro Canteiro',
+          description: 'Canteiro principal para experimentos agroflorestais',
+          size: { width: 20, height: 20 }
+        });
+        console.log('✅ Default patch created after error:', defaultPatchId);
 
-  const createDefaultPatch = async () => {
-    try {
-      const defaultPatchId = await createPatch({
-        name: 'Meu Primeiro Canteiro',
-        description: 'Canteiro principal para experimentos agroflorestais',
-        size: { width: 20, height: 20 }
-      });
-      
-      console.log('✅ Default patch created:', defaultPatchId);
-      
-      // Immediately save the new default patch
-      setTimeout(() => {
-        savePatches();
-      }, 100);
-    } catch (error) {
-      console.error('❌ Failed to create default patch:', error);
-      setSaveError('Failed to create default patch');
+        // Immediately save the new default patch to prevent data loss on quick page close
+        setTimeout(async () => {
+          try {
+            setIsSaving(true);
+            setSaveError(null);
+            const currentPatches = usePatchStore.getState().patches;
+            if (currentPatches.length > 0) {
+              await upsertPatches(currentPatches);
+              usePatchStore.getState().markClean();
+              console.log('💾 Default patch saved immediately');
+            }
+          } catch (error) {
+            console.error('❌ Failed to save default patch:', error);
+            setSaveError(error instanceof Error ? error.message : 'Failed to save default patch');
+          } finally {
+            setIsSaving(false);
+          }
+        }, 100);
+      } catch (createError) {
+        console.error('❌ Failed to create default patch:', createError);
+        setSaveError('Failed to create default patch');
+      }
     }
-  };
+  }, [createPatch, loadPatches, setCurrentPatch]);
 
   // Auto-save effect with immediate save for new patches
   useEffect(() => {
@@ -152,7 +191,7 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [isDirty, patches, debounceMs]);
+  }, [isDirty, patches, debounceMs, savePatches]);
 
   // Load patches on mount
   useEffect(() => {
@@ -160,15 +199,15 @@ export const useAutoSavePatches = ({ debounceMs = 2000 }: UseAutoSavePatchesProp
       loadPatchesFromStorage();
       isInitialized.current = true;
     }
-  }, []);
+  }, [loadPatchesFromStorage]);
 
-  const manualSave = async (): Promise<void> => {
+  const manualSave = useCallback(async (): Promise<void> => {
     console.log('🔧 Manual patch save triggered');
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
     return await savePatches();
-  };
+  }, [savePatches]);
 
   return {
     isSaving,

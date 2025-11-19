@@ -17,7 +17,7 @@ export const usePlantPlacement = ({
   canvasRef 
 }: UsePlantPlacementProps) => {
   const {
-    placements,
+    placements: _placements,
     selectedPlacementIds,
     isPlacing,
     selectedSpecies,

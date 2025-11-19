@@ -5,7 +5,7 @@
  */
 
 import { useAutoSaveOrchestrator } from './useAutoSaveOrchestrator';
-import { exportAllData, importAllData, clearAllStorage } from '../utils/storageManager';
+import { exportAllData, importAllData, clearAllStorage } from '../storage';
 
 export const useOfflineStorage = () => {
   const orchestrator = useAutoSaveOrchestrator();

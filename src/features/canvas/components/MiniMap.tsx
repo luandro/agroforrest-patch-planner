@@ -11,9 +11,8 @@ interface MiniMapProps {
 export const MiniMap: React.FC<MiniMapProps> = ({ viewport, className }) => {
   const mapSize = 80; // Size of minimap in pixels
   const totalArea = 100; // Total area we can navigate (100m x 100m)
-  
+
   // Calculate viewport rectangle position and size
-  const viewportSize = Math.max(viewport.width, viewport.height);
   const scale = mapSize / totalArea;
   
   const rectWidth = Math.max(4, viewport.width * scale);
