@@ -71,7 +71,7 @@ describe('retry utility', () => {
       const result = await resultPromise;
 
       expect(result.success).toBe(false);
-      expect(result.attempts).toBe(3);
+      expect(result.attempts).toBe(1); // Only 1 attempt made, not maxAttempts
       expect(fn).toHaveBeenCalledTimes(1);
       expect(isRetryable).toHaveBeenCalledWith(error);
     });
@@ -210,6 +210,7 @@ describe('retry utility', () => {
 
       // Should not retry because ConstraintError is not retryable
       expect(result.success).toBe(false);
+      expect(result.attempts).toBe(1); // Only 1 attempt, not maxAttempts
       expect(fn).toHaveBeenCalledTimes(1);
     });
 

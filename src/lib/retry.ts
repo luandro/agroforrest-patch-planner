@@ -103,8 +103,10 @@ export const withRetry = async <T>(
   } = options;
 
   let lastError: unknown;
+  let actualAttempts = 0;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    actualAttempts = attempt;
     try {
       const data = await fn();
       return {
@@ -138,7 +140,7 @@ export const withRetry = async <T>(
   return {
     success: false,
     error: lastError,
-    attempts: maxAttempts
+    attempts: actualAttempts
   };
 };
 
