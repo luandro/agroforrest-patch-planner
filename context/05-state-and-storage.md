@@ -14,10 +14,13 @@ Manages long-lived UI state (menus, beds, plants, focus mode, history) and persi
 - `src/features/canvas/storage/` – Modular IndexedDB persistence layer:
   - `schema.ts` – DB constants, version, store names, storage keys.
   - `connection.ts` – `openDB`, `isIndexedDBAvailable`, migrations.
-  - `operations.ts` – CRUD: `upsertPatches`, `loadPatchData`, `deletePatch`, etc.
+  - `operations.ts` – CRUD: `upsertPatches`, `loadPatchData`, `deletePatch`, etc. All operations use retry logic and validate data on save/load.
   - `fallback.ts` – localStorage fallback save/load helpers.
   - `export.ts` – `exportAllData`, `importAllData`.
   - `index.ts` – Re-exports for backward compatibility.
+- `src/features/canvas/validation/` – Runtime validation layer:
+  - `schemas.ts` – Zod schemas for Patch, Bed, PlantPlacement, PlantSpecies with helper functions (`validatePatches`, `validateBeds`, `validatePlacements`) and `ValidationError` class.
+- `src/lib/retry.ts` – Generic retry utility with exponential backoff, jitter, and IndexedDB-specific error handling (`withRetry`, `retryAsync`, `isIndexedDBRetryable`).
 
 ## Major Functions & Responsibilities
 - `useBedStore()` – Aggregates bed, focus, and history stores; auto-subscribes to `beds` changes to push undo stacks and prune focus mode placements.
@@ -32,7 +35,8 @@ Manages long-lived UI state (menus, beds, plants, focus mode, history) and persi
 
 ## External Dependencies
 - `zustand` + `persist` middleware for state + storage.
-- Browser IndexedDB + localStorage APIs; asynchronous operations rely on Promises and manual error handling.
+- `zod` for runtime schema validation of patches, beds, and placements.
+- Browser IndexedDB + localStorage APIs; asynchronous operations rely on Promises with automatic retry logic.
 - `react` hooks (`useEffect`, `useState`, `useRef`) for orchestrator lifecycle.
 
 ## Context Tips
@@ -40,3 +44,5 @@ Manages long-lived UI state (menus, beds, plants, focus mode, history) and persi
 - Auto-save hooks assume they run in the browser and will warn if storage is uninitialized; guard new code accordingly.
 - Changing DB schema requires bumping `DB_VERSION` in `src/features/canvas/storage/schema.ts` and handling migrations in `connection.ts`'s `onupgradeneeded`.
 - Manual destructive actions should coordinate with `useOfflineStorage.clearData()` to keep IndexedDB/localStorage in sync instead of clearing stores independently.
+- Storage operations automatically retry on transient IndexedDB errors (QuotaExceededError, UnknownError, TransactionInactiveError) with exponential backoff. Use `retryIndexedDB` helper for custom storage operations.
+- All data is validated with Zod schemas on both save and load. Invalid data throws `ValidationError` with detailed error messages. Extend schemas in `src/features/canvas/validation/schemas.ts` when adding new fields.

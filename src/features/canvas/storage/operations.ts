@@ -5,6 +5,7 @@ import { Patch } from '../types/patch.types';
 import { Bed } from '../types/bed.types';
 import { PlantPlacement } from '../stores/plantPlacementStore';
 import { storageLogger } from '@/lib/logger';
+import { retryIndexedDB } from '@/lib/retry';
 import {
   PATCHES_STORE_NAME,
   BEDS_STORE_NAME,
@@ -13,6 +14,30 @@ import {
 } from './schema';
 import { openDB, isIndexedDBAvailable } from './connection';
 import { saveToLocalStorageFallback, loadFromLocalStorageFallback } from './fallback';
+import { validatePatches, validateBeds, validatePlacements } from '../validation/schemas';
+
+/**
+ * Custom error class for validation failures
+ */
+export class ValidationError extends Error {
+  constructor(
+    message: string,
+    public readonly errors: string[]
+  ) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}
+
+/** Default retry options for storage operations */
+const STORAGE_RETRY_OPTIONS = {
+  maxAttempts: 3,
+  baseDelay: 100,
+  maxDelay: 2000,
+  onRetry: (attempt: number, error: unknown, delay: number) => {
+    storageLogger.warn(`Storage operation retry attempt ${attempt}, waiting ${delay}ms`, error);
+  }
+};
 
 /**
  * Clear all storage (both IndexedDB and localStorage)
@@ -23,19 +48,23 @@ export const clearAllStorage = async (): Promise<void> => {
   // Always attempt both, collect errors
   try {
     if (await isIndexedDBAvailable()) {
-      const db = await openDB();
-      const transaction = db.transaction([PATCHES_STORE_NAME, BEDS_STORE_NAME, PLACEMENTS_STORE_NAME], 'readwrite');
+      await retryIndexedDB(async () => {
+        const db = await openDB();
+        try {
+          const transaction = db.transaction([PATCHES_STORE_NAME, BEDS_STORE_NAME, PLACEMENTS_STORE_NAME], 'readwrite');
 
-      transaction.objectStore(PATCHES_STORE_NAME).clear();
-      transaction.objectStore(BEDS_STORE_NAME).clear();
-      transaction.objectStore(PLACEMENTS_STORE_NAME).clear();
+          transaction.objectStore(PATCHES_STORE_NAME).clear();
+          transaction.objectStore(BEDS_STORE_NAME).clear();
+          transaction.objectStore(PLACEMENTS_STORE_NAME).clear();
 
-      await new Promise<void>((resolve, reject) => {
-        transaction.oncomplete = () => resolve();
-        transaction.onerror = () => reject(transaction.error);
-      });
-
-      db.close();
+          await new Promise<void>((resolve, reject) => {
+            transaction.oncomplete = () => resolve();
+            transaction.onerror = () => reject(transaction.error);
+          });
+        } finally {
+          db.close();
+        }
+      }, STORAGE_RETRY_OPTIONS);
     }
   } catch (error) {
     errors.push(error instanceof Error ? error : new Error('IndexedDB clear failed'));
@@ -60,23 +89,34 @@ export const clearAllStorage = async (): Promise<void> => {
  * Upsert (insert or update) patches data efficiently
  */
 export const upsertPatches = async (patches: Patch[]): Promise<void> => {
+  // Validate patches before saving
+  const validation = validatePatches(patches);
+  if (!validation.success) {
+    storageLogger.error('Patch validation failed', validation.errors);
+    throw new ValidationError('Invalid patch data', validation.errors ?? ['Unknown validation error']);
+  }
+
   try {
     if (await isIndexedDBAvailable()) {
-      const db = await openDB();
-      const transaction = db.transaction([PATCHES_STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(PATCHES_STORE_NAME);
+      await retryIndexedDB(async () => {
+        const db = await openDB();
+        try {
+          const transaction = db.transaction([PATCHES_STORE_NAME], 'readwrite');
+          const store = transaction.objectStore(PATCHES_STORE_NAME);
 
-      // Use put() for upsert operation (insert or update)
-      patches.forEach(patch => {
-        store.put(patch);
-      });
+          // Use put() for upsert operation (insert or update)
+          patches.forEach(patch => {
+            store.put(patch);
+          });
 
-      await new Promise<void>((resolve, reject) => {
-        transaction.oncomplete = () => resolve();
-        transaction.onerror = () => reject(transaction.error);
-      });
-
-      db.close();
+          await new Promise<void>((resolve, reject) => {
+            transaction.oncomplete = () => resolve();
+            transaction.onerror = () => reject(transaction.error);
+          });
+        } finally {
+          db.close();
+        }
+      }, STORAGE_RETRY_OPTIONS);
       storageLogger.info(`Patches upserted successfully: ${patches.length}`);
     } else {
       // For localStorage, we still need to load all and merge
@@ -101,43 +141,54 @@ export const upsertPatches = async (patches: Patch[]): Promise<void> => {
  * Upsert beds data efficiently for a specific patch
  */
 export const upsertBedsForPatch = async (patchId: string, beds: Bed[]): Promise<void> => {
+  // Validate beds before saving
+  const validation = validateBeds(beds);
+  if (!validation.success) {
+    storageLogger.error('Bed validation failed', validation.errors);
+    throw new ValidationError('Invalid bed data', validation.errors ?? ['Unknown validation error']);
+  }
+
   try {
     if (await isIndexedDBAvailable()) {
-      const db = await openDB();
-      const transaction = db.transaction([BEDS_STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(BEDS_STORE_NAME);
+      await retryIndexedDB(async () => {
+        const db = await openDB();
+        try {
+          const transaction = db.transaction([BEDS_STORE_NAME], 'readwrite');
+          const store = transaction.objectStore(BEDS_STORE_NAME);
 
-      // First, remove existing beds for this patch
-      const index = store.index('patchId');
-      const range = IDBKeyRange.only(patchId);
-      const existingBedsRequest = index.getAll(range);
+          // First, remove existing beds for this patch
+          const index = store.index('patchId');
+          const range = IDBKeyRange.only(patchId);
+          const existingBedsRequest = index.getAll(range);
 
-      const existingBeds = await new Promise<Bed[]>((resolve, reject) => {
-        existingBedsRequest.onsuccess = () => resolve(existingBedsRequest.result || []);
-        existingBedsRequest.onerror = () => reject(existingBedsRequest.error);
-      });
+          const existingBeds = await new Promise<Bed[]>((resolve, reject) => {
+            existingBedsRequest.onsuccess = () => resolve(existingBedsRequest.result || []);
+            existingBedsRequest.onerror = () => reject(existingBedsRequest.error);
+          });
 
-      // Delete existing beds for this patch
-      existingBeds.forEach(bed => {
-        store.delete(bed.id);
-      });
+          // Delete existing beds for this patch
+          existingBeds.forEach(bed => {
+            store.delete(bed.id);
+          });
 
-      // Add new beds with patch reference
-      const bedsWithPatch = beds.map(bed => ({
-        ...bed,
-        patchId
-      }));
+          // Add new beds with patch reference
+          const bedsWithPatch = beds.map(bed => ({
+            ...bed,
+            patchId
+          }));
 
-      bedsWithPatch.forEach(bed => {
-        store.put(bed);
-      });
+          bedsWithPatch.forEach(bed => {
+            store.put(bed);
+          });
 
-      await new Promise<void>((resolve, reject) => {
-        transaction.oncomplete = () => resolve();
-        transaction.onerror = () => reject(transaction.error);
-      });
-
-      db.close();
+          await new Promise<void>((resolve, reject) => {
+            transaction.oncomplete = () => resolve();
+            transaction.onerror = () => reject(transaction.error);
+          });
+        } finally {
+          db.close();
+        }
+      }, STORAGE_RETRY_OPTIONS);
       storageLogger.info(`Beds upserted successfully for patch: ${patchId}, count: ${beds.length}`);
     } else {
       // For localStorage, load all beds and update
@@ -158,43 +209,54 @@ export const upsertBedsForPatch = async (patchId: string, beds: Bed[]): Promise<
  * Upsert plant placements data efficiently for a specific patch
  */
 export const upsertPlacementsForPatch = async (patchId: string, placements: PlantPlacement[]): Promise<void> => {
+  // Validate placements before saving
+  const validation = validatePlacements(placements);
+  if (!validation.success) {
+    storageLogger.error('Placement validation failed', validation.errors);
+    throw new ValidationError('Invalid placement data', validation.errors ?? ['Unknown validation error']);
+  }
+
   try {
     if (await isIndexedDBAvailable()) {
-      const db = await openDB();
-      const transaction = db.transaction([PLACEMENTS_STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(PLACEMENTS_STORE_NAME);
+      await retryIndexedDB(async () => {
+        const db = await openDB();
+        try {
+          const transaction = db.transaction([PLACEMENTS_STORE_NAME], 'readwrite');
+          const store = transaction.objectStore(PLACEMENTS_STORE_NAME);
 
-      // First, remove existing placements for this patch
-      const index = store.index('patchId');
-      const range = IDBKeyRange.only(patchId);
-      const existingPlacementsRequest = index.getAll(range);
+          // First, remove existing placements for this patch
+          const index = store.index('patchId');
+          const range = IDBKeyRange.only(patchId);
+          const existingPlacementsRequest = index.getAll(range);
 
-      const existingPlacements = await new Promise<PlantPlacement[]>((resolve, reject) => {
-        existingPlacementsRequest.onsuccess = () => resolve(existingPlacementsRequest.result || []);
-        existingPlacementsRequest.onerror = () => reject(existingPlacementsRequest.error);
-      });
+          const existingPlacements = await new Promise<PlantPlacement[]>((resolve, reject) => {
+            existingPlacementsRequest.onsuccess = () => resolve(existingPlacementsRequest.result || []);
+            existingPlacementsRequest.onerror = () => reject(existingPlacementsRequest.error);
+          });
 
-      // Delete existing placements for this patch
-      existingPlacements.forEach(placement => {
-        store.delete(placement.id);
-      });
+          // Delete existing placements for this patch
+          existingPlacements.forEach(placement => {
+            store.delete(placement.id);
+          });
 
-      // Add new placements with patch reference
-      const placementsWithPatch = placements.map(placement => ({
-        ...placement,
-        patchId
-      }));
+          // Add new placements with patch reference
+          const placementsWithPatch = placements.map(placement => ({
+            ...placement,
+            patchId
+          }));
 
-      placementsWithPatch.forEach(placement => {
-        store.put(placement);
-      });
+          placementsWithPatch.forEach(placement => {
+            store.put(placement);
+          });
 
-      await new Promise<void>((resolve, reject) => {
-        transaction.oncomplete = () => resolve();
-        transaction.onerror = () => reject(transaction.error);
-      });
-
-      db.close();
+          await new Promise<void>((resolve, reject) => {
+            transaction.oncomplete = () => resolve();
+            transaction.onerror = () => reject(transaction.error);
+          });
+        } finally {
+          db.close();
+        }
+      }, STORAGE_RETRY_OPTIONS);
       storageLogger.info(`Placements upserted successfully for patch: ${patchId}, count: ${placements.length}`);
     } else {
       // For localStorage, load all placements and update
@@ -220,32 +282,41 @@ export const loadPatchData = async (patchId: string): Promise<{ beds: Bed[]; pla
     let placements: PlantPlacement[] = [];
 
     if (await isIndexedDBAvailable()) {
-      const db = await openDB();
-      const transaction = db.transaction([BEDS_STORE_NAME, PLACEMENTS_STORE_NAME], 'readonly');
+      const result = await retryIndexedDB(async () => {
+        const db = await openDB();
+        try {
+          const transaction = db.transaction([BEDS_STORE_NAME, PLACEMENTS_STORE_NAME], 'readonly');
 
-      // Load beds for patch
-      const bedStore = transaction.objectStore(BEDS_STORE_NAME);
-      const bedIndex = bedStore.index('patchId');
-      const bedRange = IDBKeyRange.only(patchId);
-      const bedRequest = bedIndex.getAll(bedRange);
+          // Load beds for patch
+          const bedStore = transaction.objectStore(BEDS_STORE_NAME);
+          const bedIndex = bedStore.index('patchId');
+          const bedRange = IDBKeyRange.only(patchId);
+          const bedRequest = bedIndex.getAll(bedRange);
 
-      beds = await new Promise<Bed[]>((resolve, reject) => {
-        bedRequest.onsuccess = () => resolve(bedRequest.result || []);
-        bedRequest.onerror = () => reject(bedRequest.error);
-      });
+          const loadedBeds = await new Promise<Bed[]>((resolve, reject) => {
+            bedRequest.onsuccess = () => resolve(bedRequest.result || []);
+            bedRequest.onerror = () => reject(bedRequest.error);
+          });
 
-      // Load placements for patch
-      const placementStore = transaction.objectStore(PLACEMENTS_STORE_NAME);
-      const placementIndex = placementStore.index('patchId');
-      const placementRange = IDBKeyRange.only(patchId);
-      const placementRequest = placementIndex.getAll(placementRange);
+          // Load placements for patch
+          const placementStore = transaction.objectStore(PLACEMENTS_STORE_NAME);
+          const placementIndex = placementStore.index('patchId');
+          const placementRange = IDBKeyRange.only(patchId);
+          const placementRequest = placementIndex.getAll(placementRange);
 
-      placements = await new Promise<PlantPlacement[]>((resolve, reject) => {
-        placementRequest.onsuccess = () => resolve(placementRequest.result || []);
-        placementRequest.onerror = () => reject(placementRequest.error);
-      });
+          const loadedPlacements = await new Promise<PlantPlacement[]>((resolve, reject) => {
+            placementRequest.onsuccess = () => resolve(placementRequest.result || []);
+            placementRequest.onerror = () => reject(placementRequest.error);
+          });
 
-      db.close();
+          return { beds: loadedBeds, placements: loadedPlacements };
+        } finally {
+          db.close();
+        }
+      }, STORAGE_RETRY_OPTIONS);
+
+      beds = result.beds;
+      placements = result.placements;
     } else {
       // Load from localStorage fallback
       const allBeds = loadFromLocalStorageFallback<Bed[]>('beds', []);
@@ -253,6 +324,19 @@ export const loadPatchData = async (patchId: string): Promise<{ beds: Bed[]; pla
 
       beds = allBeds.filter((bed) => bed.patchId === patchId);
       placements = allPlacements.filter((placement) => placement.patchId === patchId);
+    }
+
+    // Validate loaded data to catch corruption from external sources
+    const bedValidation = validateBeds(beds);
+    if (!bedValidation.success) {
+      storageLogger.error('Loaded bed data failed validation', bedValidation.errors);
+      throw new ValidationError('Corrupted bed data in storage', bedValidation.errors ?? ['Unknown validation error']);
+    }
+
+    const placementValidation = validatePlacements(placements);
+    if (!placementValidation.success) {
+      storageLogger.error('Loaded placement data failed validation', placementValidation.errors);
+      throw new ValidationError('Corrupted placement data in storage', placementValidation.errors ?? ['Unknown validation error']);
     }
 
     storageLogger.info(`Loaded patch data for: ${patchId}, beds: ${beds.length}, placements: ${placements.length}`);

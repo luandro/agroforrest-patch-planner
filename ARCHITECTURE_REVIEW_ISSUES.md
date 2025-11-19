@@ -61,7 +61,7 @@ Created from comprehensive architecture review on 2025-11-14
 
 ---
 
-### Sprint 2 (Week 3-4) - 🚧 IN PROGRESS
+### Sprint 2 (Week 3-4) - ✅ COMPLETED (2025-11-19)
 
 **Completed Tasks:**
 
@@ -237,6 +237,307 @@ Created from comprehensive architecture review on 2025-11-14
    - All passing ✅
 
    **Note:** Full Zustand store hook testing requires additional setup for proper store mocking.
+
+---
+
+### Sprint 3 (Week 5-6) - ✅ COMPLETED (2025-11-19)
+
+**Completed Tasks:**
+
+1. **✅ Issue #8 - Document Hook Orchestration Pattern (2025-11-19)**
+
+   Created comprehensive documentation for the 3-level hook architecture.
+
+   **New File Created:**
+   - `src/features/canvas/docs/HOOK_ARCHITECTURE.md` - Complete architecture guide with:
+     - Three-level hierarchy explained (Atomic → Composite → Page)
+     - Code examples for each level
+     - Naming conventions table
+     - Anti-patterns guide (5 patterns to avoid)
+     - Guidelines for adding new features
+     - Benefits of the architecture
+
+   **Benefits:**
+   - Clear onboarding documentation for new developers
+   - Consistent patterns across the codebase
+   - Prevention of architectural drift
+
+2. **✅ Issue #14 - Add Retry Logic to Storage Operations (2025-11-19)**
+
+   Created retry utility with exponential backoff for transient failures.
+
+   **New Files Created:**
+   - `src/lib/retry.ts` - Retry utility with:
+     - `withRetry()` - Returns result object
+     - `retryAsync()` - Throws on failure
+     - `withIndexedDBRetry()` / `retryIndexedDB()` - Pre-configured for IndexedDB
+     - `isIndexedDBRetryable()` - Error classification
+     - Exponential backoff with jitter
+     - Configurable attempts, delays, and callbacks
+
+   - `src/lib/retry.test.ts` - Comprehensive tests (20 tests)
+
+   **Storage Operations Updated:**
+   - `clearAllStorage()` - Now retries on transient failures
+   - `upsertPatches()` - Retry with exponential backoff
+   - `upsertBedsForPatch()` - Retry with exponential backoff
+   - `upsertPlacementsForPatch()` - Retry with exponential backoff
+   - `loadPatchData()` - Retry with exponential backoff
+
+   **Benefits:**
+   - Improved reliability for database-locked scenarios
+   - Graceful handling of transient failures
+   - Configurable retry behavior per operation
+
+3. **✅ Issue #15 - Add Validation Layer with Zod (2025-11-19)**
+
+   Implemented comprehensive validation for all storage operations.
+
+   **New Files Created:**
+   - `src/features/canvas/validation/schemas.ts` - Zod schemas for:
+     - `PatchSchema` - Name, size, timestamps validation
+     - `BedSchema` - Shape, dimensions, rotation validation
+     - `PlantPlacementSchema` - Species, position validation
+     - `PlantSpeciesSchema` - Full species validation
+     - Helper functions: `validatePatches()`, `validateBeds()`, `validatePlacements()`
+     - Custom `ValidationError` class with detailed error messages
+
+   - `src/features/canvas/validation/schemas.test.ts` - Comprehensive tests (49 tests)
+
+   **Storage Operations Updated:**
+   - `upsertPatches()` - Validates before save
+   - `upsertBedsForPatch()` - Validates before save
+   - `upsertPlacementsForPatch()` - Validates before save
+
+   **Validation Rules:**
+   - Patch names: 1-100 characters
+   - Patch dimensions: 1-10,000 meters
+   - Bed dimensions: 1-100 meters
+   - Rotation: -360 to 360 degrees
+   - Rectangle beds require length/width; circles require radius
+   - Species spacing: min <= max
+   - Positive timestamps required
+
+   **Benefits:**
+   - Prevents invalid data from reaching storage
+   - Clear error messages for debugging
+   - Type-safe validation with Zod inference
+
+**Test Coverage Summary:**
+- Total tests: 162 (up from 92)
+- New test files: 2
+- All passing ✅
+
+**Dependencies Added:**
+- `zod` - Runtime validation library
+
+---
+
+### Sprint 4 (Week 7-8) - 📋 PLANNED
+
+**Objective:** Improve developer experience, performance, and code quality through configuration centralization, performance optimization, and technical debt cleanup.
+
+**Estimated Effort:** 4-7 days
+
+---
+
+#### Issue #9 - Centralize Configuration & Constants
+
+**Priority:** P2 | **Effort:** 1-2 days
+
+**Problem:**
+Configuration and constants are scattered across the codebase, making it hard to maintain consistency and adjust values.
+
+**Implementation Steps:**
+
+1. **Create configuration directory structure:**
+   ```
+   src/features/canvas/config/
+   ├── constants.ts      # All magic numbers and constants
+   ├── defaults.ts       # Default values for components
+   └── index.ts          # Re-exports
+   ```
+
+2. **Identify and consolidate constants:**
+   - Search for magic numbers in canvas components
+   - Grid sizes and spacing values
+   - Color constants and themes
+   - Timing/animation durations
+   - Zoom limits and viewport defaults
+
+3. **Key files to audit:**
+   - `src/features/canvas/components/` - UI constants
+   - `src/features/canvas/utils/` - Calculation constants
+   - `src/features/canvas/hooks/` - Default values
+   - `src/features/canvas/stores/` - Initial state values
+
+4. **Example structure:**
+   ```typescript
+   // src/features/canvas/config/constants.ts
+   export const CANVAS = {
+     GRID_SIZE: 1,
+     MIN_ZOOM: 0.5,
+     MAX_ZOOM: 5,
+     DEFAULT_ZOOM: 1,
+     PIXELS_PER_METER: 50,
+   } as const;
+
+   export const BED = {
+     DEFAULT_LENGTH: 5,
+     DEFAULT_WIDTH: 1,
+     MIN_DIMENSION: 0.1,
+     MAX_DIMENSION: 100,
+   } as const;
+
+   export const TIMELINE = {
+     MIN_MONTHS: 0,
+     MAX_MONTHS: 120,
+     DEFAULT_MONTHS: 12,
+   } as const;
+   ```
+
+5. **Update imports throughout codebase**
+
+**Acceptance Criteria:**
+- [ ] All magic numbers extracted to config files
+- [ ] No duplicate constant definitions
+- [ ] All existing tests pass
+- [ ] Constants are typed with `as const`
+
+---
+
+#### Issue #12 - Performance Optimization Pass
+
+**Priority:** P2 | **Effort:** 2-3 days
+
+**Problem:**
+Several performance issues affecting canvas responsiveness, especially with many plants.
+
+**Implementation Steps:**
+
+1. **Fix JSON.stringify comparison in bedStore:**
+   - Location: `src/features/canvas/stores/bedStore.ts:21`
+   - Replace with structural equality check or hash comparison
+   ```typescript
+   // Before
+   if (JSON.stringify(newBeds) === JSON.stringify(state.history[state.historyIndex])) return;
+
+   // After - use shallow comparison or dedicated equality function
+   import { isEqual } from '@/lib/equality';
+   if (isEqual(newBeds, state.history[state.historyIndex])) return;
+   ```
+
+2. **Add memoization to expensive calculations:**
+   - Identify components with heavy computations
+   - Add `useMemo` for:
+     - Filtered plant lists
+     - Growth calculations
+     - Geometry computations
+   - Add `useCallback` for event handlers passed to children
+
+3. **Optimize Zustand selectors:**
+   - Create granular selectors to prevent unnecessary re-renders
+   - Example:
+   ```typescript
+   // Before - subscribes to entire store
+   const { beds, selectedBedIds } = useBedStore();
+
+   // After - selective subscription
+   const beds = useBedStore(state => state.beds);
+   const selectedBedIds = useBedStore(state => state.selectedBedIds);
+   ```
+
+4. **Canvas rendering optimizations:**
+   - Check for unnecessary re-renders with React DevTools
+   - Implement `React.memo` for pure components
+   - Consider virtualization for plant lists
+
+5. **Key files to audit:**
+   - `src/features/canvas/stores/bedStore.ts`
+   - `src/features/canvas/stores/plantPlacementStore.ts`
+   - `src/features/canvas/components/PlantSelectionPanelContent.tsx`
+   - `src/features/canvas/hooks/useGrowthTimeline.ts`
+
+**Acceptance Criteria:**
+- [ ] JSON.stringify removed from hot paths
+- [ ] Key expensive calculations memoized
+- [ ] Zustand selectors optimized
+- [ ] No performance regression (run manual tests with 50+ plants)
+- [ ] All existing tests pass
+
+---
+
+#### Issue #13 - Implement/Remove TODOs
+
+**Priority:** Tech Debt | **Effort:** 1-2 days
+
+**Problem:**
+12 TODO comments with unimplemented features creating confusion about codebase state.
+
+**Implementation Steps:**
+
+1. **Find all TODOs:**
+   ```bash
+   grep -r "TODO" src/features/canvas --include="*.ts" --include="*.tsx"
+   ```
+
+2. **Categorize each TODO:**
+   - **Implement**: Feature is needed and feasible
+   - **Remove**: Feature not needed or out of scope
+   - **Convert to Issue**: Too large for this sprint
+
+3. **Known TODOs to address:**
+
+   | Location | TODO | Action |
+   |----------|------|--------|
+   | Plant duplication (3) | Duplicate selected plants | Implement |
+   | Editing panels (2) | Detailed plant editing | Implement or remove |
+   | Move plants | Move to different bed | Implement |
+   | Select same species (3) | Bulk selection | Implement |
+   | Adjust spacing (3) | Spacing adjustment UI | Implement or remove |
+
+4. **For each "Implement" TODO:**
+   - Write the feature code
+   - Add tests if applicable
+   - Update related components
+
+5. **For each "Remove" TODO:**
+   - Delete the TODO comment
+   - Clean up any placeholder code
+   - Document why in commit message
+
+**Acceptance Criteria:**
+- [ ] All TODO comments addressed
+- [ ] No new TODOs introduced
+- [ ] Implemented features have tests
+- [ ] All existing tests pass
+
+---
+
+#### Sprint 4 Prerequisites
+
+Before starting Sprint 4:
+
+1. **Merge Sprint 3 PR** - Ensure all Sprint 3 changes are in main
+2. **Create new branch** - `git checkout -b sprint-4-optimizations`
+3. **Run baseline tests** - `npm run test` (should have 162 tests)
+4. **Run baseline build** - `npm run build`
+
+---
+
+#### Sprint 4 Deliverables
+
+| Issue | Deliverable | Files Created/Modified |
+|-------|-------------|------------------------|
+| #9 | Configuration module | `src/features/canvas/config/*.ts` |
+| #12 | Performance improvements | Stores, hooks, components |
+| #13 | TODO cleanup | Various locations |
+
+**Expected Outcomes:**
+- Centralized, type-safe configuration
+- Improved canvas performance with many elements
+- Cleaner codebase with no dangling TODOs
+- All 162+ tests passing
 
 ---
 
@@ -604,13 +905,19 @@ Create `src/features/canvas/validation/schemas.ts` with Zod schemas
 8. ✅ Issue #6 - Break down large components (5 components, avg 59% reduction)
 9. ✅ Expand test coverage (54 → 92 tests)
 
-**Week 5-6 (Sprint 3):**
-10. Issue #8 - Document architecture
-11. Issue #14 - Add retry logic
-12. Issue #15 - Add validation
+**Week 5-6 (Sprint 3):** ✅ **FULLY COMPLETED** (2025-11-19)
+10. ✅ Issue #8 - Document architecture (HOOK_ARCHITECTURE.md)
+11. ✅ Issue #14 - Add retry logic (src/lib/retry.ts)
+12. ✅ Issue #15 - Add validation (Zod schemas + storage validation)
+
+**Week 7-8 (Sprint 4):** 📋 **PLANNED**
+13. Issue #9 - Centralize configuration & constants
+14. Issue #12 - Performance optimization pass
+15. Issue #13 - Implement/remove TODOs
 
 **Future:**
-13-15. P2 issues as needed
+- Issue #10 - Feature flags system
+- Issue #11 - Storybook documentation
 
 ---
 
