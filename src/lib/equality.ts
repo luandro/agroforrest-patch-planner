@@ -33,7 +33,11 @@ function isBedEqual(a: Bed, b: Bed): boolean {
 
   // Compare primitive fields
   if (a.id !== b.id) return false;
+  if (a.patchId !== b.patchId) return false;
   if (a.shape !== b.shape) return false;
+  if (a.rotation !== b.rotation) return false;
+  if (a.createdAt !== b.createdAt) return false;
+  if (a.updatedAt !== b.updatedAt) return false;
 
   // Compare position
   if (a.position.x !== b.position.x || a.position.y !== b.position.y) return false;
@@ -42,7 +46,6 @@ function isBedEqual(a: Bed, b: Bed): boolean {
   if (a.dimensions.length !== b.dimensions.length) return false;
   if (a.dimensions.width !== b.dimensions.width) return false;
   if (a.dimensions.radius !== b.dimensions.radius) return false;
-  if (a.dimensions.rotation !== b.dimensions.rotation) return false;
 
   return true;
 }

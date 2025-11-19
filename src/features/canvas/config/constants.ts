@@ -76,7 +76,7 @@ export const BED = {
   SHADOW_BLUR_PREVIEW: 8,
   SHADOW_BLUR_PLACEMENT: 12,
 
-  DASH_PATTERN: [5, 5],
+  DASH_PATTERN: [5, 5] as const,
 
   // Resize handles
   HANDLE_SIZE: 8,
@@ -150,7 +150,10 @@ export const PLANT = {
 
   // Preview
   PREVIEW_LINE_WIDTH: 2,
-  PREVIEW_DASH_PATTERN: [4, 4],
+  PREVIEW_DASH_PATTERN: [4, 4] as const,
+
+  // Duplication
+  DUPLICATE_OFFSET: 0.1, // 10cm offset for duplicated plants
 } as const;
 
 // =============================================================================
@@ -216,7 +219,7 @@ export const TIMELINE = {
 export const SELECTION = {
   // Selection rectangle
   LINE_WIDTH: 2,
-  DASH_PATTERN: [8, 4],
+  DASH_PATTERN: [8, 4] as const,
   CORNER_SIZE: 8,
 } as const;
 

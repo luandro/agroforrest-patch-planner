@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import { CanvasViewport } from '../types/canvas.types';
 import { Bed } from '../types/bed.types';
 import { CANVAS, DEFAULT_VIEWPORT } from '../config';
+import { storeLogger } from '@/lib/logger';
 
 interface UseCanvasViewportProps {
   initialViewport?: Partial<CanvasViewport>;
@@ -51,8 +52,6 @@ export const useCanvasViewport = ({
   }, [updateViewport]);
 
   const pan = useCallback((deltaX: number, deltaY: number) => {
-    console.log('Pan called with delta:', { deltaX, deltaY });
-    
     setViewport(prev => {
       // Improved scaling factor calculation
       const scaleFactor = CANVAS.PIXELS_PER_METER * prev.zoom;
@@ -64,19 +63,18 @@ export const useCanvasViewport = ({
       // Apply boundaries (prevent panning too far)
       const boundedX = Math.max(CANVAS.PAN_MIN, Math.min(CANVAS.PAN_MAX, newCenterX));
       const boundedY = Math.max(CANVAS.PAN_MIN, Math.min(CANVAS.PAN_MAX, newCenterY));
-      
-      console.log('Pan result:', {
+
+      storeLogger.debug('[Viewport] Pan:', {
         from: { x: prev.centerX, y: prev.centerY },
-        to: { x: boundedX, y: boundedY },
-        scaleFactor
+        to: { x: boundedX, y: boundedY }
       });
-      
+
       const newViewport = {
         ...prev,
         centerX: boundedX,
         centerY: boundedY
       };
-      
+
       onViewportChange?.(newViewport);
       return newViewport;
     });

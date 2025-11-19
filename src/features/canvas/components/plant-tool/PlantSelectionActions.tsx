@@ -2,18 +2,21 @@
 import React from 'react';
 import { Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { storeLogger } from '@/lib/logger';
 
 interface PlantSelectionActionsProps {
   selectedCount: number;
   onEdit: () => void;
   onDelete: () => void;
+  onSelectSameSpecies?: () => void;
+  onAdjustSpacing?: () => void;
 }
 
 export const PlantSelectionActions: React.FC<PlantSelectionActionsProps> = ({
   selectedCount,
   onEdit,
-  onDelete
+  onDelete,
+  onSelectSameSpecies,
+  onAdjustSpacing
 }) => {
   return (
     <div className="space-y-3">
@@ -48,10 +51,8 @@ export const PlantSelectionActions: React.FC<PlantSelectionActionsProps> = ({
             variant="outline"
             size="sm"
             className="text-xs"
-            onClick={() => {
-              // Note: Select same species is implemented in usePlantEditorActions
-              storeLogger.debug('Select same species action triggered');
-            }}
+            onClick={onSelectSameSpecies}
+            disabled={!onSelectSameSpecies}
           >
             Mesma Espécie
           </Button>
@@ -59,10 +60,8 @@ export const PlantSelectionActions: React.FC<PlantSelectionActionsProps> = ({
             variant="outline"
             size="sm"
             className="text-xs"
-            onClick={() => {
-              // Note: Spacing adjustment requires spacing input UI (future enhancement)
-              storeLogger.debug('Adjust spacing action triggered');
-            }}
+            onClick={onAdjustSpacing}
+            disabled={!onAdjustSpacing}
           >
             Ajustar Espaço
           </Button>

@@ -3,20 +3,25 @@ import React from 'react';
 import { Trash2, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { storeLogger } from '@/lib/logger';
 
 interface PlantEditFormActionsProps {
   selectedCount: number;
   hasUnsavedChanges: boolean;
   onApplyChanges: () => void;
   onDelete: () => void;
+  onDuplicate?: () => void;
+  onSelectSameSpecies?: () => void;
+  onAdjustSpacing?: () => void;
 }
 
 export const PlantEditFormActions: React.FC<PlantEditFormActionsProps> = ({
   selectedCount,
   hasUnsavedChanges,
   onApplyChanges,
-  onDelete
+  onDelete,
+  onDuplicate,
+  onSelectSameSpecies,
+  onAdjustSpacing
 }) => {
   return (
     <>
@@ -46,10 +51,8 @@ export const PlantEditFormActions: React.FC<PlantEditFormActionsProps> = ({
             variant="outline"
             size="sm"
             className="flex items-center gap-1"
-            onClick={() => {
-              // Note: Duplicate is implemented in usePlantEditorActions
-              storeLogger.debug('Duplicate action triggered');
-            }}
+            onClick={onDuplicate}
+            disabled={!onDuplicate}
           >
             <Copy className="w-3 h-3" />
           </Button>
@@ -67,10 +70,8 @@ export const PlantEditFormActions: React.FC<PlantEditFormActionsProps> = ({
                 variant="outline"
                 size="sm"
                 className="text-xs flex-1"
-                onClick={() => {
-                  // Note: Select same species is implemented in usePlantEditorActions
-                  storeLogger.debug('Select same species action triggered');
-                }}
+                onClick={onSelectSameSpecies}
+                disabled={!onSelectSameSpecies}
               >
                 Mesma Espécie
               </Button>
@@ -78,10 +79,8 @@ export const PlantEditFormActions: React.FC<PlantEditFormActionsProps> = ({
                 variant="outline"
                 size="sm"
                 className="text-xs flex-1"
-                onClick={() => {
-                  // Note: Spacing adjustment requires spacing input UI (future enhancement)
-                  storeLogger.debug('Adjust spacing action triggered');
-                }}
+                onClick={onAdjustSpacing}
+                disabled={!onAdjustSpacing}
               >
                 Espaçar
               </Button>

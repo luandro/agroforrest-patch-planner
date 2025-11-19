@@ -1,8 +1,10 @@
 
 import { useCallback, useMemo } from 'react';
 import { usePlantPlacementStore, PlantPlacement } from '../stores/plantPlacementStore';
+import { usePatchStore } from '../stores/patchStore';
 import { PlantSpecies } from '../types/species.types';
 import { storeLogger } from '@/lib/logger';
+import { PLANT } from '../config';
 
 interface SpeciesGroup {
   species: PlantSpecies;
@@ -83,27 +85,37 @@ export function usePlantEditorActions({
 
   const handleDuplicate = useCallback(() => {
     // Duplicate selected placements with slight position offsets
-    const offset = 0.1; // 10cm offset for duplicates
+    // Batch all duplicates as a single history entry
+    const { currentPatchId } = usePatchStore.getState();
+    const store = usePlantPlacementStore.getState();
 
-    selectedPlacements.forEach((placement, index) => {
+    const newPlacements: PlantPlacement[] = selectedPlacements.map((placement, index) => {
       // Create staggered offset for multiple duplicates
-      const xOffset = offset * (1 + (index % 3));
-      const yOffset = offset * (1 + Math.floor(index / 3));
+      const xOffset = PLANT.DUPLICATE_OFFSET * (1 + (index % 3));
+      const yOffset = PLANT.DUPLICATE_OFFSET * (1 + Math.floor(index / 3));
 
-      addPlacement({
+      return {
+        id: `plant-${Date.now()}-${Math.random()}-${index}`,
         bedId: placement.bedId,
-        patchId: placement.patchId,
+        patchId: currentPatchId || placement.patchId,
         species: placement.species,
         position: {
           x: placement.position.x + xOffset,
           y: placement.position.y + yOffset
         },
         notes: placement.notes
-      });
+      };
     });
 
+    // Batch update: add all placements at once, then add single history entry
+    usePlantPlacementStore.setState(state => ({
+      placements: [...state.placements, ...newPlacements],
+      isDirty: true
+    }));
+    store.addToHistory();
+
     storeLogger.info(`Duplicated ${selectedPlacements.length} plant(s)`);
-  }, [selectedPlacements, addPlacement]);
+  }, [selectedPlacements]);
 
   const handleEdit = useCallback(() => {
     // Note: Detailed editing is handled by the parent component
