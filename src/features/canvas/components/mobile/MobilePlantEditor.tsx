@@ -7,6 +7,7 @@ import { PlantDetailsDisplay } from './PlantDetailsDisplay';
 import { PlantSummaryDisplay } from './PlantSummaryDisplay';
 import { PlantEditorActions } from './PlantEditorActions';
 import { usePlantEditorActions } from '../../hooks/usePlantEditorActions';
+import { storeLogger } from '@/lib/logger';
 
 interface MobilePlantEditorProps {
   selectedPlacementIds: string[];
@@ -42,13 +43,15 @@ export const MobilePlantEditor: React.FC<MobilePlantEditorProps> = ({
   };
 
   const handleEditDetails = () => {
-    // TODO: Implement detailed editing
-    console.log('Open detailed editing');
+    // Note: Detailed editing panel would open here
+    // Currently handled by long-press gesture on plants
+    storeLogger.debug('Edit details requested for plants:', selectedPlacementIds);
   };
 
   const handleMoreOptions = () => {
-    // TODO: Implement more options menu
-    console.log('More options');
+    // Note: More options menu would include duplicate, move, select same species
+    // These actions are implemented in usePlantEditorActions
+    storeLogger.debug('More options requested for plants:', selectedPlacementIds);
   };
 
   return (

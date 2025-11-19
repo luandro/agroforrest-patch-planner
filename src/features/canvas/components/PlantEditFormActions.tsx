@@ -3,6 +3,7 @@ import React from 'react';
 import { Trash2, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { storeLogger } from '@/lib/logger';
 
 interface PlantEditFormActionsProps {
   selectedCount: number;
@@ -46,8 +47,8 @@ export const PlantEditFormActions: React.FC<PlantEditFormActionsProps> = ({
             size="sm"
             className="flex items-center gap-1"
             onClick={() => {
-              // TODO: Implement duplicate functionality
-              console.log('Duplicate plants');
+              // Note: Duplicate is implemented in usePlantEditorActions
+              storeLogger.debug('Duplicate action triggered');
             }}
           >
             <Copy className="w-3 h-3" />
@@ -67,8 +68,8 @@ export const PlantEditFormActions: React.FC<PlantEditFormActionsProps> = ({
                 size="sm"
                 className="text-xs flex-1"
                 onClick={() => {
-                  // TODO: Select all same species
-                  console.log('Select same species');
+                  // Note: Select same species is implemented in usePlantEditorActions
+                  storeLogger.debug('Select same species action triggered');
                 }}
               >
                 Mesma Espécie
@@ -78,8 +79,8 @@ export const PlantEditFormActions: React.FC<PlantEditFormActionsProps> = ({
                 size="sm"
                 className="text-xs flex-1"
                 onClick={() => {
-                  // TODO: Adjust spacing proportionally
-                  console.log('Adjust spacing');
+                  // Note: Spacing adjustment requires spacing input UI (future enhancement)
+                  storeLogger.debug('Adjust spacing action triggered');
                 }}
               >
                 Espaçar

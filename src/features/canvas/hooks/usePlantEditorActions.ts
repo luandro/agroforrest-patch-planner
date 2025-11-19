@@ -2,6 +2,7 @@
 import { useCallback, useMemo } from 'react';
 import { usePlantPlacementStore, PlantPlacement } from '../stores/plantPlacementStore';
 import { PlantSpecies } from '../types/species.types';
+import { storeLogger } from '@/lib/logger';
 
 interface SpeciesGroup {
   species: PlantSpecies;
@@ -44,7 +45,8 @@ export function usePlantEditorActions({
   selectedPlacementIds,
   onClose
 }: UsePlantEditorActionsProps): UsePlantEditorActionsReturn {
-  const { placements, removePlacements } = usePlantPlacementStore();
+  const { placements, removePlacements, selectPlacements, getPlacementsForBed } = usePlantPlacementStore();
+  const addPlacement = usePlantPlacementStore(state => state.addPlacement);
 
   // Filter selected placements
   const selectedPlacements = useMemo(() => {
@@ -80,30 +82,73 @@ export function usePlantEditorActions({
   }, [removePlacements, selectedPlacementIds, onClose]);
 
   const handleDuplicate = useCallback(() => {
-    // TODO: Implement duplication logic
-    // This would duplicate the selected placements with slight position offsets
-    console.log('Duplicate plants:', selectedPlacementIds);
-  }, [selectedPlacementIds]);
+    // Duplicate selected placements with slight position offsets
+    const offset = 0.1; // 10cm offset for duplicates
+
+    selectedPlacements.forEach((placement, index) => {
+      // Create staggered offset for multiple duplicates
+      const xOffset = offset * (1 + (index % 3));
+      const yOffset = offset * (1 + Math.floor(index / 3));
+
+      addPlacement({
+        bedId: placement.bedId,
+        patchId: placement.patchId,
+        species: placement.species,
+        position: {
+          x: placement.position.x + xOffset,
+          y: placement.position.y + yOffset
+        },
+        notes: placement.notes
+      });
+    });
+
+    storeLogger.info(`Duplicated ${selectedPlacements.length} plant(s)`);
+  }, [selectedPlacements, addPlacement]);
 
   const handleEdit = useCallback(() => {
-    // TODO: Open detailed editing panel
-    console.log('Edit plants:', selectedPlacementIds);
+    // Note: Detailed editing is handled by the parent component
+    // This callback can be used to trigger UI state changes
+    storeLogger.debug('Edit requested for plants:', selectedPlacementIds);
   }, [selectedPlacementIds]);
 
   const handleMove = useCallback(() => {
-    // TODO: Implement move to different bed
-    console.log('Move plants:', selectedPlacementIds);
+    // Note: Moving to a different bed requires bed selection UI
+    // This is tracked as a future enhancement
+    storeLogger.debug('Move requested for plants:', selectedPlacementIds);
   }, [selectedPlacementIds]);
 
   const handleSelectSameSpecies = useCallback(() => {
-    // TODO: Select all plants of the same species in the bed
-    console.log('Select same species');
-  }, []);
+    // Get the species IDs from selected placements
+    const selectedSpeciesIds = new Set(
+      selectedPlacements.map(p => p.species.id)
+    );
+
+    // Get the bed IDs from selected placements
+    const selectedBedIds = new Set(
+      selectedPlacements.map(p => p.bedId)
+    );
+
+    // Find all placements in the same beds with matching species
+    const matchingIds: string[] = [];
+    selectedBedIds.forEach(bedId => {
+      const bedPlacements = getPlacementsForBed(bedId);
+      bedPlacements.forEach(placement => {
+        if (selectedSpeciesIds.has(placement.species.id)) {
+          matchingIds.push(placement.id);
+        }
+      });
+    });
+
+    // Select all matching placements
+    selectPlacements(matchingIds);
+    storeLogger.info(`Selected ${matchingIds.length} plant(s) of same species`);
+  }, [selectedPlacements, getPlacementsForBed, selectPlacements]);
 
   const handleAdjustSpacing = useCallback(() => {
-    // TODO: Adjust spacing between selected plants
-    console.log('Adjust spacing');
-  }, []);
+    // Note: Spacing adjustment requires a spacing input UI
+    // This is tracked as a future enhancement
+    storeLogger.debug('Adjust spacing requested for plants:', selectedPlacementIds);
+  }, [selectedPlacementIds]);
 
   // Label generators
   const getDeleteLabel = useCallback(() => {

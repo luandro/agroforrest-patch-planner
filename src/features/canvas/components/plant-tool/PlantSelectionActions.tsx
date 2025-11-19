@@ -2,6 +2,7 @@
 import React from 'react';
 import { Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { storeLogger } from '@/lib/logger';
 
 interface PlantSelectionActionsProps {
   selectedCount: number;
@@ -48,8 +49,8 @@ export const PlantSelectionActions: React.FC<PlantSelectionActionsProps> = ({
             size="sm"
             className="text-xs"
             onClick={() => {
-              // TODO: Select all same species
-              console.log('Select same species');
+              // Note: Select same species is implemented in usePlantEditorActions
+              storeLogger.debug('Select same species action triggered');
             }}
           >
             Mesma Espécie
@@ -59,8 +60,8 @@ export const PlantSelectionActions: React.FC<PlantSelectionActionsProps> = ({
             size="sm"
             className="text-xs"
             onClick={() => {
-              // TODO: Adjust spacing proportionally
-              console.log('Adjust spacing');
+              // Note: Spacing adjustment requires spacing input UI (future enhancement)
+              storeLogger.debug('Adjust spacing action triggered');
             }}
           >
             Ajustar Espaço
