@@ -48,7 +48,6 @@ export function usePlantEditorActions({
   onClose
 }: UsePlantEditorActionsProps): UsePlantEditorActionsReturn {
   const { placements, removePlacements, selectPlacements, getPlacementsForBed } = usePlantPlacementStore();
-  const addPlacement = usePlantPlacementStore(state => state.addPlacement);
 
   // Filter selected placements
   const selectedPlacements = useMemo(() => {
