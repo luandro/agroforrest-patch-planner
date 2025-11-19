@@ -61,7 +61,7 @@ Created from comprehensive architecture review on 2025-11-14
 
 ---
 
-### Sprint 2 (Week 3-4) - 🚧 IN PROGRESS
+### Sprint 2 (Week 3-4) - ✅ COMPLETED (2025-11-19)
 
 **Completed Tasks:**
 
@@ -237,6 +237,99 @@ Created from comprehensive architecture review on 2025-11-14
    - All passing ✅
 
    **Note:** Full Zustand store hook testing requires additional setup for proper store mocking.
+
+---
+
+### Sprint 3 (Week 5-6) - ✅ COMPLETED (2025-11-19)
+
+**Completed Tasks:**
+
+1. **✅ Issue #8 - Document Hook Orchestration Pattern (2025-11-19)**
+
+   Created comprehensive documentation for the 3-level hook architecture.
+
+   **New File Created:**
+   - `src/features/canvas/docs/HOOK_ARCHITECTURE.md` - Complete architecture guide with:
+     - Three-level hierarchy explained (Atomic → Composite → Page)
+     - Code examples for each level
+     - Naming conventions table
+     - Anti-patterns guide (5 patterns to avoid)
+     - Guidelines for adding new features
+     - Benefits of the architecture
+
+   **Benefits:**
+   - Clear onboarding documentation for new developers
+   - Consistent patterns across the codebase
+   - Prevention of architectural drift
+
+2. **✅ Issue #14 - Add Retry Logic to Storage Operations (2025-11-19)**
+
+   Created retry utility with exponential backoff for transient failures.
+
+   **New Files Created:**
+   - `src/lib/retry.ts` - Retry utility with:
+     - `withRetry()` - Returns result object
+     - `retryAsync()` - Throws on failure
+     - `withIndexedDBRetry()` / `retryIndexedDB()` - Pre-configured for IndexedDB
+     - `isIndexedDBRetryable()` - Error classification
+     - Exponential backoff with jitter
+     - Configurable attempts, delays, and callbacks
+
+   - `src/lib/retry.test.ts` - Comprehensive tests (20 tests)
+
+   **Storage Operations Updated:**
+   - `clearAllStorage()` - Now retries on transient failures
+   - `upsertPatches()` - Retry with exponential backoff
+   - `upsertBedsForPatch()` - Retry with exponential backoff
+   - `upsertPlacementsForPatch()` - Retry with exponential backoff
+   - `loadPatchData()` - Retry with exponential backoff
+
+   **Benefits:**
+   - Improved reliability for database-locked scenarios
+   - Graceful handling of transient failures
+   - Configurable retry behavior per operation
+
+3. **✅ Issue #15 - Add Validation Layer with Zod (2025-11-19)**
+
+   Implemented comprehensive validation for all storage operations.
+
+   **New Files Created:**
+   - `src/features/canvas/validation/schemas.ts` - Zod schemas for:
+     - `PatchSchema` - Name, size, timestamps validation
+     - `BedSchema` - Shape, dimensions, rotation validation
+     - `PlantPlacementSchema` - Species, position validation
+     - `PlantSpeciesSchema` - Full species validation
+     - Helper functions: `validatePatches()`, `validateBeds()`, `validatePlacements()`
+     - Custom `ValidationError` class with detailed error messages
+
+   - `src/features/canvas/validation/schemas.test.ts` - Comprehensive tests (49 tests)
+
+   **Storage Operations Updated:**
+   - `upsertPatches()` - Validates before save
+   - `upsertBedsForPatch()` - Validates before save
+   - `upsertPlacementsForPatch()` - Validates before save
+
+   **Validation Rules:**
+   - Patch names: 1-100 characters
+   - Patch dimensions: 1-10,000 meters
+   - Bed dimensions: 1-100 meters
+   - Rotation: -360 to 360 degrees
+   - Rectangle beds require length/width; circles require radius
+   - Species spacing: min <= max
+   - Positive timestamps required
+
+   **Benefits:**
+   - Prevents invalid data from reaching storage
+   - Clear error messages for debugging
+   - Type-safe validation with Zod inference
+
+**Test Coverage Summary:**
+- Total tests: 162 (up from 92)
+- New test files: 2
+- All passing ✅
+
+**Dependencies Added:**
+- `zod` - Runtime validation library
 
 ---
 
@@ -604,10 +697,10 @@ Create `src/features/canvas/validation/schemas.ts` with Zod schemas
 8. ✅ Issue #6 - Break down large components (5 components, avg 59% reduction)
 9. ✅ Expand test coverage (54 → 92 tests)
 
-**Week 5-6 (Sprint 3):**
-10. Issue #8 - Document architecture
-11. Issue #14 - Add retry logic
-12. Issue #15 - Add validation
+**Week 5-6 (Sprint 3):** ✅ **FULLY COMPLETED** (2025-11-19)
+10. ✅ Issue #8 - Document architecture (HOOK_ARCHITECTURE.md)
+11. ✅ Issue #14 - Add retry logic (src/lib/retry.ts)
+12. ✅ Issue #15 - Add validation (Zod schemas + storage validation)
 
 **Future:**
 13-15. P2 issues as needed
