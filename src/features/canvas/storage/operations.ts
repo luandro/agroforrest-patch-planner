@@ -93,7 +93,7 @@ export const upsertPatches = async (patches: Patch[]): Promise<void> => {
   const validation = validatePatches(patches);
   if (!validation.success) {
     storageLogger.error('Patch validation failed', validation.errors);
-    throw new ValidationError('Invalid patch data', validation.errors || []);
+    throw new ValidationError('Invalid patch data', validation.errors ?? ['Unknown validation error']);
   }
 
   try {
@@ -145,7 +145,7 @@ export const upsertBedsForPatch = async (patchId: string, beds: Bed[]): Promise<
   const validation = validateBeds(beds);
   if (!validation.success) {
     storageLogger.error('Bed validation failed', validation.errors);
-    throw new ValidationError('Invalid bed data', validation.errors || []);
+    throw new ValidationError('Invalid bed data', validation.errors ?? ['Unknown validation error']);
   }
 
   try {
@@ -213,7 +213,7 @@ export const upsertPlacementsForPatch = async (patchId: string, placements: Plan
   const validation = validatePlacements(placements);
   if (!validation.success) {
     storageLogger.error('Placement validation failed', validation.errors);
-    throw new ValidationError('Invalid placement data', validation.errors || []);
+    throw new ValidationError('Invalid placement data', validation.errors ?? ['Unknown validation error']);
   }
 
   try {
@@ -324,6 +324,19 @@ export const loadPatchData = async (patchId: string): Promise<{ beds: Bed[]; pla
 
       beds = allBeds.filter((bed) => bed.patchId === patchId);
       placements = allPlacements.filter((placement) => placement.patchId === patchId);
+    }
+
+    // Validate loaded data to catch corruption from external sources
+    const bedValidation = validateBeds(beds);
+    if (!bedValidation.success) {
+      storageLogger.error('Loaded bed data failed validation', bedValidation.errors);
+      throw new ValidationError('Corrupted bed data in storage', bedValidation.errors ?? ['Unknown validation error']);
+    }
+
+    const placementValidation = validatePlacements(placements);
+    if (!placementValidation.success) {
+      storageLogger.error('Loaded placement data failed validation', placementValidation.errors);
+      throw new ValidationError('Corrupted placement data in storage', placementValidation.errors ?? ['Unknown validation error']);
     }
 
     storageLogger.info(`Loaded patch data for: ${patchId}, beds: ${beds.length}, placements: ${placements.length}`);
