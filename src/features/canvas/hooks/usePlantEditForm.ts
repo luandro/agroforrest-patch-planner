@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { usePlantPlacementStore } from '../stores/plantPlacementStore';
 import type { PlantPlacement } from '../stores/plantPlacementStore';
 import { PlantSpecies } from '../types/species.types';
@@ -25,35 +25,51 @@ interface UsePlantEditFormProps {
 export function usePlantEditForm({ selectedPlacementIds }: UsePlantEditFormProps) {
   const { placements, updatePlacement } = usePlantPlacementStore();
 
-  const selectedPlacements = placements.filter(p => selectedPlacementIds.includes(p.id));
+  // Memoize selected placements to avoid recalculating on every render
+  const selectedPlacements = useMemo(() =>
+    placements.filter(p => selectedPlacementIds.includes(p.id)),
+    [placements, selectedPlacementIds]
+  );
 
-  const [editForm, setEditForm] = useState<PlantEditForm>(() => {
-    const firstPlacement = selectedPlacements[0];
-    return {
-      maturity: 'seedling',
-      spacing: 2.0,
-      variety: 'Padrão',
-      plantingDate: new Date().toISOString().split('T')[0],
-      notes: firstPlacement?.notes || ''
-    };
+  const [editForm, setEditForm] = useState<PlantEditForm>({
+    maturity: 'seedling',
+    spacing: 2.0,
+    variety: 'Padrão',
+    plantingDate: new Date().toISOString().split('T')[0],
+    notes: ''
   });
 
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Group selected plants by species
-  const speciesGroups = selectedPlacements.reduce<Record<string, SpeciesGroup>>((acc, placement) => {
-    const speciesId = placement.species.id;
-    if (!acc[speciesId]) {
-      acc[speciesId] = {
-        species: placement.species,
-        count: 0,
-        placements: []
-      };
+  // Sync notes from first selected placement when selection changes
+  useEffect(() => {
+    const firstPlacement = selectedPlacements[0];
+    if (firstPlacement) {
+      setEditForm(prev => ({
+        ...prev,
+        notes: firstPlacement.notes || ''
+      }));
+      setHasUnsavedChanges(false);
     }
-    acc[speciesId].count++;
-    acc[speciesId].placements.push(placement);
-    return acc;
-  }, {});
+  }, [selectedPlacements]);
+
+  // Memoize species groups calculation
+  const speciesGroups = useMemo(() =>
+    selectedPlacements.reduce<Record<string, SpeciesGroup>>((acc, placement) => {
+      const speciesId = placement.species.id;
+      if (!acc[speciesId]) {
+        acc[speciesId] = {
+          species: placement.species,
+          count: 0,
+          placements: []
+        };
+      }
+      acc[speciesId].count++;
+      acc[speciesId].placements.push(placement);
+      return acc;
+    }, {}),
+    [selectedPlacements]
+  );
 
   const handleFormChange = useCallback(<K extends keyof PlantEditForm>(field: K, value: PlantEditForm[K]) => {
     setEditForm(prev => ({ ...prev, [field]: value }));

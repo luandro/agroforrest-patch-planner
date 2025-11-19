@@ -11,6 +11,9 @@ import { SideViewTimelineControls } from './timeline/SideViewTimelineControls';
 import { Button } from '@/components/ui/button';
 import { Clock, X } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { canvasLogger } from '@/lib/logger';
+
+const logger = canvasLogger.createChild('SideView');
 
 interface SideViewCanvasProps {
   focusedBedId?: string;
@@ -70,7 +73,7 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
       const ctx = canvas.getContext('2d');
       if (ctx) {
         ctx.scale(dpr, dpr);
-        console.log('[Side View] Canvas resized:', { width, height, dpr });
+        logger.debug('Canvas resized', { width, height, dpr });
       }
     };
 
@@ -93,16 +96,11 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
     const sideViewBed = convertToSideViewBed(bedId, timelineMonth);
     if (!sideViewBed) return;
 
-    console.log('[Side View Render]', {
+    logger.debug('Render side view', {
       bedId,
       plantsCount: sideViewBed.plants.length,
       timelineActive: isTimelineActive,
-      currentMonth: timelineMonth,
-      plants: sideViewBed.plants.map(p => ({
-        id: p.id,
-        height: p.position.height.toFixed(2),
-        canopy: p.canopyRadius.toFixed(2)
-      }))
+      currentMonth: timelineMonth
     });
 
     renderSideView({
@@ -112,7 +110,7 @@ export const SideViewCanvas: React.FC<SideViewCanvasProps> = ({
       viewport,
       currentMonth: isTimelineActive ? timelineMonth : 0
     });
-  }, [beds, placements, timelineMonth, isTimelineActive, focusedBedId, viewport, isMobile, convertToSideViewBed]);
+  }, [beds, placements, timelineMonth, isTimelineActive, focusedBedId, viewport, convertToSideViewBed]);
 
   const toggleTimeline = () => {
     setShowTimeline(!showTimeline);

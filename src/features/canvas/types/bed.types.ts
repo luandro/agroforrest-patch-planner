@@ -5,8 +5,10 @@ export interface BedDimensions {
   radius?: number;    // for circles
 }
 
+export type BedShape = 'rectangle' | 'circle';
+
 export interface BedConfig {
-  shape: 'rectangle' | 'circle';
+  shape: BedShape;
   length: number;      // default: 5 meters
   width: number;       // default: 1 meter
   spacing: number;     // default: 0.4 meters
