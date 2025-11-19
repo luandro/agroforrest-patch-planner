@@ -29,31 +29,17 @@ export interface RetryResult<T> {
  */
 export const isIndexedDBRetryable = (error: unknown): boolean => {
   if (error instanceof DOMException) {
-    // Retryable IndexedDB errors
+    // Only retry specific, known transient errors
     const retryableErrors = [
       'QuotaExceededError',     // Storage quota exceeded (might clear up)
       'UnknownError',          // Transient database errors
       'TransactionInactiveError', // Transaction timing issues
     ];
 
-    // Non-retryable errors
-    const nonRetryableErrors = [
-      'InvalidStateError',     // Database connection closed
-      'NotFoundError',         // Object store doesn't exist
-      'ConstraintError',       // Primary key violation
-      'DataError',             // Invalid key or value
-      'InvalidAccessError',    // Invalid operation
-      'AbortError',            // Transaction was aborted
-    ];
-
-    if (nonRetryableErrors.includes(error.name)) {
-      return false;
-    }
-
-    return retryableErrors.includes(error.name) || !nonRetryableErrors.includes(error.name);
+    return retryableErrors.includes(error.name);
   }
 
-  // Retry generic errors by default
+  // Retry generic errors by default (e.g., network issues)
   return true;
 };
 
