@@ -6,8 +6,15 @@ export const formatTime = (months: number): string => {
   if (months < 12) {
     return `${Math.round(months)} meses`;
   }
-  const years = Math.floor(months / 12);
-  const remainingMonths = Math.round(months % 12);
+  let years = Math.floor(months / 12);
+  let remainingMonths = Math.round(months % 12);
+
+  // Handle case where rounding pushes remainder to 12
+  if (remainingMonths === 12) {
+    years += 1;
+    remainingMonths = 0;
+  }
+
   return remainingMonths > 0 ? `${years}a ${remainingMonths}m` : `${years} anos`;
 };
 

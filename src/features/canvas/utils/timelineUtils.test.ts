@@ -36,6 +36,15 @@ describe('formatTime', () => {
     expect(formatTime(6.6)).toBe('7 meses');
   });
 
+  it('should handle rounding that pushes remainder to 12', () => {
+    // 23.6 months: years=1, remainder=11.6 rounds to 12 → should be 2 anos
+    expect(formatTime(23.6)).toBe('2 anos');
+    // 35.7 months: years=2, remainder=11.7 rounds to 12 → should be 3 anos
+    expect(formatTime(35.7)).toBe('3 anos');
+    // 11.6 months: rounds to 12, but < 12 check uses rounded value
+    expect(formatTime(11.6)).toBe('12 meses');
+  });
+
   it('should handle large values', () => {
     expect(formatTime(240)).toBe('20 anos');
   });
