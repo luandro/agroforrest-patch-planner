@@ -21,7 +21,7 @@ Renders and manages the interactive agroforestry canvas: bed creation, plant pla
 ## External Dependencies
 - `zustand` and `zustand/middleware` for state synchronization.
 - Browser Canvas APIs, `requestAnimationFrame`, and pointer events; no third-party canvas library is used.
-- IndexedDB/localStorage access via `storageManager` for offline persistence.
+- IndexedDB/localStorage access via `src/features/canvas/storage/` modules for offline persistence.
 - `date-fns` in timeline/growth helpers, `lucide-react` icons inside UI chrome.
 
 ## Context Tips
