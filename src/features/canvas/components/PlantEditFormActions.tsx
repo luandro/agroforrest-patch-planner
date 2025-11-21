@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Trash2, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { storeLogger } from '@/lib/logger';
 
 interface PlantEditFormActionsProps {
   selectedCount: number;
@@ -23,12 +24,22 @@ export const PlantEditFormActions: React.FC<PlantEditFormActionsProps> = ({
   onSelectSameSpecies,
   onAdjustSpacing
 }) => {
+  // Safe wrapper for callbacks with error handling
+  const safeCall = useCallback((fn: (() => void) | undefined, actionName: string) => {
+    if (!fn) return;
+    try {
+      fn();
+    } catch (error) {
+      storeLogger.error(`[PlantEditFormActions] ${actionName} failed:`, error);
+    }
+  }, []);
+
   return (
     <>
       {/* Actions */}
       <div className="space-y-2">
         <Button
-          onClick={onApplyChanges}
+          onClick={() => safeCall(onApplyChanges, 'Apply changes')}
           disabled={!hasUnsavedChanges}
           className="w-full"
           size="sm"
@@ -38,7 +49,7 @@ export const PlantEditFormActions: React.FC<PlantEditFormActionsProps> = ({
 
         <div className="flex gap-2">
           <Button
-            onClick={onDelete}
+            onClick={() => safeCall(onDelete, 'Delete')}
             variant="destructive"
             size="sm"
             className="flex-1 flex items-center gap-1"
@@ -51,7 +62,7 @@ export const PlantEditFormActions: React.FC<PlantEditFormActionsProps> = ({
             variant="outline"
             size="sm"
             className="flex items-center gap-1"
-            onClick={onDuplicate}
+            onClick={() => safeCall(onDuplicate, 'Duplicate')}
             disabled={!onDuplicate}
           >
             <Copy className="w-3 h-3" />
@@ -70,7 +81,7 @@ export const PlantEditFormActions: React.FC<PlantEditFormActionsProps> = ({
                 variant="outline"
                 size="sm"
                 className="text-xs flex-1"
-                onClick={onSelectSameSpecies}
+                onClick={() => safeCall(onSelectSameSpecies, 'Select same species')}
                 disabled={!onSelectSameSpecies}
               >
                 Mesma Espécie
@@ -79,7 +90,7 @@ export const PlantEditFormActions: React.FC<PlantEditFormActionsProps> = ({
                 variant="outline"
                 size="sm"
                 className="text-xs flex-1"
-                onClick={onAdjustSpacing}
+                onClick={() => safeCall(onAdjustSpacing, 'Adjust spacing')}
                 disabled={!onAdjustSpacing}
               >
                 Espaçar

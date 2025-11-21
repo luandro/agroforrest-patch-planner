@@ -1,7 +1,8 @@
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { storeLogger } from '@/lib/logger';
 
 interface PlantSelectionActionsProps {
   selectedCount: number;
@@ -18,6 +19,16 @@ export const PlantSelectionActions: React.FC<PlantSelectionActionsProps> = ({
   onSelectSameSpecies,
   onAdjustSpacing
 }) => {
+  // Safe wrapper for callbacks with error handling
+  const safeCall = useCallback((fn: (() => void) | undefined, actionName: string) => {
+    if (!fn) return;
+    try {
+      fn();
+    } catch (error) {
+      storeLogger.error(`[PlantSelectionActions] ${actionName} failed:`, error);
+    }
+  }, []);
+
   return (
     <div className="space-y-3">
       <div className="text-sm text-gray-600">
@@ -27,7 +38,7 @@ export const PlantSelectionActions: React.FC<PlantSelectionActionsProps> = ({
       <div className="flex gap-2">
         <Button
           size="sm"
-          onClick={onEdit}
+          onClick={() => safeCall(onEdit, 'Edit')}
           className="flex-1 flex items-center gap-1"
         >
           <Edit className="w-3 h-3" />
@@ -36,7 +47,7 @@ export const PlantSelectionActions: React.FC<PlantSelectionActionsProps> = ({
         <Button
           size="sm"
           variant="destructive"
-          onClick={onDelete}
+          onClick={() => safeCall(onDelete, 'Delete')}
           className="flex items-center gap-1"
         >
           <Trash2 className="w-3 h-3" />
@@ -51,7 +62,7 @@ export const PlantSelectionActions: React.FC<PlantSelectionActionsProps> = ({
             variant="outline"
             size="sm"
             className="text-xs"
-            onClick={onSelectSameSpecies}
+            onClick={() => safeCall(onSelectSameSpecies, 'Select same species')}
             disabled={!onSelectSameSpecies}
           >
             Mesma Espécie
@@ -60,7 +71,7 @@ export const PlantSelectionActions: React.FC<PlantSelectionActionsProps> = ({
             variant="outline"
             size="sm"
             className="text-xs"
-            onClick={onAdjustSpacing}
+            onClick={() => safeCall(onAdjustSpacing, 'Adjust spacing')}
             disabled={!onAdjustSpacing}
           >
             Ajustar Espaço
