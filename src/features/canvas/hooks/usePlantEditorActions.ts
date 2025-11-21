@@ -94,7 +94,7 @@ export function usePlantEditorActions({
       const yOffset = PLANT.DUPLICATE_OFFSET * (1 + Math.floor(index / 3));
 
       return {
-        id: `plant-${Date.now()}-${Math.random()}-${index}`,
+id: `plant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${index}`,
         bedId: placement.bedId,
         patchId: currentPatchId || placement.patchId,
         species: placement.species,
