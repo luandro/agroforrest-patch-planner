@@ -66,9 +66,56 @@ export function areArraysEqual<T>(a: T[], b: T[]): boolean {
 }
 
 /**
- * Deep equality check using JSON.stringify
- * Use sparingly - only for small objects where structural equality is needed
+ * Deep equality check with proper handling of edge cases
+ * Handles: primitives, arrays, objects, null, undefined, Date, NaN
+ * Does NOT handle: functions, symbols, circular references, Map, Set
  */
 export function deepEqual<T>(a: T, b: T): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
+  // Same reference or both primitives with same value
+  if (a === b) return true;
+
+  // Handle null/undefined
+  if (a == null || b == null) return a === b;
+
+  // Handle NaN (NaN !== NaN in JavaScript)
+  if (typeof a === 'number' && typeof b === 'number') {
+    if (Number.isNaN(a) && Number.isNaN(b)) return true;
+  }
+
+  // Different types
+  if (typeof a !== typeof b) return false;
+
+  // Handle Date objects
+  if (a instanceof Date && b instanceof Date) {
+    return a.getTime() === b.getTime();
+  }
+
+  // Handle arrays
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (!deepEqual(a[i], b[i])) return false;
+    }
+    return true;
+  }
+
+  // Handle objects
+  if (typeof a === 'object' && typeof b === 'object') {
+    const keysA = Object.keys(a as object);
+    const keysB = Object.keys(b as object);
+
+    // Different number of keys
+    if (keysA.length !== keysB.length) return false;
+
+    // Check all keys exist and values are equal
+    for (const key of keysA) {
+      if (!Object.prototype.hasOwnProperty.call(b, key)) return false;
+      if (!deepEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  return false;
 }
