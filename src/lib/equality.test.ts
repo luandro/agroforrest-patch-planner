@@ -139,12 +139,16 @@ describe('areBedsEqual', () => {
 
     it('handles undefined dimensions correctly', () => {
       const bed1 = createBed({ dimensions: { length: 2, width: 1 } });
-      const bed2 = createBed({ dimensions: { length: 2, width: 1 } });
+      const bed2 = createBed({ dimensions: { length: 2, width: 1, radius: undefined } });
       expect(areBedsEqual([bed1], [bed2])).toBe(true);
 
-      const bed3 = createBed({ dimensions: { radius: 1 } });
-      const bed4 = createBed({ dimensions: { radius: 1 } });
+      const bed3 = createBed({ shape: 'circle', dimensions: { radius: 1 } });
+      const bed4 = createBed({ shape: 'circle', dimensions: { radius: 1, length: undefined, width: undefined } });
       expect(areBedsEqual([bed3], [bed4])).toBe(true);
+
+      const bed5 = createBed({ dimensions: { length: 2, width: 1 } });
+      const bed6 = createBed({ shape: 'circle', dimensions: { radius: 1 } });
+      expect(areBedsEqual([bed5], [bed6])).toBe(false);
     });
   });
 
