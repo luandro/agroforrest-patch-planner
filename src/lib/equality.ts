@@ -30,6 +30,9 @@ export function areBedsEqual(a: Bed[], b: Bed[]): boolean {
 function isBedEqual(a: Bed, b: Bed): boolean {
   // Quick reference check
   if (a === b) return true;
+  
+  // Null/undefined checks
+  if (!a || !b) return false;
 
   // Compare primitive fields
   if (a.id !== b.id) return false;
