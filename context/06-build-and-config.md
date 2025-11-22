@@ -5,7 +5,7 @@ Defines the toolchain, linting/formatting, Tailwind tokens, and shadcn setup tha
 
 ## Key Files
 - `package.json` – Scripts (`dev`, `build`, `build:dev`, `preview`, `lint`) plus dependency graph (Vite, React 18, shadcn/Radix deps, Zustand, React Query).
-- `vite.config.ts` – Configures React SWC plugin, Lovable component tagger (development only), host `::`, port `8080`, and sets `@` alias to `./src`.
+- `vite.config.ts` – Configures React SWC plugin, host `::`, port `8080`, base path for GitHub Pages deployment, and sets `@` alias to `./src`.
 - `tsconfig.json` / `tsconfig.app.json` / `tsconfig.node.json` – TypeScript compiler options, path aliases, relaxed strictness toggles for this prototype.
 - `tailwind.config.ts` – Content globs, color tokens, sidebar palette, animations, and plugin registration (`tailwindcss-animate`).
 - `eslint.config.js` – ESLint flat config with JS + TypeScript presets, React Hooks rules, and refresh constraints.

@@ -1,73 +1,156 @@
-# Welcome to your Lovable project
+# AgroForrest Patch Planner
 
-## Project info
+A comprehensive planning tool for designing and managing agroforestry systems in Brazil. This application helps users create, visualize, and manage agroforestry patches with intelligent species selection and spatial planning.
 
-**URL**: https://lovable.dev/projects/7fe95dc7-6be6-4a80-ba21-0dd9864f78ca
+## Features
 
-## How can I edit this code?
+- **Interactive Patch Designer**: Visual canvas-based interface for creating and arranging agroforestry patches
+- **Species Management**: Comprehensive database of Brazilian native and agricultural species
+- **Intelligent Planning**: Automated suggestions for companion planting and spatial arrangements
+- **Dashboard**: Track and manage multiple patches across your property
+- **Responsive Design**: Works seamlessly on desktop and mobile devices
 
-There are several ways of editing your application.
+## Technology Stack
 
-**Use Lovable**
+This project is built with modern web technologies:
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/7fe95dc7-6be6-4a80-ba21-0dd9864f78ca) and start prompting.
+- **React 18** - UI framework
+- **TypeScript** - Type-safe development
+- **Vite** - Fast build tool and dev server
+- **Tailwind CSS** - Utility-first styling
+- **shadcn/ui** - High-quality component library
+- **Zustand** - State management
+- **React Query** - Data fetching and caching
+- **Vitest** - Unit testing framework
 
-Changes made via Lovable will be committed automatically to this repo.
+## Getting Started
 
-**Use your preferred IDE**
+### Prerequisites
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- Node.js 18+ (recommended: install with [nvm](https://github.com/nvm-sh/nvm#installing-and-updating))
+- npm or bun package manager
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Installation
 
-Follow these steps:
+```bash
+# Clone the repository
+git clone https://github.com/luandro/agroforrest-patch-planner.git
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Navigate to the project directory
+cd agroforrest-patch-planner
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Install dependencies
+npm install
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will be available at `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Available Scripts
 
-**Use GitHub Codespaces**
+- `npm run dev` - Start development server with hot reload
+- `npm run build` - Build for production
+- `npm run build:dev` - Build in development mode
+- `npm run preview` - Preview production build locally
+- `npm run lint` - Run ESLint
+- `npm test` - Run tests
+- `npm run test:ui` - Run tests with UI
+- `npm run test:coverage` - Generate test coverage report
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Project Structure
 
-## What technologies are used for this project?
+```
+agroforrest-patch-planner/
+├── src/
+│   ├── components/     # Reusable UI components
+│   ├── pages/          # Page components
+│   ├── lib/            # Utilities and helpers
+│   ├── hooks/          # Custom React hooks
+│   ├── stores/         # Zustand state stores
+│   └── types/          # TypeScript type definitions
+├── context/            # Architecture documentation
+├── public/             # Static assets
+└── ...config files
+```
 
-This project is built with:
+## Development
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Architecture Documentation
 
-## How can I deploy this project?
+For detailed information about the codebase architecture, see:
+- `AGENTS.md` - Contributor norms and quick reference
+- `context/` - Module-specific documentation
 
-Simply open [Lovable](https://lovable.dev/projects/7fe95dc7-6be6-4a80-ba21-0dd9864f78ca) and click on Share -> Publish.
+### Testing
 
-## Can I connect a custom domain to my Lovable project?
+Run the test suite with:
 
-Yes, you can!
+```bash
+npm test
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Generate coverage reports:
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+```bash
+npm run test:coverage
+```
+
+## Deployment
+
+The application supports deployment to multiple platforms (Vercel, GitHub Pages, etc.) with automatic base path configuration.
+
+### Base Path Configuration
+
+The app uses the `VITE_BASE_PATH` environment variable to configure the base URL:
+- **Vercel/Netlify**: Deploys at root `/` (default, no env var needed)
+- **GitHub Pages**: Deploys at `/agroforrest-patch-planner/` (set `VITE_BASE_PATH=/agroforrest-patch-planner/`)
+
+### GitHub Pages Deployment
+
+Automatic deployment is configured via GitHub Actions. To enable:
+
+1. Update `.github/workflows/deploy.yml` build step to include:
+```yaml
+- name: Build
+  run: npm run build
+  env:
+    VITE_BASE_PATH: /agroforrest-patch-planner/
+```
+
+2. Enable GitHub Pages in repository Settings → Pages → Source: "GitHub Actions"
+
+The site will be available at: `https://luandro.github.io/agroforrest-patch-planner/`
+
+### Vercel Deployment
+
+No additional configuration needed. Simply connect your repository to Vercel and deploy.
+
+### Manual Deployment
+
+```bash
+# Build for production (uses default base path '/')
+npm run build
+
+# Build for GitHub Pages
+VITE_BASE_PATH=/agroforrest-patch-planner/ npm run build
+
+# The dist/ folder contains the production-ready files
+```
+
+## Contributing
+
+1. Create a feature branch from `main`
+2. Make your changes
+3. Ensure tests pass and coverage meets thresholds
+4. Run `npm run lint` to check for issues
+5. Submit a pull request
+
+## License
+
+[Add your license information here]
+
+## Contact
+
+For questions or support, please open an issue on GitHub.
