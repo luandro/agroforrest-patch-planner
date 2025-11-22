@@ -3,10 +3,10 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CanvasTool } from '../types/bed.types';
-import { 
-  Square, 
+import {
+  Square,
   Move,
-  Sprout
+  HandPointer
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -57,7 +57,7 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
     },
     {
       id: 'select' as CanvasTool,
-      icon: '🎯',
+      icon: HandPointer,
       label: 'Selecionar',
       tooltip: 'Selecionar e editar canteiros'
     }
@@ -107,7 +107,7 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
           >
             <span className="text-xl font-bold text-green-600">+</span>
           </Button>
-          
+
           <Button
             variant="outline"
             size="sm"
@@ -118,7 +118,7 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
           >
             <span className="text-xl font-bold text-red-600">−</span>
           </Button>
-          
+
           <Button
             variant="outline"
             size="sm"
@@ -131,20 +131,6 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
             <span className="text-lg text-blue-600">📐</span>
           </Button>
         </div>
-      )}
-
-      {/* Plant Selection Button */}
-      {onOpenPlantSelection && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onOpenPlantSelection}
-          className="min-w-[48px] min-h-[48px] p-0 hover:bg-green-50 hover:border-green-300 rounded-xl"
-          title="Selecionar plantas"
-          aria-label="Abrir seleção de plantas"
-        >
-          <Sprout className="w-5 h-5 text-green-600" />
-        </Button>
       )}
 
       {/* Zoom Level Indicator */}

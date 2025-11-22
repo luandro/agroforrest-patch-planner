@@ -43,8 +43,8 @@ export const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
       {toolbar && (
         <header className="bg-white border-b border-gray-200 shadow-sm z-40 relative">
           <div className="flex items-center justify-between h-16 px-4 gap-4">
-            {/* Sidebar Toggle for Mobile */}
-            {showSidebar && isMobile && (
+            {/* Sidebar Toggle - Mobile and Desktop when closed */}
+            {showSidebar && (isMobile || !isSidebarOpen) && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -71,14 +71,18 @@ export const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
           <>
             <aside
               className={cn(
-                "bg-white border-r border-gray-200 transition-all duration-300 ease-in-out flex-shrink-0 relative z-30",
-                isSidebarOpen ? "w-80" : "w-0 overflow-hidden"
+                "bg-white border-r border-gray-200 transition-all duration-300 ease-in-out flex-shrink-0 relative z-30 overflow-y-auto",
+                isSidebarOpen ? "w-80" : "w-0"
               )}
             >
-              {isSidebarOpen && sidebar}
+              {isSidebarOpen && (
+                <div className="h-full overflow-y-auto">
+                  {sidebar}
+                </div>
+              )}
 
-              {/* Toggle Button for Desktop */}
-              {sidebarCollapsible && (
+              {/* Toggle Button for Desktop - Always visible */}
+              {sidebarCollapsible && isSidebarOpen && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -87,13 +91,9 @@ export const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({
                     "absolute -right-3 top-4 h-6 w-6 p-0 bg-white border border-gray-200 rounded-full shadow-sm z-10",
                     "hover:bg-gray-50"
                   )}
-                  aria-label={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+                  aria-label="Collapse sidebar"
                 >
-                  {isSidebarOpen ? (
-                    <span className="text-xs">‹</span>
-                  ) : (
-                    <span className="text-xs">›</span>
-                  )}
+                  <span className="text-xs">‹</span>
                 </Button>
               )}
             </aside>

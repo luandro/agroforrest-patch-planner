@@ -93,30 +93,16 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
         />
       )}
 
-      {/* Desktop Sidebar */}
-      {!isMobile && (
-        <DesktopSidebar
-          activeTool={tool}
-          onToolChange={setTool}
-          bedConfig={bedConfig}
-          onBedConfigChange={updateBedConfig}
-          onUndo={undo}
-          onRedo={redo}
-          canUndo={canUndo()}
-          canRedo={canRedo()}
-          onDeleteSelected={deleteSelected}
-          selectedCount={selectedBedIds.length}
-          isCollapsed={isCollapsed}
-          onToggleCollapse={onToggleCollapse || (() => {})}
-          isSaving={isSaving}
-          beds={beds}
-          viewport={viewport}
-          isInFocusMode={isInFocusMode}
-          focusedBedId={focusedBedId || undefined}
+      {/* Desktop: Plant Editor when plants are selected in focus mode */}
+      {!isMobile && isInFocusMode && focusedBedId && (
+        <DesktopPlantEditor
+          selectedPlacementIds={selectedBedIds}
+          onClose={() => {}}
+          focusedBedId={focusedBedId}
         />
       )}
 
-      {/* Desktop View Controls - Only show when not in focus mode or when no plants are selected */}
+      {/* Desktop View Controls - Simplified positioning without right sidebar */}
       {!isMobile && (!isInFocusMode || !focusedBedId) && (
         <ViewControls
           zoom={viewport.zoom}
@@ -127,10 +113,7 @@ export const ControlsOverlay: React.FC<ControlsOverlayProps> = ({
           activeTool={tool}
           onToolChange={setTool}
           onOpenPlantSelection={onOpenPlantSelection}
-          className={cn(
-            "fixed bottom-4 right-4 z-30 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-2",
-            isCollapsed ? "md:right-20" : "md:right-[21rem]"
-          )}
+          className="fixed bottom-4 right-4 z-30 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-2"
         />
       )}
     </>
