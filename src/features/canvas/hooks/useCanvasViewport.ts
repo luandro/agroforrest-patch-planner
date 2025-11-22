@@ -2,6 +2,8 @@
 import { useState, useCallback } from 'react';
 import { CanvasViewport } from '../types/canvas.types';
 import { Bed } from '../types/bed.types';
+import { CANVAS, DEFAULT_VIEWPORT } from '../config';
+import { storeLogger } from '@/lib/logger';
 
 interface UseCanvasViewportProps {
   initialViewport?: Partial<CanvasViewport>;
@@ -12,16 +14,12 @@ interface UseCanvasViewportProps {
 
 export const useCanvasViewport = ({
   initialViewport = {},
-  minZoom = 0.5,
-  maxZoom = 5,
+  minZoom = CANVAS.MIN_ZOOM,
+  maxZoom = CANVAS.MAX_ZOOM,
   onViewportChange
 }: UseCanvasViewportProps) => {
   const [viewport, setViewport] = useState<CanvasViewport>({
-    zoom: 1,
-    centerX: 10, // Center of 20m x 20m area
-    centerY: 10,
-    width: 20,
-    height: 20,
+    ...DEFAULT_VIEWPORT,
     ...initialViewport
   });
 
@@ -34,10 +32,8 @@ export const useCanvasViewport = ({
       };
       
       // Update viewport dimensions based on zoom
-      const baseWidth = 20;
-      const baseHeight = 20;
-      newViewport.width = baseWidth / newViewport.zoom;
-      newViewport.height = baseHeight / newViewport.zoom;
+      newViewport.width = CANVAS.DEFAULT_WIDTH / newViewport.zoom;
+      newViewport.height = CANVAS.DEFAULT_HEIGHT / newViewport.zoom;
       
       onViewportChange?.(newViewport);
       return newViewport;
@@ -56,32 +52,29 @@ export const useCanvasViewport = ({
   }, [updateViewport]);
 
   const pan = useCallback((deltaX: number, deltaY: number) => {
-    console.log('Pan called with delta:', { deltaX, deltaY });
-    
     setViewport(prev => {
       // Improved scaling factor calculation
-      const scaleFactor = 50 * prev.zoom;
-      
+      const scaleFactor = CANVAS.PIXELS_PER_METER * prev.zoom;
+
       // Apply deltas with proper Y-axis handling (no inversion needed)
       const newCenterX = prev.centerX - deltaX / scaleFactor;
       const newCenterY = prev.centerY - deltaY / scaleFactor;
-      
+
       // Apply boundaries (prevent panning too far)
-      const boundedX = Math.max(-50, Math.min(50, newCenterX));
-      const boundedY = Math.max(-50, Math.min(50, newCenterY));
-      
-      console.log('Pan result:', {
+      const boundedX = Math.max(CANVAS.PAN_MIN, Math.min(CANVAS.PAN_MAX, newCenterX));
+      const boundedY = Math.max(CANVAS.PAN_MIN, Math.min(CANVAS.PAN_MAX, newCenterY));
+
+      storeLogger.debug('[Viewport] Pan:', {
         from: { x: prev.centerX, y: prev.centerY },
-        to: { x: boundedX, y: boundedY },
-        scaleFactor
+        to: { x: boundedX, y: boundedY }
       });
-      
+
       const newViewport = {
         ...prev,
         centerX: boundedX,
         centerY: boundedY
       };
-      
+
       onViewportChange?.(newViewport);
       return newViewport;
     });
@@ -133,7 +126,7 @@ export const useCanvasViewport = ({
     // Calculate zoom to fit with padding
     const viewWidth = width + padding * 2;
     const viewHeight = height + padding * 2;
-    const requiredZoom = Math.min(20 / viewWidth, 20 / viewHeight);
+    const requiredZoom = Math.min(CANVAS.DEFAULT_WIDTH / viewWidth, CANVAS.DEFAULT_HEIGHT / viewHeight);
     const targetZoom = Math.max(minZoom, Math.min(maxZoom, requiredZoom));
     
     // Animate to new viewport

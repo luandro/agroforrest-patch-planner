@@ -4,6 +4,7 @@ import { useFocusModeStore } from './focusModeStore';
 import { useHistoryStore } from './historyStore';
 import { usePlantPlacementStore } from './plantPlacementStore';
 import { Bed } from '../types/bed.types';
+import { areBedsEqual } from '@/lib/equality';
 
 // Re-export the combined store interface for backward compatibility
 export const useBedStore = () => {
@@ -18,7 +19,8 @@ export const useBedStore = () => {
       state => state.beds,
       (beds, prevBeds) => {
         // Prevent adding duplicate states, which can happen with some actions.
-        if (JSON.stringify(beds) !== JSON.stringify(prevBeds)) {
+        // Use efficient structural equality check instead of JSON.stringify
+        if (!areBedsEqual(beds, prevBeds)) {
           historyStore.addToHistory(beds);
         }
       },

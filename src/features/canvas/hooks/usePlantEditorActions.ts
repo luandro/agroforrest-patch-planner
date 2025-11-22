@@ -1,7 +1,10 @@
 
 import { useCallback, useMemo } from 'react';
 import { usePlantPlacementStore, PlantPlacement } from '../stores/plantPlacementStore';
+import { usePatchStore } from '../stores/patchStore';
 import { PlantSpecies } from '../types/species.types';
+import { storeLogger } from '@/lib/logger';
+import { PLANT } from '../config';
 
 interface SpeciesGroup {
   species: PlantSpecies;
@@ -44,7 +47,7 @@ export function usePlantEditorActions({
   selectedPlacementIds,
   onClose
 }: UsePlantEditorActionsProps): UsePlantEditorActionsReturn {
-  const { placements, removePlacements } = usePlantPlacementStore();
+  const { placements, removePlacements, selectPlacements, getPlacementsForBed } = usePlantPlacementStore();
 
   // Filter selected placements
   const selectedPlacements = useMemo(() => {
@@ -80,30 +83,83 @@ export function usePlantEditorActions({
   }, [removePlacements, selectedPlacementIds, onClose]);
 
   const handleDuplicate = useCallback(() => {
-    // TODO: Implement duplication logic
-    // This would duplicate the selected placements with slight position offsets
-    console.log('Duplicate plants:', selectedPlacementIds);
-  }, [selectedPlacementIds]);
+    // Duplicate selected placements with slight position offsets
+    // Batch all duplicates as a single history entry
+    const { currentPatchId } = usePatchStore.getState();
+    const store = usePlantPlacementStore.getState();
+
+    const newPlacements: PlantPlacement[] = selectedPlacements.map((placement, index) => {
+      // Create staggered offset for multiple duplicates
+      const xOffset = PLANT.DUPLICATE_OFFSET * (1 + (index % 3));
+      const yOffset = PLANT.DUPLICATE_OFFSET * (1 + Math.floor(index / 3));
+
+      return {
+id: `plant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${index}`,
+        bedId: placement.bedId,
+        patchId: currentPatchId || placement.patchId,
+        species: placement.species,
+        position: {
+          x: placement.position.x + xOffset,
+          y: placement.position.y + yOffset
+        },
+        notes: placement.notes
+      };
+    });
+
+    // Batch update: add all placements at once, then add single history entry
+    usePlantPlacementStore.setState(state => ({
+      placements: [...state.placements, ...newPlacements],
+      isDirty: true
+    }));
+    store.addToHistory();
+
+    storeLogger.info(`Duplicated ${selectedPlacements.length} plant(s)`);
+  }, [selectedPlacements]);
 
   const handleEdit = useCallback(() => {
-    // TODO: Open detailed editing panel
-    console.log('Edit plants:', selectedPlacementIds);
+    // Note: Detailed editing is handled by the parent component
+    // This callback can be used to trigger UI state changes
+    storeLogger.debug('Edit requested for plants:', selectedPlacementIds);
   }, [selectedPlacementIds]);
 
   const handleMove = useCallback(() => {
-    // TODO: Implement move to different bed
-    console.log('Move plants:', selectedPlacementIds);
+    // Note: Moving to a different bed requires bed selection UI
+    // This is tracked as a future enhancement
+    storeLogger.debug('Move requested for plants:', selectedPlacementIds);
   }, [selectedPlacementIds]);
 
   const handleSelectSameSpecies = useCallback(() => {
-    // TODO: Select all plants of the same species in the bed
-    console.log('Select same species');
-  }, []);
+    // Get the species IDs from selected placements
+    const selectedSpeciesIds = new Set(
+      selectedPlacements.map(p => p.species.id)
+    );
+
+    // Get the bed IDs from selected placements
+    const selectedBedIds = new Set(
+      selectedPlacements.map(p => p.bedId)
+    );
+
+    // Find all placements in the same beds with matching species
+    const matchingIds: string[] = [];
+    selectedBedIds.forEach(bedId => {
+      const bedPlacements = getPlacementsForBed(bedId);
+      bedPlacements.forEach(placement => {
+        if (selectedSpeciesIds.has(placement.species.id)) {
+          matchingIds.push(placement.id);
+        }
+      });
+    });
+
+    // Select all matching placements
+    selectPlacements(matchingIds);
+    storeLogger.info(`Selected ${matchingIds.length} plant(s) of same species`);
+  }, [selectedPlacements, getPlacementsForBed, selectPlacements]);
 
   const handleAdjustSpacing = useCallback(() => {
-    // TODO: Adjust spacing between selected plants
-    console.log('Adjust spacing');
-  }, []);
+    // Note: Spacing adjustment requires a spacing input UI
+    // This is tracked as a future enhancement
+    storeLogger.debug('Adjust spacing requested for plants:', selectedPlacementIds);
+  }, [selectedPlacementIds]);
 
   // Label generators
   const getDeleteLabel = useCallback(() => {

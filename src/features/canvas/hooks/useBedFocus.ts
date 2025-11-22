@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { useFocusModeStore } from '../stores/focusModeStore';
 import { useBedStore } from '../stores/bedStore';
 import { CanvasViewport } from '../types/canvas.types';
+import { BED, ANIMATION } from '../config';
 
 interface UseBedFocusProps {
   viewport: CanvasViewport;
@@ -27,35 +28,33 @@ export const useBedFocus = ({
 
     // Enter focus mode first for immediate state change
     enterFocusMode(bedId);
-    
+
     // Calculate optimal target viewport
-    const padding = 0.15; // 15% padding around bed
     let bedWidth, bedHeight;
-    
+
     if (bed.shape === 'rectangle') {
-      bedWidth = bed.dimensions.length || 1;
-      bedHeight = bed.dimensions.width || 1;
+      bedWidth = bed.dimensions.length || BED.DEFAULT_LENGTH;
+      bedHeight = bed.dimensions.width || BED.DEFAULT_WIDTH;
     } else {
-      const radius = bed.dimensions.radius || 0.5;
+      const radius = bed.dimensions.radius || BED.DEFAULT_RADIUS;
       bedWidth = bedHeight = radius * 2;
     }
-    
+
     // Add padding to ensure fine grid is visible
-    const targetWidth = bedWidth / (1 - padding * 2);
-    const targetHeight = bedHeight / (1 - padding * 2);
-    
-    // Calculate zoom to fit bed in viewport with 10m base viewport
-    const baseViewportSize = 10;
-    const zoomX = baseViewportSize / targetWidth;
-    const zoomY = baseViewportSize / targetHeight;
+    const targetWidth = bedWidth / (1 - BED.FOCUS_PADDING * 2);
+    const targetHeight = bedHeight / (1 - BED.FOCUS_PADDING * 2);
+
+    // Calculate zoom to fit bed in viewport
+    const zoomX = BED.FOCUS_BASE_VIEWPORT / targetWidth;
+    const zoomY = BED.FOCUS_BASE_VIEWPORT / targetHeight;
     const targetZoom = Math.min(zoomX, zoomY);
-    
-    // Clamp zoom for usability (minimum 3x for fine grid visibility)
-    const finalZoom = Math.max(3, Math.min(8, targetZoom));
+
+    // Clamp zoom for usability (minimum for fine grid visibility)
+    const finalZoom = Math.max(BED.FOCUS_MIN_ZOOM, Math.min(BED.FOCUS_MAX_ZOOM, targetZoom));
 
     // Smooth animation to target position
     const startTime = performance.now();
-    const duration = 600; // Slightly longer for smoothness
+    const duration = ANIMATION.BED_FOCUS;
     
     const startViewport = {
       zoom: viewport.zoom,
