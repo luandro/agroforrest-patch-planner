@@ -14,12 +14,17 @@ import { useBulkPlacementStore } from '../stores/bulkPlacementStore';
 
 interface PlantSelectionPanelContentProps {
   onSelectSpecies: (species: PlantSpecies) => void;
+  searchQuery?: string;
 }
 
 export const PlantSelectionPanelContent: React.FC<PlantSelectionPanelContentProps> = ({
-  onSelectSpecies
+  onSelectSpecies,
+  searchQuery: externalSearchQuery
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Use external search query if provided, otherwise use internal state
+  const effectiveSearchTerm = externalSearchQuery !== undefined ? externalSearchQuery : searchTerm;
   const [selectedCategory, setSelectedCategory] = useState<PlantCategory | 'all'>('all');
   const [selectedCompatibility, setSelectedCompatibility] = useState<CompatibilityLevel | 'all'>('all');
   const [showFilters, setShowFilters] = useState(false);
@@ -35,7 +40,7 @@ export const PlantSelectionPanelContent: React.FC<PlantSelectionPanelContentProp
 
   // Use extracted hooks
   const { filteredSpecies, speciesByCategory } = usePlantSpeciesFilter({
-    searchTerm,
+    searchTerm: effectiveSearchTerm,
     selectedCategory,
     selectedCompatibility
   });
@@ -47,12 +52,14 @@ export const PlantSelectionPanelContent: React.FC<PlantSelectionPanelContentProp
   };
 
   const clearFilters = () => {
-    setSearchTerm('');
+    if (externalSearchQuery === undefined) {
+      setSearchTerm('');
+    }
     setSelectedCategory('all');
     setSelectedCompatibility('all');
   };
 
-  const hasActiveFilters = selectedCategory !== 'all' || selectedCompatibility !== 'all' || searchTerm !== '';
+  const hasActiveFilters = selectedCategory !== 'all' || selectedCompatibility !== 'all' || effectiveSearchTerm !== '';
 
   const handleStartBulkPlacement = useCallback((species: PlantSpecies) => {
     setSpeciesForBulk(species);
@@ -102,8 +109,8 @@ export const PlantSelectionPanelContent: React.FC<PlantSelectionPanelContentProp
           )}
 
           <PlantSelectionIndividualMode
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
+            searchTerm={effectiveSearchTerm}
+            onSearchChange={externalSearchQuery === undefined ? setSearchTerm : undefined}
             selectedCategory={selectedCategory}
             onCategoryChange={setSelectedCategory}
             selectedCompatibility={selectedCompatibility}

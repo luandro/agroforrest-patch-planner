@@ -1,15 +1,19 @@
 
 import React from 'react';
 import PatchCanvas from '../features/canvas/components/PatchCanvas';
-import MainLayout from '../components/layout/MainLayout';
-import { PlantSelectionPanel } from '../features/canvas/components/PlantSelectionPanel';
+import { PlantLibrarySidebar } from '../features/canvas/components/PlantLibrarySidebar';
+import { ResponsiveLayout } from '../components/layout/ResponsiveLayout';
+import { UnifiedToolbar } from '../components/layout/UnifiedToolbar';
 import { GrowthTimelineProvider } from '../features/canvas/providers/GrowthTimelineProvider';
 import { usePatchCreatorState } from '../features/patch-creator/hooks/usePatchCreatorState';
-import { PatchCreatorHeader } from '../features/patch-creator/components/PatchCreatorHeader';
 import { useOfflineStorage } from '../features/canvas/hooks/useOfflineStorage';
 import { StorageDebugPanel } from '../features/canvas/components/StorageDebugPanel';
 import { PageErrorBoundary } from '@/components/ErrorBoundary';
 import { logger } from '@/lib/logger';
+import { useMenuStore } from '@/stores/menuStore';
+import { UserMenu } from '@/components/UserMenu';
+import { usePlantPlacementStore } from '@/features/canvas/stores/plantPlacementStore';
+import { useBedStore } from '@/features/canvas/stores/bedStore';
 
 // Import storage test for development
 if (import.meta.env.DEV) {
@@ -19,6 +23,11 @@ if (import.meta.env.DEV) {
 const PatchCreatorPage: React.FC = () => {
   // Initialize storage at the page level to ensure it happens early
   const storage = useOfflineStorage();
+  const { toggleMenu } = useMenuStore();
+  const { selectedSpecies, isPlacing } = usePlantPlacementStore();
+
+  // Get undo/redo from bed store
+  const { setTool: setBedTool, undo, redo, canUndo, canRedo } = useBedStore();
 
   const {
     viewport,
@@ -39,7 +48,27 @@ const PatchCreatorPage: React.FC = () => {
     handleSelectSpecies,
     handleExitFocus,
     setTimelineActive,
+    handleManualSave,
+    isSaving,
   } = usePatchCreatorState();
+
+  // Store refs for canvas zoom controls
+  const canvasControlsRef = React.useRef<{
+    zoomIn: () => void;
+    zoomOut: () => void;
+  }>();
+
+  // Calculate stats for toolbar
+  const totalArea = beds.reduce((total, bed) => {
+    if (bed.shape === 'rectangle') {
+      return total + ((bed.dimensions.length || 0) * (bed.dimensions.width || 0));
+    } else {
+      const radius = bed.dimensions.radius || 0;
+      return total + (Math.PI * radius * radius);
+    }
+  }, 0);
+
+  const totalPlants = placements.length;
 
   // Debug storage state
   React.useEffect(() => {
@@ -50,13 +79,7 @@ const PatchCreatorPage: React.FC = () => {
       bedsDirty: storage.bedsDirty,
       errors: storage.saveErrors
     });
-  }, [storage.isInitialized, storage.isLoading, storage.isDirty, storage.bedsDirty]);
-
-  const handlePatchSwitch = (patchId: string) => {
-    // The patch switching is handled automatically by the auto-save hooks
-    // when the current patch changes in the store
-    logger.info(`Switching to patch: ${patchId}`);
-  };
+  }, [storage.isInitialized, storage.isLoading, storage.isDirty, storage.bedsDirty, storage.saveErrors]);
 
   // Show loading state while storage is initializing
   if (storage.isLoading) {
@@ -91,28 +114,44 @@ const PatchCreatorPage: React.FC = () => {
   return (
     <PageErrorBoundary>
       <GrowthTimelineProvider>
-        <MainLayout
-          showUserMenu={true}
-          showPatchSelector={true}
-          onFitAll={handleFitAll}
-          onCreateNewPatch={handleCreateNewPatch}
-          onPatchSwitch={handlePatchSwitch}
+        <ResponsiveLayout
+          showSidebar={true}
+          sidebarCollapsible={true}
+          sidebar={
+            <PlantLibrarySidebar
+              onSelectSpecies={handleSelectSpecies}
+              selectedBedId={focusMode.isActive ? focusMode.bedId : undefined}
+              selectedSpecies={selectedSpecies}
+              isPlacing={isPlacing}
+            />
+          }
+          toolbar={
+            <UnifiedToolbar
+              appName="Croqui SAF"
+              onMenuClick={toggleMenu}
+              totalArea={totalArea}
+              totalPlants={totalPlants}
+              terrainSize={50}
+              gridEnabled={true}
+              onToggleGrid={() => {/* TODO: implement grid toggle */}}
+              onExport={() => {/* TODO: implement export */}}
+              onSave={handleManualSave}
+              onLoad={() => {/* TODO: implement load */}}
+              onClear={() => {/* TODO: implement clear */}}
+              onUndo={undo}
+              onRedo={redo}
+              canUndo={canUndo()}
+              canRedo={canRedo()}
+              onZoomIn={() => canvasControlsRef.current?.zoomIn()}
+              onZoomOut={() => canvasControlsRef.current?.zoomOut()}
+              onFitAll={handleFitAll}
+              zoom={viewport?.zoom || 1}
+              isSaving={isSaving}
+            />
+          }
         >
-          <PatchCreatorHeader
-            isMobile={isMobile}
-            focusMode={focusMode}
-            handleExitFocus={handleExitFocus}
-            placements={placements}
-            isTimelineActive={isTimelineActive}
-            setTimelineActive={setTimelineActive}
-            fps={fps}
-            beds={beds}
-            selectedBedIds={selectedBedIds}
-            tool={tool}
-          />
-
           {/* Full-Screen Canvas */}
-          <main className="relative">
+          <div className="w-full h-full relative">
             <PatchCanvas
               onViewportChange={handleViewportChange}
               onOpenPlantSelection={handleOpenPlantSelection}
@@ -120,34 +159,26 @@ const PatchCreatorPage: React.FC = () => {
               minZoom={0.5}
               maxZoom={5}
             />
-          </main>
-
-          {/* Plant Selection Panel */}
-          <PlantSelectionPanel
-            isOpen={isPlantSelectionOpen}
-            onClose={handleClosePlantSelection}
-            onSelectSpecies={handleSelectSpecies}
-            selectedBedId={focusMode.isActive ? focusMode.bedId : undefined}
-          />
+          </div>
 
           {/* Debug Panel - Remove in production */}
           {import.meta.env.DEV && <StorageDebugPanel />}
 
           {/* Hidden stats for development */}
           {import.meta.env.DEV && viewport && (
-            <div className="fixed bottom-20 right-4 bg-black/80 text-white text-xs p-2 rounded font-mono z-50 hidden lg:block">
-              <div>Área Total: {beds.reduce((total, bed) => {
-                if (bed.shape === 'rectangle') {
-                  return total + ((bed.dimensions.length || 0) * (bed.dimensions.width || 0));
-                } else {
-                  const radius = bed.dimensions.radius || 0;
-                  return total + (Math.PI * radius * radius);
-                }
-              }, 0).toFixed(1)}m²</div>
+            <div className="fixed bottom-4 left-4 bg-black/80 text-white text-xs p-2 rounded font-mono z-50">
+              <div>Área Total: {totalArea.toFixed(1)}m²</div>
               <div>Área Visível: {(viewport.width * viewport.height).toFixed(0)}m²</div>
+              <div>FPS: {fps}</div>
             </div>
           )}
-        </MainLayout>
+        </ResponsiveLayout>
+
+        {/* User Menu */}
+        <UserMenu
+          onFitAll={handleFitAll}
+          onCreateNewPatch={handleCreateNewPatch}
+        />
       </GrowthTimelineProvider>
     </PageErrorBoundary>
   );
