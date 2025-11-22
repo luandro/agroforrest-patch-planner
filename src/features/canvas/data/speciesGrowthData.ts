@@ -66,6 +66,72 @@ export const SPECIES_GROWTH_PROFILES: Record<string, SpeciesGrowthProfile> = {
     ]
   },
 
+  'laranja': {
+    speciesId: 'laranja',
+    growthCurveType: 'sigmoid',
+    maxAge: 300, // 25 anos
+    environmentalFactors: {
+      soilQualityEffect: 1.2,
+      waterAvailabilityEffect: 1.3,
+      competitionResistance: 0.7
+    },
+    dataPoints: [
+      { months: 0, canopyRadius: 0.08, height: 0.4, lightPenetration: 96 },
+      { months: 6, canopyRadius: 0.2, height: 0.9, lightPenetration: 92 },
+      { months: 12, canopyRadius: 0.4, height: 1.5, lightPenetration: 88 },
+      { months: 24, canopyRadius: 0.8, height: 2.5, lightPenetration: 80 },
+      { months: 36, canopyRadius: 1.2, height: 4, lightPenetration: 70 },
+      { months: 60, canopyRadius: 2, height: 6, lightPenetration: 50 },
+      { months: 96, canopyRadius: 2.8, height: 7.5, lightPenetration: 35 },
+      { months: 180, canopyRadius: 3.5, height: 8.5, lightPenetration: 25 },
+      { months: 300, canopyRadius: 4, height: 9, lightPenetration: 20 }
+    ]
+  },
+
+  'limao': {
+    speciesId: 'limao',
+    growthCurveType: 'sigmoid',
+    maxAge: 240, // 20 anos
+    environmentalFactors: {
+      soilQualityEffect: 1.2,
+      waterAvailabilityEffect: 1.3,
+      competitionResistance: 0.6
+    },
+    dataPoints: [
+      { months: 0, canopyRadius: 0.06, height: 0.3, lightPenetration: 97 },
+      { months: 6, canopyRadius: 0.15, height: 0.7, lightPenetration: 93 },
+      { months: 12, canopyRadius: 0.3, height: 1.2, lightPenetration: 89 },
+      { months: 24, canopyRadius: 0.6, height: 2, lightPenetration: 82 },
+      { months: 36, canopyRadius: 1, height: 3.5, lightPenetration: 72 },
+      { months: 60, canopyRadius: 1.5, height: 5, lightPenetration: 55 },
+      { months: 96, canopyRadius: 2, height: 6, lightPenetration: 40 },
+      { months: 180, canopyRadius: 2.5, height: 6.5, lightPenetration: 30 },
+      { months: 240, canopyRadius: 2.8, height: 7, lightPenetration: 25 }
+    ]
+  },
+
+  'acerola': {
+    speciesId: 'acerola',
+    growthCurveType: 'exponential',
+    maxAge: 120, // 10 anos
+    environmentalFactors: {
+      soilQualityEffect: 1.1,
+      waterAvailabilityEffect: 1.2,
+      competitionResistance: 0.5
+    },
+    dataPoints: [
+      { months: 0, canopyRadius: 0.05, height: 0.2, lightPenetration: 97 },
+      { months: 6, canopyRadius: 0.2, height: 0.6, lightPenetration: 90 },
+      { months: 12, canopyRadius: 0.4, height: 1.2, lightPenetration: 82 },
+      { months: 18, canopyRadius: 0.6, height: 1.8, lightPenetration: 75 },
+      { months: 24, canopyRadius: 0.9, height: 2.2, lightPenetration: 65 },
+      { months: 36, canopyRadius: 1.2, height: 2.8, lightPenetration: 55 },
+      { months: 60, canopyRadius: 1.5, height: 3.2, lightPenetration: 45 },
+      { months: 96, canopyRadius: 1.8, height: 3.5, lightPenetration: 38 },
+      { months: 120, canopyRadius: 2, height: 3.8, lightPenetration: 35 }
+    ]
+  },
+
   // ÁRVORES DO CERRADO
   'pequi': {
     speciesId: 'pequi',
