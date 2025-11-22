@@ -161,17 +161,8 @@ const PatchCreatorPage: React.FC = () => {
             />
           </div>
 
-          {/* Debug Panel - Remove in production */}
+          {/* Debug Panel - Only in development, positioned to avoid collisions */}
           {import.meta.env.DEV && <StorageDebugPanel />}
-
-          {/* Hidden stats for development */}
-          {import.meta.env.DEV && viewport && (
-            <div className="fixed bottom-4 left-4 bg-black/80 text-white text-xs p-2 rounded font-mono z-50">
-              <div>Área Total: {totalArea.toFixed(1)}m²</div>
-              <div>Área Visível: {(viewport.width * viewport.height).toFixed(0)}m²</div>
-              <div>FPS: {fps}</div>
-            </div>
-          )}
         </ResponsiveLayout>
 
         {/* User Menu */}
