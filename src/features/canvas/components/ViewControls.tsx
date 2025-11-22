@@ -6,7 +6,7 @@ import { CanvasTool } from '../types/bed.types';
 import {
   Square,
   Move,
-  HandPointer
+  MousePointer2
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -57,7 +57,7 @@ export const ViewControls: React.FC<ViewControlsProps> = ({
     },
     {
       id: 'select' as CanvasTool,
-      icon: HandPointer,
+      icon: MousePointer2,
       label: 'Selecionar',
       tooltip: 'Selecionar e editar canteiros'
     }
