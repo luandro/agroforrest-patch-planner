@@ -99,13 +99,42 @@ npm run test:coverage
 
 ## Deployment
 
-The application is configured to deploy to GitHub Pages automatically on pushes to the main branch.
+The application supports deployment to multiple platforms (Vercel, GitHub Pages, etc.) with automatic base path configuration.
+
+### Base Path Configuration
+
+The app uses the `VITE_BASE_PATH` environment variable to configure the base URL:
+- **Vercel/Netlify**: Deploys at root `/` (default, no env var needed)
+- **GitHub Pages**: Deploys at `/agroforrest-patch-planner/` (set `VITE_BASE_PATH=/agroforrest-patch-planner/`)
+
+### GitHub Pages Deployment
+
+Automatic deployment is configured via GitHub Actions. To enable:
+
+1. Update `.github/workflows/deploy.yml` build step to include:
+```yaml
+- name: Build
+  run: npm run build
+  env:
+    VITE_BASE_PATH: /agroforrest-patch-planner/
+```
+
+2. Enable GitHub Pages in repository Settings → Pages → Source: "GitHub Actions"
+
+The site will be available at: `https://luandro.github.io/agroforrest-patch-planner/`
+
+### Vercel Deployment
+
+No additional configuration needed. Simply connect your repository to Vercel and deploy.
 
 ### Manual Deployment
 
 ```bash
-# Build for production
+# Build for production (uses default base path '/')
 npm run build
+
+# Build for GitHub Pages
+VITE_BASE_PATH=/agroforrest-patch-planner/ npm run build
 
 # The dist/ folder contains the production-ready files
 ```
