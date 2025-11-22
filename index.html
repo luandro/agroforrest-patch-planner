@@ -13,13 +13,24 @@
     <meta property="og:type" content="website" />
 
     <script>
-      // Single Page App GitHub Pages redirect
-      // Store the path and redirect to index so React Router can handle it
+      // Single Page App GitHub Pages redirect handler
+      // Decode the path from query parameter and restore it before React loads
       (function() {
-        var redirect = sessionStorage.getItem('redirect');
-        sessionStorage.removeItem('redirect');
-        if (redirect && redirect !== location.pathname) {
-          history.replaceState(null, null, redirect);
+        var l = window.location;
+        if (l.search) {
+          var q = {};
+          l.search.slice(1).split('&').forEach(function(v) {
+            var a = v.split('=');
+            q[a[0]] = a.slice(1).join('=').replace(/~and~/g, '&');
+          });
+          if (q.p !== undefined) {
+            var path = q.p;
+            // Restore search params if they were encoded
+            var search = q.q ? ('?' + q.q) : '';
+            history.replaceState(null, null,
+              l.pathname.slice(0, -1) + path + search + l.hash
+            );
+          }
         }
       })();
     </script>

@@ -13,14 +13,20 @@
 
     <script>
       // GitHub Pages SPA 404 handler
-      // Store the current path and redirect to index.html
-      sessionStorage.setItem('redirect', location.pathname + location.search + location.hash);
+      // Redirect to index with the current path encoded as a query parameter
+      (function() {
+        var pathSegmentsToKeep = 1; // Number of path segments for repo name
+        var l = window.location;
+        var redirect = l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/');
 
-      // Calculate the base path by removing everything after the repo name
-      var pathSegments = location.pathname.split('/').filter(function(segment) { return segment; });
-      var basePath = pathSegments.length > 0 ? '/' + pathSegments[0] + '/' : '/';
-
-      location.replace(location.origin + basePath);
+        l.replace(
+          l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+          l.pathname.split('/').slice(0, pathSegmentsToKeep + 1).join('/') +
+          '/?p=/' + redirect +
+          (l.search ? '&q=' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+          l.hash
+        );
+      })();
     </script>
   </head>
 
