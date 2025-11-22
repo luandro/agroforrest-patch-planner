@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 
 interface PlantSelectionIndividualModeProps {
   searchTerm: string;
-  onSearchChange: (value: string) => void;
+  onSearchChange?: (value: string) => void;
   selectedCategory: PlantCategory | 'all';
   onCategoryChange: (category: PlantCategory | 'all') => void;
   selectedCompatibility: CompatibilityLevel | 'all';

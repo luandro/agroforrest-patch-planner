@@ -65,7 +65,7 @@ export const CanvasViewport: React.FC<CanvasViewportProps> = ({
   }
 
   return (
-    <div className="relative w-full h-screen pt-16 overflow-hidden">
+    <div className="relative w-full h-full overflow-hidden">
       {/* View Mode Toggle - Enhanced positioning with safe z-index */}
       <div className={cn(
         "absolute z-[200]",
