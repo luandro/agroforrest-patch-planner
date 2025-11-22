@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
   <head>
@@ -13,15 +12,15 @@
     <meta property="og:type" content="website" />
 
     <script>
-      // Single Page App GitHub Pages redirect
-      // Store the path and redirect to index so React Router can handle it
-      (function() {
-        var redirect = sessionStorage.getItem('redirect');
-        sessionStorage.removeItem('redirect');
-        if (redirect && redirect !== location.pathname) {
-          history.replaceState(null, null, redirect);
-        }
-      })();
+      // GitHub Pages SPA 404 handler
+      // Store the current path and redirect to index.html
+      sessionStorage.setItem('redirect', location.pathname + location.search + location.hash);
+
+      // Calculate the base path by removing everything after the repo name
+      var pathSegments = location.pathname.split('/').filter(function(segment) { return segment; });
+      var basePath = pathSegments.length > 0 ? '/' + pathSegments[0] + '/' : '/';
+
+      location.replace(location.origin + basePath);
     </script>
   </head>
 
